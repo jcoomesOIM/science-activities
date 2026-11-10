@@ -104,6 +104,9 @@ th{background:var(--ink);color:var(--paper)}
 .legend{font-size:15px;margin:4px 0 0}
 .sr{position:absolute;left:-9999px}
 @media print{body{background:#fff;overflow:visible}#game,#hud,#toast,#caption,.panel:not(#report),.noprint{display:none!important}#report{display:block!important;position:static;border:none;box-shadow:none;overflow:visible}}
+.swatch{width:36px;height:36px;border-radius:50%;padding:0;margin:2px;vertical-align:middle;box-shadow:0 2px 0 #000}
+.swatch.on{outline:4px solid var(--signal);outline-offset:2px}
+.avatarpick{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 14px;margin:8px auto;max-width:640px;text-align:left;font-size:18px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:15;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;font-size:20px;font-weight:bold;max-width:90vw;text-align:center;display:none;box-shadow:0 5px 0 rgba(0,0,0,.5)}
 #caption{position:fixed;left:14px;bottom:90px;z-index:8;background:rgba(0,0,0,.8);color:#fff;padding:6px 12px;border-radius:10px;font-size:18px;display:none}
 </style>
@@ -129,11 +132,14 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
       <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
       <button data-open="levels"><span>🏅 Levels and badges</span><kbd>V</kbd></button>
+      <button data-open="store"><span>🛍️ Rock shop</span></button>
+      <button data-open="prize"><span>🎁 Prize box</span></button>
       <button data-open="report"><span>📋 Rock Hound Report</span><kbd>Q</kbd></button>
     </div></div>
   </div><div class="mrow">
   <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl">🎮 Controls ▾</button>
     <div class="mlist" id="mCtl" hidden>
+      <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
       <button id="bRope"><span>🪢 Rope up to camp</span><kbd>R</kbd></button>
       <button id="bSound"><span>🔇 Sound: off</span><kbd>M</kbd></button>
@@ -153,7 +159,8 @@ th{background:var(--ink);color:var(--paper)}
     <h1>Rock Hound</h1>
     <p class="sub">Dig, test, and identify rocks and minerals</p>
     <canvas id="titleArt" width="600" height="190" aria-hidden="true"></canvas>
-    <p>You are the new junior field geologist at Pebble Creek Survey Camp. The town dug a well and hit layer after layer of mystery stones! Dig down through the rock layers, test every mystery specimen like a real geologist, and identify it with the reference chart. Each correct ID goes into your Collection Box and fills a page of the Rock Dex. Use the Rock Cycle Machine at camp to predict how rocks change. Pick a favorite to be your pet rock. It will follow you and answer your science questions. Earn XP for every correct ID: the fewer tests and guesses you need, the more XP you get!</p>
+    <div id="titleAvatar"></div>
+    <p>You are the new junior field geologist at Pebble Creek Survey Camp. The town dug a well and hit layer after layer of mystery stones! Dig down through the rock layers, test every mystery specimen like a real geologist, and identify it with the reference chart. Each correct ID goes into your Collection Box and fills a page of the Rock Dex. Use the Rock Cycle Machine at camp to predict how rocks change. Pick a favorite to be your pet rock. It will follow you, answer your science questions, and wear the hats and glasses you buy with the XP you earn. Earn XP for every correct ID: the fewer tests and guesses you need, the more XP you get!</p>
     <div class="keys">
       <span><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></span><span>Walk, and dig sideways into rock</span>
       <span><kbd>↓</kbd> or <kbd>S</kbd></span><span>Dig down</span>
@@ -208,6 +215,9 @@ th{background:var(--ink);color:var(--paper)}
 </div>
 <p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
 </section>
+<section class="panel" id="store" aria-label="Rock shop"><button class="close" data-close>✖ Close (Esc)</button><h2>🛍️ Rock shop</h2><div id="storeBody"></div></section>
+<section class="panel" id="prize" aria-label="Prize box"><button class="close" data-close>✖ Close (Esc)</button><h2>🎁 Prize box</h2><div id="prizeBody"></div></section>
+<section class="panel" id="avatar" aria-label="Choose your geologist"><button class="close" data-close>✖ Close (Esc)</button><h2>🧑 Choose your geologist</h2><div id="avatarBody"></div></section>
 <section class="panel" id="levels" aria-label="Levels and badges"><button class="close" data-close>✖ Close (Esc)</button><h2>🏅 Levels and badges</h2><div id="levelsBody"></div></section>
 <section class="panel" id="report" aria-label="Rock Hound Report"><button class="close noprint" data-close>✖ Close (Esc)</button><h2>📋 Rock Hound Report</h2><div id="reportBody"></div></section>
 <section class="panel" id="notebook" aria-label="Lab notebook"><button class="close" data-close>✖ Close (Esc)</button><h2>📓 Lab notebook</h2><div id="notebookBody"></div></section>
@@ -718,24 +728,58 @@ function mouth(c, x, y, mood) {
     c.stroke();
   }
 }
-// The geologist: rounded blocky style, hard hat with lamp, pick in hand
+// AVATAR: students choose a geologist. Natural skin tones and hair colors.
+const SKIN = ['#f6d9c4', '#eebd98', '#d9a06e', '#b67a4b', '#8d5835', '#5e3b23'];
+const HAIR = {black:['Black', '#1d1b1f'], darkbrown:['Dark brown', '#3b2417'], brown:['Brown', '#6b4226'], auburn:['Red', '#8e3b1f'], blonde:['Blonde', '#d9b35c'], gray:['Gray', '#a3a3a3']};
+const avatar = {body:'female', skin:2, hair:'darkbrown'};
+// The geologist: a little more realistic proportions, safety vest, hard hat, rock hammer
 function drawPerson(c, cx, by, face, mood, walk, swing, sc) {
-  c.save(); c.translate(cx, by); c.scale(face * sc, sc);
-  c.fillStyle = '#1c2541'; rr(c, -10, -10 - Math.max(0, walk) * 3, 8, 10, 3); c.fill(); rr(c, 2, -10 - Math.max(0, -walk) * 3, 8, 10, 3); c.fill();
-  c.fillStyle = '#e8711c'; rr(c, -13, -27, 26, 19, 7); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 2.5; c.stroke();
-  c.fillStyle = '#3a86c8'; rr(c, -9, -19, 18, 10, 3); c.fill();
-  c.save(); c.translate(11, -20); c.rotate(swing > 0 ? -1.3 + (0.2 - swing) * 8 : 0.3);
-  c.strokeStyle = '#7a5233'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 9); c.lineTo(0, -8); c.stroke();
-  c.strokeStyle = '#9aa3ad'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(-7, -7); c.quadraticCurveTo(0, -12, 7, -7); c.stroke();
-  c.fillStyle = '#e7b48a'; c.beginPath(); c.arc(0, 2, 3.5, 0, 7); c.fill(); c.restore();
-  c.fillStyle = '#e7b48a'; rr(c, -12, -46, 24, 20, 8); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 2.5; c.stroke();
-  c.fillStyle = '#ffcc33'; c.beginPath(); c.arc(0, -43, 13, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
-  rr(c, -15, -45, 30, 5, 2); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(7, -50, 3.2, 0, 7); c.fill(); c.stroke();
-  c.fillStyle = '#1c2541';
-  if (mood === 'hot') { c.lineWidth = 2; c.beginPath(); c.moveTo(-6, -36); c.lineTo(-1, -35); c.moveTo(3, -35); c.lineTo(8, -36); c.stroke();
-    c.fillStyle = '#7cc4f0'; c.beginPath(); c.moveTo(-13, -42); c.quadraticCurveTo(-17, -36, -13, -34); c.quadraticCurveTo(-9, -36, -13, -42); c.fill(); }
-  else { const er = mood === 'wow' ? 2.8 : 2; c.beginPath(); c.arc(-3, -36, er, 0, 7); c.arc(5, -36, er, 0, 7); c.fill(); }
-  mouth(c, 1, -30, mood);
+  const skin = SKIN[avatar.skin], hair = HAIR[avatar.hair][1], fem = avatar.body === 'female', ink = '#1c2541', skinD = shade(skin, .82);
+  c.save(); c.translate(cx, by); c.scale(face * sc, sc); c.lineJoin = 'round'; c.lineCap = 'round';
+  const leg = walk * 4;
+  // back arm (behind body)
+  c.save(); c.translate(-6, -47); c.rotate(.15 - walk * .35); c.fillStyle = '#26897d'; rr(c, -3, 0, 6, 15, 3); c.fill(); c.fillStyle = skin; c.beginPath(); c.arc(0, 17, 3, 0, 7); c.fill(); c.restore();
+  // legs: jeans and work boots
+  for (const [lx, s] of [[-4.5, -leg], [4.5, leg]]) {
+    c.fillStyle = '#3b5b8c'; rr(c, lx - 3.6 + s * .4, -31, 7.2, 25, 3); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.4; c.stroke();
+    c.fillStyle = '#4a3424'; rr(c, lx - 4 + s * .6, -7.5, 10.5, 7.5, 3); c.fill(); c.stroke();
+  }
+  // torso: shirt, orange safety vest with reflective stripes, belt
+  c.fillStyle = '#2a9d8f'; rr(c, fem ? -9.5 : -10.5, -51, fem ? 19 : 21, 22, 6); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.6; c.stroke();
+  c.fillStyle = '#e8711c'; rr(c, fem ? -9.5 : -10.5, -50, 8, 19, 4); c.fill(); rr(c, 2, -50, fem ? 7.5 : 8.5, 19, 4); c.fill();
+  c.fillStyle = '#ffe066'; c.fillRect(fem ? -9.5 : -10.5, -39, 8, 2.6); c.fillRect(2, -39, fem ? 7.5 : 8.5, 2.6);
+  c.fillStyle = '#4a3424'; c.fillRect(fem ? -9.5 : -10.5, -32, fem ? 19 : 21, 3);
+  // neck and head
+  c.fillStyle = skinD; c.fillRect(-2.6, -55, 5.2, 5);
+  if (fem) { c.fillStyle = hair; c.beginPath(); c.moveTo(-8.5, -64); c.quadraticCurveTo(-12, -54, -9, -47); c.lineTo(-3, -50); c.lineTo(-4, -60); c.closePath(); c.fill(); // hair falling behind
+    c.beginPath(); c.ellipse(-11, -60, 3.4, 6.5, .35, 0, 7); c.fill(); }  // ponytail
+  c.fillStyle = skin; c.beginPath(); c.ellipse(0.5, -62, 8.2, 9.2, 0, 0, 7); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.4; c.stroke();
+  c.fillStyle = hair; c.beginPath(); c.moveTo(-8, -66); c.quadraticCurveTo(-8.8, -58, -5, fem ? -55 : -57); c.lineTo(-3.5, -62); c.lineTo(2, -67); c.closePath(); c.fill(); // hair at back and side
+  if (fem) { c.beginPath(); c.moveTo(1, -67.5); c.quadraticCurveTo(7, -67, 8.3, -63); c.lineTo(4, -65); c.closePath(); c.fill(); } // bangs
+  c.fillStyle = skinD; c.beginPath(); c.ellipse(-3.2, -61.5, 1.7, 2.5, 0, 0, 7); c.fill(); // ear
+  // hard hat with headlamp
+  c.fillStyle = '#ffcc33'; c.strokeStyle = ink; c.lineWidth = 1.5; c.beginPath(); c.arc(0.5, -67, 9.6, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+  rr(c, -11, -68.5, 23.5, 3.4, 1.5); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(7, -72, 2.2, 0, 7); c.fill(); c.stroke();
+  // face (facing right): eyebrow, eye, nose, mouth
+  const eyeH = mood === 'wow' ? 2.2 : mood === 'hot' ? .5 : 1.6;
+  c.strokeStyle = hair; c.lineWidth = 1.2; c.beginPath(); c.moveTo(2.3, mood === 'sad' ? -64.2 : -65); c.lineTo(5.8, mood === 'think' ? -65.6 : -65); c.stroke();
+  c.fillStyle = '#fff'; c.beginPath(); c.ellipse(4.2, -62.3, 1.9, eyeH + .4, 0, 0, 7); c.fill();
+  c.fillStyle = ink; c.beginPath(); c.ellipse(4.8, -62.3, 1.1, eyeH, 0, 0, 7); c.fill();
+  c.strokeStyle = skinD; c.lineWidth = 1.1; c.beginPath(); c.moveTo(8.2, -61.5); c.lineTo(9.3, -59); c.lineTo(8, -58.6); c.stroke();
+  c.strokeStyle = '#7a2e2e'; c.lineWidth = 1.2; c.beginPath();
+  if (mood === 'wow') { c.ellipse(5.6, -56.2, 1.2, 1.5, 0, 0, 7); }
+  else if (mood === 'sad') c.arc(5.2, -54.4, 2.2, Math.PI * 1.15, Math.PI * 1.85);
+  else if (mood === 'think' || mood === 'hot') { c.moveTo(4, -56.2); c.lineTo(7, -56.2); }
+  else c.arc(5.2, -57.6, 2.4, Math.PI * .15, Math.PI * .8);
+  c.stroke();
+  if (mood === 'hot') { c.fillStyle = '#7cc4f0'; c.beginPath(); c.moveTo(-1, -66); c.quadraticCurveTo(-3.5, -61, -1, -60); c.quadraticCurveTo(1.5, -61, -1, -66); c.fill(); }
+  // front arm with rock hammer (swings when digging)
+  c.save(); c.translate(5.5, -47); c.rotate(swing > 0 ? -1.4 + (.2 - swing) * 8 : .25 + walk * .35);
+  c.fillStyle = '#2a9d8f'; rr(c, -3, 0, 6, 14, 3); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.2; c.stroke();
+  c.fillStyle = skin; c.beginPath(); c.arc(0, 16, 3, 0, 7); c.fill(); c.stroke();
+  c.strokeStyle = '#7a5233'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(0, 19); c.lineTo(0, 5); c.stroke();
+  c.fillStyle = '#9aa3ad'; c.strokeStyle = ink; c.lineWidth = 1; rr(c, -5, 2, 10, 4, 1.5); c.fill(); c.stroke();
+  c.restore();
   c.restore();
 }
 
@@ -776,7 +820,7 @@ function hit(r, c) {
 function foundSpecimen(r, c) {
   const sid = spec[r][c]; spec[r][c] = null;
   const sp = {uid:++uidN, sid, zone:zoneOfType(back[r][c]), depth:depthKm(r), done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[]};
-  bag.push(sp); labIdx = bag.length - 1;
+  bag.push(sp); labIdx = bag.length - 1; gainEvidence();
   sfx('find'); burst(c * T + T / 2, r * T + T / 2, ['#fff', '#ffcc33', '#3a86c8'], 24);
   floatText(c * T + T / 2, r * T, 'Mystery specimen!'); setMood('wow', 1.6);
   toast(`🔍 You found mystery specimen #${sp.uid}! Press <kbd>L</kbd> or 🧪 Lab to test it.`);
@@ -912,7 +956,10 @@ function setPet(sid) {
 function petSay(text, mood, t) { if (!pet) return; pet.say = text; pet.sayT = t; pet.mood = mood || 'happy'; pet.moodT = t; }
 function updatePet(dt) {
   if (!pet) return;
-  const p = player, tx = p.x + p.w / 2 - p.face * 36, ty = p.y + p.h - 22, k = Math.min(1, dt * (reduceMotion ? 9 : 5));
+  const p = player, k = Math.min(1, dt * (reduceMotion ? 9 : 5)); let tx = p.x + p.w / 2 - p.face * 36, ty = p.y + p.h - 22;
+  // In its yard: if you stand still nearby, your pet goes to its bed or cottage
+  const home = shopState.display.has('bed') ? 'bed' : shopState.display.has('house') ? 'house' : null;
+  if (home && p.x < 6 * T && p.y + p.h <= SURF * T + 2 && idleT > 2) { tx = YARD[home]; ty = SURF * T - (home === 'bed' ? 38 : 22); if (!pet.homeSaid) { pet.homeSaid = true; petSay('Home sweet home!', 'happy', 3); } } else if (idleT < 1) pet.homeSaid = false;
   pet.x += (tx - pet.x) * k; pet.y += (ty - pet.y) * k; pet.hop = Math.max(0, pet.hop - dt);
   if (pet.sayT > 0) { pet.sayT -= dt; if (pet.sayT <= 0) pet.say = ''; }
   pet.moodT -= dt; if (pet.moodT <= 0) pet.mood = 'happy';
@@ -1003,7 +1050,7 @@ function askPet(q) {
 function runTest(tid) {
   const sp = bag[labIdx]; if (!sp) return;
   const t = TB[tid], r = result(SP[sp.sid], tid);
-  if (!sp.done.has(tid)) { sp.done.add(tid); sp.notes.push({t:t.icon + ' ' + t.name, r:r.txt}); }
+  if (!sp.done.has(tid)) { sp.done.add(tid); sp.notes.push({t:t.icon + ' ' + t.name, r:r.txt}); gainEvidence(); }
   sfx(tid === 'fizz' && r.k === 'yes' ? 'fizz' : tid === 'magnet' && r.k === 'yes' ? 'magnet' : 'test');
   sp.fb = null; renderLab();
   const b = document.querySelector(`[data-test="${tid}"]`); b && b.focus();
@@ -1029,7 +1076,7 @@ function identify() {
     xp += gain.xp; idTotal++; idBy[sp.zone] = (idBy[sp.zone] || 0) + 1;
     const isNew = !found.has(a.id); found.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
     notebook.push({uid:sp.uid, sid:a.id, zone:sp.zone, depth:sp.depth, tests:[...sp.done], wrong:sp.wrong.slice(), xp:gain.xp, lines:gain.lines});
-    stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++;
+    stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++; gainEvidence();
     labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew};
     bag.splice(labIdx, 1); labIdx = Math.max(0, Math.min(labIdx, bag.length - 1));
     sfx('right'); burst(player.x + player.w / 2, player.y, ['#ffcc33', '#fff', '#3a86c8'], 30); setMood('happy', 3);
@@ -1132,7 +1179,7 @@ function rcOutcome(rid, proc, set) {
 }
 // Paths a student has actually seen happen (shown in the Rock Dex like an evolution chart)
 const rcSeen = new Map();
-function seePath(from, to, proc, set) { rcSeen.set(`${from}|${proc}|${set || ''}`, {from, to, proc, set}); }
+function seePath(from, to, proc, set) { if (!rcSeen.has(`${from}|${proc}|${set || ''}`) && typeof gainEvidence === 'function') gainEvidence(); rcSeen.set(`${from}|${proc}|${set || ''}`, {from, to, proc, set}); }
 
 /* ----- Challenge mode: reach a target rock in as few steps as possible.
    "Par" is the fewest steps possible, worked out by searching every path. */
@@ -1461,7 +1508,7 @@ function renderBox() {
 }
 function petPortrait() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 160; const c = cv.getContext('2d');
-  c.drawImage(spriteCv[pet.sid], 0, 0); drawFace(c, 80, 92, 2.4, 'happy', 0, false); return cv.toDataURL();
+  c.drawImage(spriteCv[pet.sid], 0, 0); drawFace(c, 80, 92, 2.4, 'happy', 0, false); drawOutfit(c, 80, 80, 124); return cv.toDataURL();
 }
 function renderPet() {
   const b = $('#petBody');
@@ -1487,7 +1534,7 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
 }
-const RENDER = {levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
   if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
   if (id === 'machine' && ch && ch.phase === 'run') ch.phase = 'play';
@@ -1548,6 +1595,9 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (b && Object.keys(b.dataset).some(k => /^(rc|ch|mmode)/.test(k))) { closeMenus(); rcClick(b); return; }
   if (b && b.dataset.quiz) { quizClick(b.dataset.quiz); return; }
+  if (b && b.dataset.shop) { shopClick(b.dataset.shop); return; }
+  if (b && b.dataset.vault) { vaultClick(b.dataset.vault); return; }
+  if (b && b.dataset.av) { avClick(b.dataset.av); return; }
   if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) placeMenu(b, $('#' + b.dataset.menu)); if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
   closeMenus();
   if (!b) return;
@@ -1613,7 +1663,8 @@ function drawSky() {
   }
 }
 function drawCamp() {
-  const x = 3 * T, y = SURF * T;
+  drawYard();
+  const x = 6.2 * T, y = SURF * T;
   g.fillStyle = '#e8711c'; g.beginPath(); g.moveTo(x - 30, y); g.lineTo(x + 20, y - 70); g.lineTo(x + 70, y); g.closePath(); g.fill();
   g.strokeStyle = '#1c2541'; g.lineWidth = 3; g.stroke();
   g.fillStyle = '#1c2541'; g.beginPath(); g.moveTo(x + 8, y); g.lineTo(x + 20, y - 32); g.lineTo(x + 32, y); g.fill();
@@ -1771,10 +1822,10 @@ function draw() {
     const hop = reduceMotion ? 0 : (moving ? -Math.abs(Math.sin(time * 10)) * 5 : 0) + (pet.hop > 0 ? -Math.sin(pet.hop / .4 * Math.PI) * 14 : 0);
     const px = pet.x, py = pet.y + hop, look = Math.sign(player.x + player.w / 2 - px);
     g.fillStyle = '#1c2541'; for (const fx of [-8, 8]) { g.beginPath(); g.ellipse(px + fx, pet.y + 21, 5, 3, 0, 0, 7); g.fill(); }
-    g.drawImage(spriteCv[pet.sid], px - 26, py - 26, 52, 52); drawFace(g, px, py + 2, 1, pet.mood, look, pet.blink < 0);
+    g.drawImage(spriteCv[pet.sid], px - 26, py - 26, 52, 52); drawFace(g, px, py + 2, 1, pet.mood, look, pet.blink < 0); drawOutfit(g, px, py, 52);
   }
   drawRope();
-  drawPerson(g, player.x + player.w / 2, player.y + player.h, player.face, player.mood, Math.abs(player.vx) > 20 && player.onGround && !reduceMotion ? Math.sin(time * 16) : 0, digAnim, .8);
+  drawPerson(g, player.x + player.w / 2, player.y + player.h, player.face, player.mood, Math.abs(player.vx) > 20 && player.onGround && !reduceMotion ? Math.sin(time * 16) : 0, digAnim, .62);
   for (const q of particles) { g.fillStyle = q.col; g.fillRect(q.x - q.s / 2, q.y - q.s / 2, q.s, q.s); }
   g.font = 'bold 17px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   for (const f of floats) { g.globalAlpha = Math.min(1, f.life); g.lineWidth = 4; g.strokeStyle = '#1c2541'; g.strokeText(f.txt, f.x, f.y); g.fillStyle = '#ffcc33'; g.fillText(f.txt, f.x, f.y); g.globalAlpha = 1; }
@@ -1818,12 +1869,13 @@ function renderReport() {
   <p class="noprint"><button id="saveBtn">💾 Download save file</button> <button class="loadBtn">📂 Load a save file</button> <button id="pdfBtn" class="pdfBtn">📄 Download 1-page exit ticket (PDF)</button></p></div>
   ${editedFlag ? '<div class="fb bad" role="status">⚠️ This progress came from a save file that was changed outside the game.</div>' : ''}
   <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
-    ${card(`<img src="${badgeURL[levelOf(xp)]}" alt="" style="width:44px;height:44px;vertical-align:middle"> Level`, `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}<br><button data-open="levels" style="margin-top:6px">🏅 See all levels</button>`)}
+    ${card(`<img src="${badgeURL[levelOf(xp)]}" alt="" style="width:44px;height:44px;vertical-align:middle"> Level`, `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}<br>🪙 ${coins()} Geo-Coins to spend<br><button data-open="levels" style="margin-top:6px">🏅 See all levels</button> <button data-open="store" style="margin-top:6px">🛍️ Rock shop</button>`)}
     ${card('📚 Rock Dex', `${found.size} / ${DEX.length}`, `Minerals: ${DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length} · Rocks: ${DEX.filter(s => s.kind === 'rock' && found.has(s.id)).length}`)}
     ${card('🔬 Identifications', `${idTotal}`, `Right on the first guess: ${pct(stats.firstTry, idTotal)} · Average tests per ID: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '—'}`)}
     ${card('♻️ Rock cycle predictions', `${stats.predOk} / ${stats.preds} correct`, `Paths discovered: ${rcSeen.size}`)}
     ${card('🏆 Rock cycle challenges', `${chDone} / ${CHALLENGES.length}`, `Stars: ${chStars} / ${CHALLENGES.length * 3}`)}
     ${card('🧠 Science checks', `${stats.expOk} / ${stats.exps} correct`, 'Explaining why each rock changed')}
+    ${card('🔬 Science vault', `${VAULT.filter(v => vault[v.id].status === 'won').length} / ${VAULT.length} prizes`, 'Won with science questions')}
     ${card('🎯 Missions', `${Math.min(mi, MISSIONS.length)} / ${MISSIONS.length}`, mi < MISSIONS.length ? 'Next: ' + MISSIONS[mi].t : 'All complete!')}
     ${card('🐾 Pet rock', pet ? esc(pet.name) : 'None yet', pet ? 'a ' + SP[pet.sid].name.toLowerCase() : 'Choose one in the Collection Box')}
   </div>
@@ -1836,13 +1888,14 @@ function snapshot() {
   return {
     xp, mi, idTotal, idBy, found:[...found], counts, chBest, chWins, chExplained, rcCorrect, stats:{...stats, priorMs:stats.priorMs + (Date.now() - sessionStart)},
     rcPaths:[...rcPaths], rcTried:[...rcTried], rcSeen:[...rcSeen.values()], visited:[...visited], edited:editedFlag,
-    pet:pet ? {sid:pet.sid, name:pet.name} : null,
+    pet:pet ? {sid:pet.sid, name:pet.name} : null, avatar:{...avatar}, evidence, vault, vaultAsked:[...vaultAsked],
+    shop:{spent:shopState.spent, owned:[...shopState.owned], hat:shopState.hat, glasses:shopState.glasses, display:[...shopState.display]},
     bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong})),
     notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
     world:{tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y}
   };
 }
-function saveSig() { return String(xp) + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
+function saveSig() { return String(xp) + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
 function downloadSave() {
   const payload = snapshot(), body = JSON.stringify(payload);
   const file = {game:'rock-hound', version:1, savedAt:new Date().toISOString(), check:hashStr(body + '|rock-hound'), payload};
@@ -1878,6 +1931,16 @@ function applySave(file) {
   notebook.length = 0; (P.notebook || []).forEach(e => { if (e && isId(e.sid) && ZONES[e.zone]) notebook.push({uid:num(e.uid, 1, 1e6, 1), sid:e.sid, zone:e.zone, depth:num(e.depth, 0, 99, 0),
     tests:(e.tests || []).filter(t => TB[t]), wrong:(e.wrong || []).filter(isId), xp:num(e.xp, 0, 999, 0), lines:(e.lines || []).slice(0, 5).map(l => String(l).slice(0, 200))}); });
   uidN = Math.max(0, ...bag.map(b => b.uid), ...notebook.map(e => e.uid)); labIdx = 0; labResult = null;
+  if (P.avatar) { if (P.avatar.body === 'male' || P.avatar.body === 'female') avatar.body = P.avatar.body; if (SKIN[P.avatar.skin]) avatar.skin = +P.avatar.skin; if (HAIR[P.avatar.hair]) avatar.hair = P.avatar.hair; }
+  const SH = P.shop || {}, okItem = id => typeof id === 'string' && !!SHOPID[id];
+  shopState.owned = new Set((SH.owned || []).filter(okItem)); shopState.spent = num(SH.spent, 0, 1e7, 0);
+  shopState.hat = okItem(SH.hat) && shopState.owned.has(SH.hat) && SHOPID[SH.hat].type === 'hat' ? SH.hat : null;
+  shopState.glasses = okItem(SH.glasses) && shopState.owned.has(SH.glasses) && SHOPID[SH.glasses].type === 'glasses' ? SH.glasses : null;
+  shopState.display = new Set((SH.display || []).filter(id => okItem(id) && shopState.owned.has(id) && SHOPID[id].type === 'home'));
+  evidence = num(P.evidence, 0, 1e7, 0); vaultAsked.clear(); (P.vaultAsked || []).forEach(q => { if (typeof q === 'string') vaultAsked.add(q.slice(0, 600)); });
+  for (const v of VAULT) { const o = (P.vault || {})[v.id] || {}; vault[v.id] = {tries:num(o.tries, 0, MAX_TRIES, 0), status:['open', 'won', 'gone'].includes(o.status) ? o.status : 'open', evAt:o.evAt === null || o.evAt === undefined ? null : num(o.evAt, 0, 1e7, 0)}; }
+  (SH.display || []).forEach(id => { if (VID[id] && vault[id].status === 'won') shopState.display.add(id); });
+  vaultActive = null;
   pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
   const W = P.world;
   if (W && typeof W.tiles === 'string' && W.tiles.length === ROWS * COLS) {
@@ -1902,6 +1965,7 @@ filePick.addEventListener('change', () => {
       const edited = applySave(JSON.parse(rd.result));
       if (current === 'title') { audioInit(); $('#title').classList.remove('open'); current = null; }
       else if (current) closeTop();
+      drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML();
       $('#game').focus(); sfx('find');
       toast(`📂 Welcome back, Rock Hound! ${found.size} Dex entries and ${xp} XP loaded.${edited ? ' ⚠️ This file was changed outside the game.' : ''}`, 5500);
     } catch (err) { toast('⚠️ That file couldn’t be loaded. Choose a Rock Hound save file (it ends in .json).', 5000); }
@@ -1925,49 +1989,80 @@ function tidyQ(q) { const right = q.opts[q.ans], seen = new Set(); q.opts = q.op
 // Typed only for the exit ticket. Kept on screen while the page is open: never saved in the save file or sent anywhere.
 const ticket = {name:'', period:'', learned:''};
 function parentsOf(id) { return Object.keys(META).filter(k => META[k][0] === id && k !== id); }
-function quizMake() {
+// All question generators, sorted by thinking level (used by the quiz and the Science vault)
+function questionBank() {
   const have = DEX.filter(s => found.has(s.id)), rocks = have.filter(s => s.kind === 'rock'), mins = have.filter(s => s.kind === 'mineral');
-  const gens = [], addQ = (sid, f) => { f.sid = sid; gens.push(f); };
+  const T1 = [], T2 = [], T3 = [], addQ = (arr, sid, f) => { f.sid = sid; arr.push(f); };
   const pickOthers = (pool, right, n) => shuffle(pool.filter(x => x !== right)).slice(0, n);
-  // 1. What type of rock is it?
-  rocks.forEach(s => addQ(s.id, () => ({type:'Rock types', q:`Your Rock Dex has ${s.name}. What type of rock is it?`,
-    opts:['Igneous', 'Sedimentary', 'Metamorphic'], ans:['igneous', 'sedimentary', 'metamorphic'].indexOf(s.grp), why:`${s.name}: ${s.info}`})));
-  // 2. Which rock did it come from? (metamorphic "evolutions")
-  rocks.filter(s => parentsOf(s.id).length).forEach(s => addQ(s.id, () => {
-    const pars = parentsOf(s.id), par = pars[0], wrong = pickOthers(['shale', 'limestone', 'sandstone', 'granite', 'basalt', 'conglomerate', 'obsidian', 'pumice', 'gabbro'].filter(id => !pars.includes(id) && id !== s.id), par, 3); // other parents also count, so never use them as wrong answers
-    const opts = shuffle([par, ...wrong]);
-    return {type:'Rock cycle', q:`Your Rock Dex has ${s.name}. Heat and pressure made it from which rock?`, opts:opts.map(rname), ans:opts.indexOf(par), why:META[par][1]};
-  }));
-  // 3. How did an igneous rock form?
-  rocks.filter(s => s.grp === 'igneous').forEach(s => addQ(s.id, () => {
-    const slow = /intrusive/i.test(s.rtype);
+  const lc = s => s.charAt(0).toLowerCase() + s.slice(1);
+  // ⭐ REMEMBER: recall facts
+  rocks.forEach(s => addQ(T1, s.id, () => ({q:`Your Rock Dex has ${s.name}. What type of rock is it?`, opts:['Igneous', 'Sedimentary', 'Metamorphic'], ans:['igneous', 'sedimentary', 'metamorphic'].indexOf(s.grp), why:`${s.name}: ${s.info}`})));
+  mins.forEach(s => addQ(T1, s.id, () => { const right = STREAK_NAME[s.sk], opts = shuffle([right, ...pickOthers(Object.values(STREAK_NAME), right, 3)]);
+    return {q:`You rub ${s.name} on a streak plate. What color is the powder?`, opts, ans:opts.indexOf(right), why:`The streak is the color of the mineral’s powder. ${s.name}’s streak is ${s.streak.toLowerCase()}.`}; }));
+  // ⭐⭐ EXPLAIN: describe how something forms or why a clue works
+  rocks.forEach(s => addQ(T2, s.id, () => {
     const opts = ['Magma cooled slowly underground', 'Lava cooled quickly at the surface', 'Heat and pressure changed it without melting', 'Sediment was compacted and cemented'];
-    return {type:'Igneous rocks', q:`How did ${s.name} form?`, opts, ans:slow ? 0 : 1, why:`${s.name}: ${s.info}`};
+    const ans = s.grp === 'igneous' ? (/intrusive/i.test(s.rtype) ? 0 : 1) : s.grp === 'metamorphic' ? 2 : 3;
+    return {q:`How did ${s.name} form?`, opts, ans, why:`${s.name}: ${s.info}`}; }));
+  mins.forEach(s => addQ(T2, s.id, () => { const others = pickOthers(SPECIES.filter(m => m.kind === 'mineral' && m.id !== s.id && !clueFits(m.sp, s)).map(m => m.sp), s.sp, 3), opts = shuffle([s.sp, ...others]);
+    return {q:`Which clue would help you identify ${s.name}?`, opts, ans:opts.indexOf(s.sp), why:`${s.name}: streak ${s.streak.toLowerCase()}, hardness ${s.hd}. ${s.sp}.`}; }));
+  // ⭐⭐⭐ APPLY & ANALYZE: use evidence or predict a change
+  have.filter(s => SPECIES.includes(s)).forEach(s => addQ(T3, s.id, () => {
+    // Pick test results that point to ONLY this specimen, like real field notes
+    let cands = SPECIES.slice(); const clues = [];
+    const narrow = t => cands.filter(m => result(m, t.id).k === result(s, t.id).k);
+    // First clue: a useful test that still leaves several possibilities (so one clue alone isn't enough)
+    const first = shuffle(TESTS.filter(t => t.id !== 'look')).find(t => { const n = narrow(t).length; return n > 1 && n < cands.length; });
+    if (first) { clues.push(first.id); cands = narrow(first); }
+    // Then the most useful tests until only one specimen fits (usually 2–3 clues in total)
+    while (cands.length > 1 && clues.length < 5) { let best = null, bn = 1e9;
+      for (const t of shuffle(TESTS.slice())) { if (clues.includes(t.id)) continue; const n = narrow(t).length; if (n < cands.length && n < bn) { bn = n; best = t; } }
+      if (!best) break; clues.push(best.id); cands = narrow(best); }
+    // Wrong choices: specimens that match the first clue, so students must use ALL the evidence
+    const near = SPECIES.filter(m => m.id !== s.id && result(m, clues[0]).k === result(s, clues[0]).k), far = SPECIES.filter(m => m.id !== s.id);
+    const wrong = shuffle(near).slice(0, 3); while (wrong.length < 3) { const m = far[Math.floor(Math.random() * far.length)]; if (!wrong.includes(m)) wrong.push(m); }
+    const opts = shuffle([s, ...wrong]);
+    const clean = t => result(s, t).txt.replace(/\s*\((A rock|Careful|Rocks are|Streak works)[^)]*\)/g, '').replace(/^(Luster|Color|Streak): /, m => m);
+    return {q:`A geologist’s field notes say: ${clues.map(t => `• ${TB[t].name}: ${clean(t).replace(/^(Luster|Color|Streak): /, '')}`).join(' ')} Which specimen is it?`, opts:opts.map(m => m.name), ans:opts.indexOf(s),
+      why:`Only ${s.name} matches all ${clues.length} clues. ${wrong.filter(m => near.includes(m)).length ? 'The other choices may match one clue, but not all of them.' : ''}`};
   }));
-  // 4. Mineral clue
-  mins.forEach(s => addQ(s.id, () => {
-    const others = pickOthers(SPECIES.filter(m => m.kind === 'mineral' && m.id !== s.id && !clueFits(m.sp, s)).map(m => m.sp), s.sp, 3), opts = shuffle([s.sp, ...others]);
-    return {type:'Mineral ID', q:`Which clue would help you identify ${s.name}?`, opts, ans:opts.indexOf(s.sp), why:`${s.name}: streak ${s.streak.toLowerCase()}, hardness ${s.hd}. ${s.sp}.`};
-  }));
-  mins.forEach(s => addQ(s.id, () => {
-    // Streak choices are color families, so "White" never appears twice in different wording
-    const right = STREAK_NAME[s.sk], opts = shuffle([right, ...pickOthers(Object.values(STREAK_NAME), right, 3)]);
-    return {type:'Streak test', q:`You rub ${s.name} on a streak plate. What color is the powder?`, opts, ans:opts.indexOf(right), why:`The streak is the color of the mineral’s powder. ${s.name}’s streak is ${s.streak.toLowerCase()}.`};
-  }));
-  // General questions (used when a student hasn't discovered enough yet)
-  const general = [
-    {type:'Rock cycle', q:'Which process turns layers of sediment into sedimentary rock?', opts:['Compaction and cementation', 'Melting and cooling', 'Heat and pressure', 'Erupting as lava'], ans:0, why:'Buried sediment is squeezed (compaction) and glued (cementation) into sedimentary rock.'},
-    {type:'Igneous rocks', q:'Why does granite have bigger crystals than basalt?', opts:['Granite’s magma cooled slowly underground', 'Granite cooled quickly at the surface', 'Granite was squeezed by heat and pressure', 'Granite is made of cemented sand'], ans:0, why:'Slow cooling underground gives crystals time to grow large.'},
-    {type:'Rock vs. mineral', q:'What is the difference between a rock and a mineral?', opts:['A rock is a mixture of minerals; a mineral is one pure substance', 'A mineral is a mixture of rocks', 'Rocks are always harder than minerals', 'There is no difference'], ans:0, why:'Minerals are the building blocks; rocks are mixtures of minerals (or glass, or rock pieces).'}
-  ];
-  // Prefer 3 DIFFERENT specimens, then allow repeats if needed
-  const used = new Set(), picked = [];
-  for (const f of shuffle(gens)) if (picked.length < 3 && !used.has(f.sid)) { used.add(f.sid); picked.push(f); }
-  for (const f of gens) if (picked.length < 3 && !picked.includes(f)) picked.push(f);
-  const qs = picked.map(f => tidyQ(f()));
-  for (const g of shuffle(general)) if (qs.length < 3) qs.push(g);
+  rocks.forEach(s => addQ(T3, s.id, () => {
+    const procs = shuffle([['meta'], ['slow'], ['fast'], ['weather', 'sand'], ['weather', 'mud'], ['weather', 'pebbles']]);
+    for (const [p, st] of procs) { const o = rcOutcome(s.id, p, st); if (o.blocked || o.res === s.id) continue;
+      const how = {meta:'is buried deep and squeezed by heat and pressure (without melting)', slow:'melts, then cools slowly deep underground', fast:'melts, erupts as lava and cools quickly'}[p] ||
+        {sand:'is weathered into sand that settles on a beach and is cemented', mud:'is weathered into mud that settles in a calm lake and is squeezed', pebbles:'is weathered into pebbles that a fast river drops and cement glues'}[st];
+      const wrong = pickOthers(o.pool.filter(id => id !== s.id && !(o.alt || []).includes(id)), o.res, 3), opts = shuffle([o.res, ...wrong]);
+      return {q:`Predict: if ${s.name} ${how}, what rock will it most likely become?`, opts:opts.map(rname), ans:opts.indexOf(o.res), why:o.why}; }
+    return null; }));
+  rocks.filter(s => parentsOf(s.id).length).forEach(s => addQ(T3, s.id, () => {
+    const pars = parentsOf(s.id), par = pars[0], wrong = pickOthers(['shale', 'limestone', 'sandstone', 'granite', 'basalt', 'conglomerate', 'obsidian', 'pumice', 'gabbro'].filter(id => !pars.includes(id) && id !== s.id), par, 3), opts = shuffle([par, ...wrong]);
+    return {q:`Your Rock Dex has ${s.name}. Heat and pressure made it from which rock?`, opts:opts.map(rname), ans:opts.indexOf(par), why:META[par][1]}; }));
+  // Backup questions for each level (used when a student hasn't discovered enough yet)
+  const G1 = [{q:'What is the softest mineral on the Mohs hardness scale?', opts:['Talc', 'Quartz', 'Calcite', 'Diamond'], ans:0, why:'Talc is number 1 on the Mohs scale; diamond is 10.'},
+    {q:'Which tool in our hardness kit has a hardness of about 5.5?', opts:['Glass plate', 'Fingernail', 'Copper penny', 'Steel file'], ans:0, why:'Fingernail 2.5, copper penny 3.5, glass plate 5.5, steel file 6.5.'}];
+  const G2 = [{q:'Why does granite have bigger crystals than basalt?', opts:['Granite’s magma cooled slowly underground', 'Granite cooled quickly at the surface', 'Granite was squeezed by heat and pressure', 'Granite is made of cemented sand'], ans:0, why:'Slow cooling underground gives crystals time to grow large.'},
+    {q:'Why is a mineral’s streak more useful than its outside color?', opts:['The powder color stays the same even when the outside color changes', 'Streak tells you how heavy the mineral is', 'Only metals have a streak', 'The streak shows how the mineral formed'], ans:0, why:'Hematite can look silver or red, but its streak is always reddish-brown.'}];
+  const G3 = [{q:'In flat, undisturbed sedimentary layers, layer A is below layer B. Which layer is older, and why?', opts:['Layer A, because lower layers were laid down first', 'Layer B, because it is closer to the surface', 'They are the same age', 'Layer B, because it is harder'], ans:0, why:'This is the law of superposition: layers build up from the bottom, so the bottom is oldest.'},
+    {q:'You find a light rock full of gas holes that floats in water. Where did it most likely form?', opts:['From gassy lava cooling quickly at the surface', 'From magma cooling slowly deep underground', 'From sand cemented on a beach', 'From shale squeezed by heat and pressure'], ans:0, why:'That is pumice: gas bubbles were trapped when lava cooled fast.'},
+    {q:'Why are fossils common in sedimentary rock but almost never found in igneous rock?', opts:['Igneous rock forms from melted rock, which would destroy fossils', 'Fossils are too heavy to stay in igneous rock', 'Igneous rocks are too young to have fossils', 'Fossils only form in mountains'], ans:0, why:'Sedimentary rock forms from layers that can bury living things gently; melting destroys them.'}];
+  return {T1, T2, T3, G1, G2, G3};
+}
+function quizMake() {
+  // Three questions at three thinking levels: Remember, Explain, Apply & analyze.
+  const {T1, T2, T3, G1, G2, G3} = questionBank();
+  // Choose one question per level, using a different specimen each time when possible
+  const used = new Set(), qs = [];
+  for (const [arr, backup] of [[T1, G1], [T2, G2], [T3, G3]]) {
+    let q = null;
+    for (const f of shuffle(arr.slice())) { if (used.has(f.sid)) continue; q = f(); if (q) { used.add(f.sid); break; } }
+    if (!q) for (const f of shuffle(arr.slice())) { q = f(); if (q) break; }
+    if (!q) { const b = backup[Math.floor(Math.random() * backup.length)]; const opts = shuffle(b.opts.slice()); q = {...b, opts, ans:opts.indexOf(b.opts[b.ans])}; }
+    qs.push(tidyQ(q));
+  }
+  qs.forEach((q, i) => { q.tier = i; });
   return {qs, answers:[null, null, null], foundN:found.size};
 }
+const TIER = ['⭐ Remember', '⭐⭐ Explain', '⭐⭐⭐ Apply & analyze'], TIER_XP = [10, 15, 20];
 function quizScore() { return quiz ? quiz.qs.filter((q, i) => quiz.answers[i] === q.ans).length : 0; }
 const quizDone = () => quiz && quiz.answers.every(a => a !== null);
 function quizHTML() {
@@ -1976,9 +2071,9 @@ function quizHTML() {
     const a = quiz.answers[i];
     const opts = q.opts.map((o, k) => `<button data-quiz="${i}:${k}" ${a !== null ? 'disabled' : ''} class="${a === k ? 'on' : ''}">${String.fromCharCode(65 + k)}. ${esc(o)}${a === k ? ' ← your answer' : ''}</button>`).join('');
     const fb = a === null ? '' : `<div class="fb ${a === q.ans ? 'good' : 'bad'} pop" role="status"><b>${a === q.ans ? '✔ Correct!' : '✖ Not quite.'}</b> ${a === q.ans ? '' : `The answer is <b>${esc(q.opts[q.ans])}</b>. `}${esc(q.why)}</div>`;
-    return `<div class="card" style="text-align:left"><p style="margin:0 0 8px"><b>${i + 1}. ${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${opts}</div>${fb}</div>`;
+    return `<div class="card" style="text-align:left"><p style="margin:0 0 4px"><span class="tag">${TIER[q.tier]}</span> <small>(+${TIER_XP[q.tier]} XP)</small></p><p style="margin:0 0 8px"><b>${i + 1}. ${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${opts}</div>${fb}</div>`;
   }).join('');
-  return `<div class="goalcard"><h3>🧠 Field Guide Quiz${quizDone() ? `: ${quizScore()} / 3` : ''}</h3><p style="margin-top:0">Three questions from your own discoveries. Your answers and score go on your exit ticket.</p>
+  return `<div class="goalcard"><h3>🧠 Field Guide Quiz${quizDone() ? `: ${quizScore()} / 3` : ''}</h3><p style="margin-top:0">Three questions from your own discoveries, from ⭐ remembering facts to ⭐⭐⭐ using evidence. Your answers and score go on your exit ticket.</p>
     <div class="grid" style="grid-template-columns:1fr">${qhtml}</div>${quizDone() ? '<p><button data-quiz="new">🔄 Try a new quiz</button></p>' : ''}</div>
   <div class="goalcard"><h3>✏️ My exit ticket</h3>
     <p style="margin-top:0">Type your details. They print on your PDF exit ticket and are not saved or sent anywhere.</p>
@@ -1993,7 +2088,7 @@ function quizClick(v) {
   if (v === 'new') { quiz = quizMake(); renderReport(); const f = $('#reportBody [data-quiz]'); f && f.focus(); return; }
   const [i, k] = v.split(':').map(Number); if (quiz.answers[i] !== null) return;
   quiz.answers[i] = k; const ok = k === quiz.qs[i].ans; sfx(ok ? 'right' : 'wrong');
-  if (quizDone() && !quizXPGiven) { quizXPGiven = true; const gain = quizScore() * 10; if (gain) { addXP(gain); toast(`🧠 Quiz complete: ${quizScore()} / 3, +${gain} XP`, 4000); } }
+  if (quizDone() && !quizXPGiven) { quizXPGiven = true; const gain = quiz.qs.reduce((n, q, j) => n + (quiz.answers[j] === q.ans ? TIER_XP[q.tier] : 0), 0); if (gain) { addXP(gain); toast(`🧠 Quiz complete: ${quizScore()} / 3, +${gain} XP`, 4000); } }
   const top = $('#report').scrollTop; renderReport(); $('#report').scrollTop = top;
   const nx = $(`#reportBody [data-quiz^="${i + 1}:"]`) || $('#reportBody .goalcard .pdfBtn'); nx && nx.focus({preventScroll:true});
 }
@@ -2033,7 +2128,9 @@ const XP_RULES = [
   ['🔮 Predict a rock change', '+40 XP for a correct prediction on a new path, +10 for repeating a path.'],
   ['🏆 Rock cycle challenge', '+80 XP at par, +50 with one extra step, +30 with two extra steps. Replays: +10.'],
   ['🧠 Explain your path', '+20 XP for a correct science check after a challenge (+5 on replays).'],
-  ['📋 Field Guide Quiz', '+10 XP for each correct answer on your first quiz of the session.']
+  ['📋 Field Guide Quiz', 'Correct answers: ⭐ Remember +10, ⭐⭐ Explain +15, ⭐⭐⭐ Apply & analyze +20 (first quiz of each session).'],
+  ['🔬 Science vault', 'The best prizes (toys, trophies and gem displays) can’t be bought. Reach a milestone, then answer a science question to win them.'],
+  ['🪙 Geo-Coins', 'Every XP you earn also gives you 1 Geo-Coin to spend in the 🛍️ Rock shop. Spending never lowers your XP or level.']
 ];
 function renderLevels() {
   const L = levelOf(xp), next = LEVELS[L + 1], base = LEVELS[L][0], prog = next ? Math.round(100 * (xp - base) / (next[0] - base)) : 100;
@@ -2046,6 +2143,300 @@ function renderLevels() {
     <img src="${badgeURL[i]}" alt="" style="width:110px;height:110px;${i > L ? 'filter:grayscale(1);opacity:.45' : ''}"><b>Level ${i + 1}: ${name}</b><br>${need} XP needed<br>${i <= L ? '✔ Earned' : '🔒 ' + (need - xp) + ' XP to go'}</div>`).join('')}</div>
   <h3>How to earn XP</h3><table><tr><th>Activity</th><th>XP</th></tr>${XP_RULES.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}</table>
   <p><b>Tip:</b> careful scientists earn the most XP. Choose tests that rule things out, predict before you run the machine, and explain your thinking!</p>`;
+}
+
+/* ---------- 15e. ROCK SHOP, PRIZE BOX AND PET YARD -----------------
+   Every XP you earn also gives 1 Geo-Coin. Spending coins never lowers XP or your level. */
+const SHOP = [
+  {id:'hardhat', type:'hat', name:'Mini hard hat', price:60}, {id:'beanie', type:'hat', name:'Cozy beanie', price:80},
+  {id:'party', type:'hat', name:'Party hat', price:100}, {id:'cowboy', type:'hat', name:'Cowboy hat', price:150},
+  {id:'flower', type:'hat', name:'Flower crown', price:200}, {id:'tophat', type:'hat', name:'Fancy top hat', price:250}, {id:'crown', type:'hat', name:'Royal crown', price:500},
+  {id:'round', type:'glasses', name:'Round glasses', price:60}, {id:'goggles', type:'glasses', name:'Safety goggles', price:90},
+  {id:'sun', type:'glasses', name:'Cool sunglasses', price:120}, {id:'heart', type:'glasses', name:'Heart glasses', price:150},
+  {id:'star', type:'glasses', name:'Star glasses', price:180}, {id:'monocle', type:'glasses', name:'Monocle', price:250},
+  {id:'fern', type:'home', name:'Potted fern', price:70}, {id:'bed', type:'home', name:'Pebble bed', price:100},
+  {id:'fence', type:'home', name:'Picket fence', price:120}, {id:'pond', type:'home', name:'Little pond', price:150},
+  {id:'lantern', type:'home', name:'Camp lantern', price:150}, {id:'flag', type:'home', name:'Pet flag', price:180},
+  {id:'crystal', type:'home', name:'Crystal lamp', price:250}, {id:'house', type:'home', name:'Rock cottage', price:400}
+];
+const SHOPID = {}; SHOP.forEach(i => SHOPID[i.id] = i);
+const shopState = {spent:0, owned:new Set(), hat:null, glasses:null, display:new Set()};
+const coins = () => Math.max(0, xp - shopState.spent);
+let shopTab = 'hat';
+// ART: hats sit on top of the pet (x, y = top-center of the rock), s = size
+function drawHat(c, id, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.lineJoin = 'round';
+  const P = pts => { c.beginPath(); pts.forEach(([a, b], i) => i ? c.lineTo(a, b) : c.moveTo(a, b)); c.closePath(); };
+  if (id === 'hardhat') { c.fillStyle = '#ffcc33'; c.beginPath(); c.arc(0, 0, 11, Math.PI, 0); c.closePath(); c.fill(); c.stroke(); rr(c, -14, -1.5, 28, 4, 2); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(0, -6, 2.5, 0, 7); c.fill(); c.stroke(); }
+  else if (id === 'beanie') { c.fillStyle = '#d64545'; c.beginPath(); c.arc(0, 0, 12, Math.PI, 0); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#f2f7f5'; rr(c, -13, -3, 26, 5, 2); c.fill(); c.stroke(); c.beginPath(); c.arc(0, -13, 3.5, 0, 7); c.fill(); c.stroke(); }
+  else if (id === 'party') { P([[-9, 1], [0, -24], [9, 1]]); c.fillStyle = '#3a86c8'; c.fill(); c.stroke(); c.fillStyle = '#ffcc33'; P([[-6, -6], [-3, -14], [3, -14], [6, -6]]); c.fill(); c.fillStyle = '#e8711c'; c.beginPath(); c.arc(0, -25, 3, 0, 7); c.fill(); c.stroke(); }
+  else if (id === 'cowboy') { c.fillStyle = '#8a5a2b'; c.beginPath(); c.ellipse(0, 0, 18, 4, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#a06a35'; P([[-9, 0], [-8, -12], [-3, -9], [0, -13], [3, -9], [8, -12], [9, 0]]); c.fill(); c.stroke(); c.fillStyle = '#4a3424'; c.fillRect(-9, -3, 18, 2.5); }
+  else if (id === 'flower') { const cols = ['#ff6fa8', '#ffcc33', '#9cc8ea', '#ff9f43', '#c58cf2']; for (let i = 0; i < 5; i++) { const fx = -12 + i * 6, fy = -2 - Math.sin(i / 4 * Math.PI) * 3; c.fillStyle = cols[i]; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(fx + Math.cos(k * 1.26) * 2.4, fy + Math.sin(k * 1.26) * 2.4, 2, 0, 7); c.fill(); } c.fillStyle = '#fff4cc'; c.beginPath(); c.arc(fx, fy, 1.3, 0, 7); c.fill(); } }
+  else if (id === 'tophat') { c.fillStyle = '#222'; rr(c, -15, -2, 30, 4, 2); c.fill(); c.stroke(); rr(c, -9, -21, 18, 20, 2); c.fill(); c.stroke(); c.fillStyle = '#a3243a'; c.fillRect(-9, -7, 18, 3.5); }
+  else if (id === 'crown') { c.fillStyle = '#ffcc33'; P([[-12, 1], [-12, -12], [-6, -5], [0, -15], [6, -5], [12, -12], [12, 1]]); c.fill(); c.stroke(); [[-6, -3, '#a3243a'], [0, -4, '#3a86c8'], [6, -3, '#2a9d8f']].forEach(([gx, gy, col]) => { c.fillStyle = col; c.beginPath(); c.arc(gx, gy, 2, 0, 7); c.fill(); }); }
+  c.restore();
+}
+// ART: glasses sit over the pet's eyes (x, y = between the eyes)
+function drawGlasses(c, id, x, y, s) {
+  c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = '#1c2541'; c.lineWidth = 1.6; c.lineJoin = 'round';
+  if (id === 'round') { for (const ex of [-7, 7]) { c.beginPath(); c.arc(ex, 0, 5.5, 0, 7); c.stroke(); } c.beginPath(); c.moveTo(-1.5, -1); c.quadraticCurveTo(0, -2.5, 1.5, -1); c.stroke(); }
+  else if (id === 'goggles') { c.strokeStyle = '#3a86c8'; c.lineWidth = 3; c.beginPath(); c.moveTo(-16, 0); c.lineTo(16, 0); c.stroke(); c.fillStyle = 'rgba(160,215,245,.55)'; c.strokeStyle = '#1c2541'; c.lineWidth = 1.6; rr(c, -14, -5.5, 28, 11, 5); c.fill(); c.stroke(); c.beginPath(); c.moveTo(0, -5.5); c.lineTo(0, 5.5); c.stroke(); }
+  else if (id === 'sun') { c.fillStyle = 'rgba(20,24,40,.92)'; for (const ex of [-7, 7]) { rr(c, ex - 6, -4.5, 12, 9, 3.5); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-1, -2); c.lineTo(1, -2); c.stroke(); c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(-11, -3, 3, 1.5); c.fillRect(3, -3, 3, 1.5); }
+  else if (id === 'heart' || id === 'star') { c.fillStyle = id === 'heart' ? 'rgba(230,60,90,.85)' : 'rgba(255,111,168,.85)';
+    for (const ex of [-7, 7]) { c.beginPath();
+      if (id === 'heart') { c.moveTo(ex, 4.5); c.bezierCurveTo(ex - 9, -2, ex - 4, -8, ex, -3); c.bezierCurveTo(ex + 4, -8, ex + 9, -2, ex, 4.5); }
+      else for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.8 : 6.5; c.lineTo(ex + Math.cos(a) * r, Math.sin(a) * r); }
+      c.closePath(); c.fill(); c.stroke(); } c.beginPath(); c.moveTo(-2, -1); c.lineTo(2, -1); c.stroke(); }
+  else if (id === 'monocle') { c.strokeStyle = '#c99a10'; c.lineWidth = 2; c.beginPath(); c.arc(7, 0, 6, 0, 7); c.stroke(); c.lineWidth = 1; c.beginPath(); c.moveTo(12, 3); c.quadraticCurveTo(15, 12, 9, 18); c.stroke(); }
+  c.restore();
+}
+// ART: pet yard items. x = center, G = ground line
+const YARD = {fern:16, bed:56, pond:104, flag:138, house:180, crystal:226, lantern:246};
+function drawHome(c, id, x, G, s) {
+  c.save(); c.translate(x, G); c.scale(s, s); c.strokeStyle = '#1c2541'; c.lineWidth = 1.6; c.lineJoin = 'round';
+  if (id === 'fern') { c.fillStyle = '#c97b4b'; c.beginPath(); c.moveTo(-8, 0); c.lineTo(-10, -12); c.lineTo(10, -12); c.lineTo(8, 0); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = '#3f8f3a'; c.lineWidth = 2.5; for (const a of [-1.1, -.6, 0, .6, 1.1]) { c.beginPath(); c.moveTo(0, -12); c.quadraticCurveTo(Math.sin(a) * 10, -24, Math.sin(a) * 16, -28 + Math.abs(a) * 6); c.stroke(); } }
+  else if (id === 'bed') { c.fillStyle = '#a06a35'; rr(c, -18, -8, 36, 8, 3); c.fill(); c.stroke(); c.fillStyle = '#9cc8ea'; c.beginPath(); c.ellipse(0, -9, 15, 5, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.ellipse(-9, -11, 5, 3, 0, 0, 7); c.fill(); c.stroke(); }
+  else if (id === 'pond') { c.fillStyle = '#5fb3e6'; c.beginPath(); c.ellipse(0, -2, 18, 5, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#9aa3ad'; for (const px of [-17, -8, 8, 17]) { c.beginPath(); c.ellipse(px, -2 + (px % 2), 3.5, 2.5, 0, 0, 7); c.fill(); c.stroke(); } c.strokeStyle = 'rgba(255,255,255,.8)'; c.beginPath(); c.moveTo(-6, -3); c.lineTo(2, -3); c.stroke(); }
+  else if (id === 'flag') { c.strokeStyle = '#7a5233'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -40); c.stroke(); c.fillStyle = '#e8711c'; c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, -40); c.lineTo(18, -34); c.lineTo(0, -28); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(6, -34, 2.2, 0, 7); c.fill(); }
+  else if (id === 'house') { c.fillStyle = '#b7a37e'; rr(c, -20, -26, 40, 26, 3); c.fill(); c.stroke(); c.fillStyle = 'rgba(80,60,40,.25)'; for (let i = 0; i < 9; i++) { c.beginPath(); c.ellipse(-15 + (i % 3) * 13, -20 + Math.floor(i / 3) * 7, 4, 2.5, 0, 0, 7); c.fill(); }
+    c.fillStyle = '#8e3b1f'; c.beginPath(); c.moveTo(-25, -24); c.lineTo(0, -42); c.lineTo(25, -24); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#4a3424'; c.beginPath(); c.moveTo(-6, 0); c.lineTo(-6, -12); c.arc(0, -12, 6, Math.PI, 0); c.lineTo(6, 0); c.fill(); c.stroke();
+    c.fillStyle = '#ffe066'; rr(c, 10, -20, 7, 7, 1); c.fill(); c.stroke(); }
+  else if (id === 'crystal') { c.fillStyle = '#4a4040'; rr(c, -8, -6, 16, 6, 2); c.fill(); c.stroke(); crystal(c, 0, -5, 9, 16, 0, 'rgba(200,170,255,.95)'); c.fillStyle = 'rgba(200,170,255,.25)'; c.beginPath(); c.arc(0, -18, 14, 0, 7); c.fill(); }
+  else if (id === 'lantern') { c.strokeStyle = '#4a3424'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -30); c.lineTo(8, -30); c.stroke(); c.fillStyle = '#ffe066'; c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; rr(c, 4, -29, 8, 11, 2); c.fill(); c.stroke(); c.fillStyle = 'rgba(255,224,102,.3)'; c.beginPath(); c.arc(8, -23, 11, 0, 7); c.fill(); }
+  c.restore();
+}
+function drawFence(c, x0, x1, G) { c.strokeStyle = '#1c2541'; c.fillStyle = '#f2f7f5'; c.lineWidth = 1.4; c.fillRect(x0, G - 11, x1 - x0, 2.5); c.strokeRect(x0, G - 11, x1 - x0, 2.5); for (let x = x0; x <= x1; x += 9) { c.beginPath(); c.moveTo(x - 2.5, G); c.lineTo(x - 2.5, G - 14); c.lineTo(x, G - 17); c.lineTo(x + 2.5, G - 14); c.lineTo(x + 2.5, G); c.closePath(); c.fill(); c.stroke(); } }
+function drawYard() {
+  const G = SURF * T, d = shopState.display;
+  if (!d.size) return;
+  const shelf = drawShelf();
+  for (const id of ['flag', 'house', 'crystal', 'lantern', 'fern', 'bed', 'pond']) if (d.has(id)) drawHome(g, id, YARD[id], G, 1.5);
+  if (d.has('fence')) drawFence(g, 4, 256, G);
+  if (pet) { g.fillStyle = '#f2f7f5'; g.strokeStyle = '#1c2541'; g.lineWidth = 2; g.font = 'bold 12px Verdana, sans-serif'; const t = `${pet.name}’s yard`, w = g.measureText(t).width + 12;
+    if (shelf) return; const sy = G - 98; rr(g, 125 - w / 2, sy, w, 18, 6); g.fill(); g.stroke(); g.fillStyle = '#1c2541'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 125, sy + 9); }
+}
+// Everything the pet is wearing, drawn on top of the rock (cx, cy = rock center, size = rock size in px)
+function drawOutfit(c, cx, cy, size) { const k = size / 52; if (shopState.glasses) drawGlasses(c, shopState.glasses, cx, cy - 1 * k, k); if (shopState.hat) drawHat(c, shopState.hat, cx, cy - 17 * k, k); }
+function itemPreview(it) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 120; const c = cv.getContext('2d');
+  if (it.type === 'home') { c.fillStyle = '#c9e6f6'; c.fillRect(0, 0, 120, 120); c.fillStyle = '#6cc04a'; c.fillRect(0, 92, 120, 28); if (it.id === 'fence') drawFence(c, 10, 110, 92); else drawHome(c, it.id, 60, 92, 1.8); }
+  else { const sid = pet ? pet.sid : 'granite'; c.drawImage(spriteCv[sid], 20, 22, 80, 80); drawFace(c, 60, 65, 1.5, 'happy', 0, false);
+    if (it.type === 'hat') drawHat(c, it.id, 60, 36, 1.5); else drawGlasses(c, it.id, 60, 60, 1.5); }
+  return cv.toDataURL();
+}
+const previewCache = {};
+function preview(it) { const key = it.id + '|' + (pet ? pet.sid : ''); return previewCache[key] || (previewCache[key] = itemPreview(it)); }
+function itemButton(it) {
+  const own = shopState.owned.has(it.id);
+  if (!own) return `<button data-shop="buy:${it.id}" ${coins() < it.price ? 'disabled aria-disabled="true"' : ''}>🪙 Buy for ${it.price}</button>${coins() < it.price ? `<br><small>Need ${it.price - coins()} more</small>` : ''}`;
+  if (it.type === 'home') return shopState.display.has(it.id) ? `<button data-shop="hide:${it.id}" class="on">🏡 On display ✔ (put away)</button>` : `<button data-shop="show:${it.id}">🏡 Put in yard</button>`;
+  return shopState[it.type] === it.id ? `<button data-shop="off:${it.type}" class="on">✔ Wearing (take off)</button>` : `<button data-shop="wear:${it.id}">👕 Wear it</button>`;
+}
+function renderStore() {
+  const tabs = [['hat', '🎩 Hats'], ['glasses', '👓 Glasses'], ['home', '🏡 Yard and home'], ['vault', '🔬 Science vault']];
+  $('#storeBody').innerHTML = `<p class="big" style="margin:0 0 6px">🪙 Geo-Coins: <b>${coins()}</b></p>
+  <p style="margin-top:0">You get 1 Geo-Coin for every XP you earn. Spending coins never lowers your XP or your level. ${pet ? '' : '<b>Tip:</b> choose a pet rock in your 📦 Collection box so it can wear your hats and glasses!'}</p>
+  <div class="tabs">${tabs.map(([id, n]) => `<button data-shop="tab:${id}" class="${shopTab === id ? 'done' : ''}" aria-pressed="${shopTab === id}">${n}</button>`).join('')}<button data-open="prize">🎁 Open prize box</button></div>
+  ${shopTab === 'vault' ? vaultHTML() : ''}<div class="grid">${SHOP.filter(i => i.type === shopTab).map(it => `<div class="card"><img src="${preview(it)}" alt="" style="width:110px;height:110px"><b>${it.name}</b><br>${shopState.owned.has(it.id) ? '✔ Owned' : '🪙 ' + it.price}<br><br>${itemButton(it)}</div>`).join('')}</div>`;
+}
+function renderPrize() {
+  const own = SHOP.filter(i => shopState.owned.has(i.id));
+  let portrait = '';
+  if (pet) { const cv = document.createElement('canvas'); cv.width = cv.height = 160; const c = cv.getContext('2d'); c.drawImage(spriteCv[pet.sid], 0, 0); drawFace(c, 80, 92, 2.4, 'happy', 0, false); drawOutfit(c, 80, 80, 124); portrait = cv.toDataURL(); }
+  const sec = (type, title, none) => { const items = own.filter(i => i.type === type);
+    return `<h3>${title}</h3>${items.length ? `<div class="grid">${type !== 'home' ? `<div class="card"><div class="blank" style="margin:0 auto">–</div><b>${none}</b><br><br>${shopState[type] ? `<button data-shop="off:${type}">Choose none</button>` : '<button class="on" disabled>✔ Chosen</button>'}</div>` : ''}${items.map(it => `<div class="card"><img src="${preview(it)}" alt="" style="width:96px;height:96px"><b>${it.name}</b><br><br>${itemButton(it)}</div>`).join('')}</div>` : '<p>Nothing here yet. Visit the 🛍️ Rock shop!</p>'}`; };
+  $('#prizeBody').innerHTML = `<p style="margin-top:0">Everything you buy is stored here. Your pet rock can wear <b>1 hat</b> and <b>1 pair of glasses</b> at a time. Yard items appear in ${pet ? esc(pet.name) + '’s' : 'your pet’s'} yard next to the tent at camp.</p>
+    ${pet ? `<div class="detail"><img src="${portrait}" alt="Your pet rock wearing its outfit" style="width:150px;height:150px"><div><h3>${esc(pet.name)}’s look</h3><p>Hat: <b>${shopState.hat ? SHOPID[shopState.hat].name : 'none'}</b><br>Glasses: <b>${shopState.glasses ? SHOPID[shopState.glasses].name : 'none'}</b><br>Yard items on display: <b>${shopState.display.size}</b></p></div></div>` : '<p><b>Choose a pet rock in your 📦 Collection box to dress it up!</b></p>'}
+    ${sec('hat', '🎩 Hats', 'No hat')}${sec('glasses', '👓 Glasses', 'No glasses')}${sec('home', '🏡 Yard and home', '')}
+    <h3>🔬 Science vault prizes</h3>${VAULT.some(v => vault[v.id].status === 'won') ? `<div class="grid">${VAULT.filter(v => vault[v.id].status === 'won').map(vaultCard).join('')}</div>` : '<p>None yet. Win them with science in the 🔬 Science vault (Rock shop)!</p>'}
+    <p><button data-open="store">🛍️ Back to the Rock shop</button></p>`;
+}
+function shopClick(v) {
+  const [act, id] = v.split(':'), it = SHOPID[id];
+  if (act === 'tab') { shopTab = id; vaultActive = null; }
+  else if (act === 'buy' && it && !shopState.owned.has(id) && coins() >= it.price) {
+    shopState.spent += it.price; shopState.owned.add(id); sfx('right');
+    if (it.type === 'home') shopState.display.add(id); else shopState[it.type] = id; // put it on right away (one hat and one pair of glasses at a time)
+    toast(`🛍️ You bought the ${it.name}! It’s in your 🎁 Prize box${it.type === 'home' ? ' and in the yard by the tent' : ' and your pet is wearing it'}.`, 4500);
+    if (pet) { petSay(it.type === 'home' ? 'A new thing for my yard! Thank you!' : 'How do I look?', 'happy', 3.5); pet.hop = .4; }
+  }
+  else if (act === 'wear' && it && shopState.owned.has(id)) { shopState[it.type] = id; sfx('pet'); }   // replaces whatever hat/glasses was on before
+  else if (act === 'off') { shopState[id] = null; sfx('test'); }
+  else if (act === 'show' && it && shopState.owned.has(id)) { shopState.display.add(id); sfx('build'); }
+  else if (act === 'hide') { shopState.display.delete(id); sfx('test'); }
+  const host = current; RENDER[host] && RENDER[host]();
+  const f = document.querySelector(`#${host} [data-shop="${v}"]`) || document.querySelector(`#${host} [data-shop]`); f && f.focus({preventScroll:true});
+}
+// The avatar picker (used on the title screen and in Controls)
+function avatarHTML() {
+  const cv = document.createElement('canvas'); cv.width = 120; cv.height = 150; const c = cv.getContext('2d'); drawPerson(c, 60, 145, 1, 'happy', 0, 0, 1.75);
+  return `<div class="avatarpick"><img src="${cv.toDataURL()}" alt="Your geologist" style="width:96px;height:120px">
+    <div><p style="margin:0 0 4px"><b>Geologist:</b> ${[['female', 'Female'], ['male', 'Male']].map(([v, n]) => `<button data-av="body:${v}" class="${avatar.body === v ? 'on' : ''}" aria-pressed="${avatar.body === v}">${n}</button>`).join(' ')}</p>
+    <p style="margin:6px 0 4px"><b>Skin tone:</b> ${SKIN.map((col, i) => `<button data-av="skin:${i}" class="swatch ${avatar.skin === i ? 'on' : ''}" aria-pressed="${avatar.skin === i}" aria-label="Skin tone ${i + 1}" style="background:${col}"></button>`).join('')}</p>
+    <p style="margin:6px 0 0"><b>Hair:</b> ${Object.entries(HAIR).map(([k, [n, col]]) => `<button data-av="hair:${k}" class="swatch ${avatar.hair === k ? 'on' : ''}" aria-pressed="${avatar.hair === k}" aria-label="${n} hair" title="${n}" style="background:${col}"></button>`).join('')} <span>${HAIR[avatar.hair][0]}</span></p></div></div>`;
+}
+function renderAvatar() { $('#avatarBody').innerHTML = avatarHTML() + '<p><button data-close>✔ Done</button></p>'; }
+function avClick(v) {
+  const [k, val] = v.split(':'); if (k === 'body' && (val === 'male' || val === 'female')) avatar.body = val; if (k === 'skin' && SKIN[+val]) avatar.skin = +val; if (k === 'hair' && HAIR[val]) avatar.hair = val;
+  sfx('test'); if (current === 'title') { $('#titleAvatar').innerHTML = avatarHTML(); drawTitleArt(); } else renderAvatar();
+  const f = document.querySelector(`[data-av="${v}"]`); f && f.focus();
+}
+
+/* ---------- 15f. SCIENCE VAULT: prizes you win with science --------
+   Rules: meet the milestone, then answer a science question.
+   A wrong answer locks the prize until you gather NEW evidence.
+   You never get the same question twice. 5 tries maximum per prize. */
+const VAULT = [
+  {id:'magnifier', tier:1, name:'Toy magnifying glass', kind:'Toy', need:'Identify 3 specimens', prog:() => [idTotal, 3]},
+  {id:'yoyo', tier:1, name:'Geode yo-yo', kind:'Toy', need:'Discover 5 Rock Dex entries', prog:() => [found.size, 5]},
+  {id:'skate', tier:1, name:'Pebble skateboard', kind:'Toy', need:'Discover 2 rock cycle paths', prog:() => [rcSeen.size, 2]},
+  {id:'trophy_min', tier:2, name:'Mineral Master trophy', kind:'Trophy', need:'Discover 5 different minerals', prog:() => [DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length, 5]},
+  {id:'trophy_cycle', tier:2, name:'Rock Cycle trophy', kind:'Trophy', need:'Complete 3 different rock cycle challenges', prog:() => [Object.keys(chBest).length, 3]},
+  {id:'trophy_dig', tier:2, name:'Deep Digger trophy', kind:'Trophy', need:'Reach the igneous zone', prog:() => [visited.has('igneous') ? 1 : 0, 1]},
+  {id:'geode', tier:3, name:'Amethyst geode display', kind:'Gem display', need:'Discover 12 Rock Dex entries', prog:() => [found.size, 12]},
+  {id:'gemcase', tier:3, name:'Crystal collection case', kind:'Gem display', need:'Discover 8 different minerals', prog:() => [DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length, 8]},
+  {id:'mohs', tier:3, name:'Mohs scale gem tower', kind:'Gem display', need:'Reach Field Geologist (1,500 XP)', prog:() => [xp, 1500]}
+];
+const VTIER = {1:'⭐⭐ Explain', 2:'⭐⭐⭐ Apply & analyze', 3:'⭐⭐⭐⭐ Evaluate & design'};
+const VID = {}; VAULT.forEach(v => VID[v.id] = v);
+const MAX_TRIES = 5;
+let evidence = 0, vaultActive = null; const vaultAsked = new Set(), vault = {};
+VAULT.forEach(v => vault[v.id] = {tries:0, status:'open', evAt:null});
+// NEW EVIDENCE: running a new lab test, finding or identifying a specimen, or seeing a new rock change
+function gainEvidence() { evidence++; }
+// ⭐⭐⭐⭐ EVALUATE & DESIGN questions: plan multi-step paths, design a test, judge a claim, reason from data
+const ACT_LABEL = a => a[0] === 'weather' ? `Weathering (${{pebbles:'pebbles', sand:'sand', mud:'mud', sea:'shells in the sea'}[a[1]]})` : {meta:'Heat and pressure', slow:'Melt, cool slowly', fast:'Melt, cool fast'}[a[0]];
+function runPath(from, seq) { let r = from; for (const a of seq) { const o = rcOutcome(r, a[0], a[1]); if (o.blocked) return null; r = o.res; } return r; }
+function evalBank() {
+  const gens = [];
+  gens.push(() => { // plan a multi-step path
+    const rocks = DEX.filter(s => s.kind === 'rock'); for (let tries = 0; tries < 20; tries++) {
+      const from = rocks[Math.floor(Math.random() * rocks.length)].id, dist = {[from]:0}, q = [from];
+      while (q.length) { const r = q.shift(); for (const a of ACTIONS) { const o = rcOutcome(r, a[0], a[1]); if (!o.blocked && dist[o.res] === undefined) { dist[o.res] = dist[r] + 1; q.push(o.res); } } }
+      const targets = Object.keys(dist).filter(t => dist[t] >= 2 && dist[t] <= 3); if (!targets.length) continue;
+      const to = targets[Math.floor(Math.random() * targets.length)], n = dist[to], seqs = [];
+      const walk = (pre) => { if (pre.length === n) { seqs.push(pre); return; } for (const a of ACTIONS) walk([...pre, a]); }; walk([]);
+      const good = shuffle(seqs.filter(sq => runPath(from, sq) === to)), bad = shuffle(seqs.filter(sq => { const e = runPath(from, sq); return e && e !== to; }));
+      if (!good.length || bad.length < 3) continue;
+      const right = good[0], label = sq => sq.map(ACT_LABEL).join(' → '), opts = shuffle([right, bad[0], bad[1], bad[2]]);
+      let r = from; const steps = right.map(a => { const o = rcOutcome(r, a[0], a[1]); const t = `${rname(r)} → ${rname(o.res)}`; r = o.res; return t; });
+      return {q:`Design a path: which sequence of processes would turn ${rname(from)} into ${rname(to)}?`, opts:opts.map(label), ans:opts.indexOf(right), why:`That path works: ${steps.join(', then ')}. The other paths end with a different rock.`};
+    } return null; });
+  gens.push(() => { // design a test that tells two look-alikes apart
+    for (let tries = 0; tries < 40; tries++) {
+      const a = SPECIES[Math.floor(Math.random() * SPECIES.length)], b = SPECIES[Math.floor(Math.random() * SPECIES.length)];
+      if (a === b || result(a, 'lens').k !== result(b, 'lens').k) continue;
+      const diff = TESTS.filter(t => t.id !== 'look' && result(a, t.id).k !== result(b, t.id).k), same = TESTS.filter(t => result(a, t.id).k === result(b, t.id).k);
+      if (!diff.length || same.length < 3) continue;
+      const right = diff[Math.floor(Math.random() * diff.length)], opts = shuffle([right, ...shuffle(same).slice(0, 3)]);
+      return {q:`Your notes can’t decide between ${a.name} and ${b.name}. Which ONE test would tell them apart?`, opts:opts.map(t => `${t.icon} ${t.name}`), ans:opts.indexOf(right),
+        why:`${right.name}: ${a.name}: ${result(a, right.id).txt} ${b.name}: ${result(b, right.id).txt} The other tests give the same result for both.`};
+    } return null; });
+  gens.push(() => { // reason from hardness data
+    const B = [['less than 2.5', ['The fingernail SCRATCHES it.']], ['between 2.5 and 3.5', ['The fingernail does NOT scratch it.', 'The copper penny SCRATCHES it.']],
+      ['between 3.5 and 5.5', ['The copper penny does NOT scratch it.', 'It does NOT scratch the glass plate.']], ['between 5.5 and 6.5', ['It SCRATCHES the glass plate.', 'The steel file SCRATCHES it.']], ['more than 6.5', ['The steel file does NOT scratch it.']]];
+    const i = Math.floor(Math.random() * B.length), opts = shuffle([B[i][0], ...shuffle(B.filter((x, k) => k !== i).map(x => x[0])).slice(0, 3)]);
+    return {q:`Hardness data for a mystery mineral: ${B[i][1].join(' ')} What is its Mohs hardness?`, opts, ans:opts.indexOf(B[i][0]), why:'A tool scratches a mineral only if the mineral is softer. Kit: fingernail 2.5, penny 3.5, glass 5.5, steel file 6.5.'};
+  });
+  const CLAIMS = [
+    ['Maya says her specimen is gold because it is shiny and yellow. What is the best evaluation?', 'Not enough evidence: pyrite looks the same. A streak test would decide (pyrite’s streak is greenish-black).', ['She is right: shiny and yellow always means gold.', 'Gold is never yellow, so she is wrong.', 'She should check whether it floats in water.'], 'Color and luster can fool you. Streak is more reliable.'],
+    ['Leo says any rock with layers must be sedimentary. What is the best evaluation?', 'Not always: metamorphic rocks like slate and gneiss also have layers or bands, so he needs more evidence.', ['He is right: only sedimentary rocks have layers.', 'He is wrong: sedimentary rocks never have layers.', 'Layers only form in igneous rocks.'], 'Foliated metamorphic rocks have layers or bands too.'],
+    ['Ana says a black, glassy rock with no crystals cooled slowly underground. What is the best evaluation?', 'Disagree: no crystals means it cooled too fast for crystals to grow, so it formed at the surface.', ['Agree: slow cooling makes glass.', 'Agree: all black rocks form underground.', 'It must be a sedimentary rock instead.'], 'Obsidian is volcanic glass from very fast cooling.'],
+    ['Sam plans to tell marble from quartzite by their color. What is the best evaluation of his plan?', 'Weak plan: both can be white. An acid fizz test or a glass scratch test is better evidence.', ['Good plan: color always tells them apart.', 'Good plan: marble is always pink.', 'They cannot be told apart at all.'], 'Marble fizzes and is soft (3); quartzite doesn’t fizz and scratches glass (7).'],
+    ['Kai claims the deepest layer in undisturbed sedimentary rock is the youngest. What is the best evaluation?', 'Disagree: lower layers were deposited first, so they are the oldest.', ['Agree: deeper layers formed last.', 'Agree: depth has nothing to do with age.', 'All the layers are the same age.'], 'The law of superposition: the bottom layer is oldest.'],
+    ['Zoe says a mineral’s streak changes when its outside color changes. What is the best evaluation?', 'Disagree: the streak is the color of the powder and stays the same even when outside color varies.', ['Agree: streak always matches the outside color.', 'Agree: only metals have a streak.', 'Streak depends on how hard you press.'], 'Hematite can look silver or red, but its streak is always reddish-brown.']
+  ];
+  CLAIMS.forEach(([q, right, wrong, why]) => gens.push(() => { const opts = shuffle([right, ...wrong]); return {q, opts, ans:opts.indexOf(right), why}; }));
+  return gens;
+}
+function vaultQuestion(tier) {
+  const B = questionBank(), fix = b => () => { const opts = shuffle(b.opts.slice()); return {...b, opts, ans:opts.indexOf(b.opts[b.ans])}; };
+  const pool = tier === 1 ? [...B.T2, ...B.G2.map(fix)] : tier === 2 ? [...B.T3, ...B.G3.map(fix)] : evalBank();
+  for (const f of shuffle(pool.slice())) for (let k = 0; k < 4; k++) { const q = f(); if (q && q.ans >= 0 && !vaultAsked.has(q.q)) return tidyQ(q); }
+  return null;
+}
+// ART: vault prizes (x = center, G = shelf line)
+function drawVault(c, id, x, G, s) {
+  c.save(); c.translate(x, G); c.scale(s, s); c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.lineJoin = 'round';
+  const cup = (col, dark, emblem) => { c.fillStyle = dark; rr(c, -9, -5, 18, 5, 1.5); c.fill(); c.stroke(); c.fillRect(-2.5, -12, 5, 7); c.strokeRect(-2.5, -12, 5, 7);
+    c.fillStyle = col; c.beginPath(); c.moveTo(-11, -30); c.lineTo(11, -30); c.quadraticCurveTo(10, -13, 0, -12); c.quadraticCurveTo(-10, -13, -11, -30); c.fill(); c.stroke();
+    c.beginPath(); c.arc(-11, -24, 4.5, Math.PI * .5, Math.PI * 1.5); c.stroke(); c.beginPath(); c.arc(11, -24, 4.5, -Math.PI * .5, Math.PI * .5); c.stroke(); emblem(); shine(c, -5, -25, 2.5); };
+  if (id === 'magnifier') { c.strokeStyle = '#7a5233'; c.lineWidth = 4; c.beginPath(); c.moveTo(5, -4); c.lineTo(12, 3); c.stroke(); c.strokeStyle = '#1c2541'; c.lineWidth = 2.5; c.fillStyle = 'rgba(160,215,245,.6)'; c.beginPath(); c.arc(-2, -12, 9, 0, 7); c.fill(); c.stroke(); shine(c, -5, -15, 2.5); }
+  else if (id === 'yoyo') { c.fillStyle = '#7a6a5a'; c.beginPath(); c.arc(0, -11, 10, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#8b5cc4'; c.beginPath(); c.arc(0, -11, 6.5, 0, 7); c.fill(); for (let i = 0; i < 6; i++) { c.fillStyle = 'rgba(230,210,255,.85)'; c.beginPath(); c.moveTo(0, -11); c.lineTo(Math.cos(i) * 6, -11 + Math.sin(i) * 6); c.lineTo(Math.cos(i + .5) * 6, -11 + Math.sin(i + .5) * 6); c.fill(); } c.strokeStyle = '#f2f7f5'; c.beginPath(); c.moveTo(0, -21); c.lineTo(0, -30); c.stroke(); }
+  else if (id === 'skate') { c.fillStyle = '#e8711c'; rr(c, -16, -10, 32, 5, 2.5); c.fill(); c.stroke(); c.fillStyle = '#ffe066'; c.fillRect(-8, -9, 16, 2); c.fillStyle = '#3a3537'; for (const wx of [-10, 10]) { c.beginPath(); c.arc(wx, -2.5, 3, 0, 7); c.fill(); } }
+  else if (id === 'trophy_min') cup('#ffcc33', '#c99a10', () => crystal(c, 0, -17, 6, 8, 0, 'rgba(235,240,250,.95)'));
+  else if (id === 'trophy_cycle') cup('#c9d0d9', '#8a93a3', () => { c.strokeStyle = '#2a9d8f'; c.lineWidth = 2; c.beginPath(); c.arc(0, -22, 4.5, .3, 5.6); c.stroke(); });
+  else if (id === 'trophy_dig') cup('#c98a4b', '#8a5a2b', () => { c.strokeStyle = '#1c2541'; c.lineWidth = 1.8; c.beginPath(); c.moveTo(-4, -17); c.lineTo(4, -26); c.moveTo(0, -27); c.quadraticCurveTo(5, -27, 7, -22); c.stroke(); });
+  else if (id === 'geode') { c.fillStyle = '#4a3424'; rr(c, -12, -5, 24, 5, 1.5); c.fill(); c.stroke(); c.fillStyle = '#8e8a82'; c.beginPath(); c.ellipse(0, -18, 14, 13, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#e8e2f2'; c.beginPath(); c.ellipse(0, -18, 11, 10, 0, 0, 7); c.fill();
+    c.fillStyle = '#7b4fb0'; c.beginPath(); c.ellipse(0, -18, 8.5, 7.5, 0, 0, 7); c.fill(); for (let i = 0; i < 10; i++) { const a = i * .63; c.fillStyle = i % 2 ? '#b892e6' : '#9a6fd1'; c.beginPath(); c.moveTo(Math.cos(a) * 8, -18 + Math.sin(a) * 7); c.lineTo(Math.cos(a) * 3, -18 + Math.sin(a) * 2.5); c.lineTo(Math.cos(a + .3) * 8, -18 + Math.sin(a + .3) * 7); c.fill(); } shine(c, -3, -21, 2.5); }
+  else if (id === 'gemcase') { c.fillStyle = '#7a5233'; rr(c, -16, -4, 32, 4, 1); c.fill(); c.stroke(); c.fillStyle = 'rgba(200,230,250,.45)'; rr(c, -15, -26, 30, 22, 2); c.fill(); c.stroke();
+    [[-8, '#a3243a'], [0, '#2a9d8f'], [8, '#3a86c8']].forEach(([gx, col]) => { c.fillStyle = col; c.beginPath(); c.moveTo(gx, -19); c.lineTo(gx + 4, -14); c.lineTo(gx, -8); c.lineTo(gx - 4, -14); c.closePath(); c.fill(); c.stroke(); }); shine(c, -10, -22, 2); }
+  else if (id === 'mohs') { const cols = ['#e3e7ea', '#f2f0ea', '#f3e6c4', '#8b5cc4', '#9cc8ea', '#e3a089', '#f4f6fc', '#ffcc33', '#3a86c8', '#ffffff'];
+    c.fillStyle = '#4a3424'; rr(c, -12, -4, 24, 4, 1); c.fill(); c.stroke(); for (let i = 0; i < 10; i++) { const w = 20 - i * 1.6, y = -6 - i * 3.6; c.fillStyle = cols[i]; rr(c, -w / 2, y - 3.2, w, 3.4, 1.2); c.fill(); c.lineWidth = .8; c.stroke(); } shine(c, 0, -42, 3.5); }
+  c.restore();
+}
+// The trophy shelf stands behind the pet yard
+const SHELF = {magnifier:[48, 0], yoyo:[80, 0], skate:[112, 0], trophy_min:[150, 0], trophy_cycle:[184, 0], trophy_dig:[218, 0], geode:[78, 1], gemcase:[132, 1], mohs:[186, 1]};
+function shelfItems() { return VAULT.filter(v => vault[v.id].status === 'won' && shopState.display.has(v.id)); }
+function drawShelf() {
+  const items = shelfItems(); if (!items.length) return false;
+  const G = SURF * T, y1 = G - 74, y2 = G - 122;
+  g.fillStyle = '#7a5233'; g.strokeStyle = '#1c2541'; g.lineWidth = 2;
+  for (const px of [26, 238]) { g.fillRect(px - 4, y2 - 4, 8, G - y2 + 4); g.strokeRect(px - 4, y2 - 4, 8, G - y2 + 4); }
+  for (const y of [y1, y2]) { g.fillStyle = '#a06a35'; g.fillRect(18, y, 228, 12); g.strokeRect(18, y, 228, 12); }
+  g.fillStyle = '#fff4cc'; g.font = 'bold 10px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('SCIENCE SHELF', 132, y1 + 6.5); g.fillText(pet ? `${pet.name.toUpperCase()}’S YARD` : 'PET YARD', 132, y2 + 6.5);
+  for (const v of items) { const [x, row] = SHELF[v.id]; drawVault(g, v.id, x, row ? y2 : y1, row ? 1.35 : 1.1);
+    if (row && !reduceMotion) shine(g, x + 10, (row ? y2 : y1) - 30, 2.5 + Math.abs(Math.sin(time * 2 + x)) * 3); }
+  return true;
+}
+function vaultPreview(v) { const cv = document.createElement('canvas'); cv.width = cv.height = 120; const c = cv.getContext('2d'); c.fillStyle = ['', '#e2f0fb', '#fff4cc', '#efe6fb'][v.tier]; c.fillRect(0, 0, 120, 120); drawVault(c, v.id, 60, 100, 2.4); return cv.toDataURL(); }
+const vPrevCache = {}; const vPrev = v => vPrevCache[v.id] || (vPrevCache[v.id] = vaultPreview(v));
+function vaultCard(v) {
+  const st = vault[v.id], [have, need] = v.prog(), met = have >= need, left = MAX_TRIES - st.tries;
+  let action;
+  if (st.status === 'won') action = `<b>✔ Won!</b><br>${shopState.display.has(v.id) ? `<button data-vault="hide:${v.id}" class="on">🏆 On the shelf (put away)</button>` : `<button data-vault="show:${v.id}">🏆 Put on the shelf</button>`}`;
+  else if (st.status === 'gone') action = '<b>🔒 No longer available</b><br><small>All 5 tries were used.</small>';
+  else if (!met) action = `<b>Milestone:</b> ${v.need}<br>Progress: ${Math.min(have, need)} / ${need}`;
+  else if (st.evAt !== null && evidence <= st.evAt) action = `<b>🔍 Gather new evidence to retry</b><br><small>Run a new lab test, find or identify a specimen, or discover a new rock change.</small>`;
+  else action = `<button data-vault="try:${v.id}">🔬 Take the science challenge</button>`;
+  return `<div class="card"><img src="${vPrev(v)}" alt="" style="width:110px;height:110px"><b>${v.name}</b><br><span class="tag">${v.kind} · ${VTIER[v.tier]}</span><br><small>${v.need}</small><br>${st.status === 'open' ? `Tries left: <b>${left}</b> of ${MAX_TRIES}<br>` : ''}<br>${action}</div>`;
+}
+function vaultHTML() {
+  if (vaultActive) {
+    const A = vaultActive, v = VID[A.id], q = A.q, st = vault[v.id];
+    const opts = q.opts.map((o, k) => `<button data-vault="ans:${k}" ${A.answered !== null ? 'disabled' : ''} class="${A.answered === k ? 'on' : ''}">${String.fromCharCode(65 + k)}. ${esc(o)}${A.answered === k ? ' ← your answer' : ''}</button>`).join('');
+    let fb = '';
+    if (A.answered !== null) { const ok = A.answered === q.ans;
+      fb = `<div class="fb ${ok ? 'good' : 'bad'} pop" role="status"><b>${ok ? `✔ Correct! You won the ${v.name}!` : '✖ Not this time.'}</b> ${ok ? '' : `The best answer was <b>${esc(q.opts[q.ans])}</b>. `}${esc(q.why)}
+        ${ok ? '<br>🏆 It’s on the Science shelf behind your pet’s yard.' : st.status === 'gone' ? '<br><b>That was your 5th try, so this prize is no longer available.</b> Other prizes are still waiting!' : `<br>Tries left: <b>${MAX_TRIES - st.tries}</b>. To try again, gather new evidence first (run a new lab test, find or identify a specimen, or discover a new rock change). You’ll get a different question.`}</div>
+        <p><button data-vault="back">⬅ Back to the Science vault</button></p>`; }
+    return `<div class="goalcard"><h3>🔬 Science challenge: ${v.name}</h3><p style="margin-top:0"><span class="tag">${VTIER[v.tier]}</span> Try ${st.tries + (A.answered === null ? 1 : 0)} of ${MAX_TRIES}. Think carefully: a wrong answer means you must gather new evidence before trying again.</p>
+      <p class="big"><b>${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr">${opts}</div>${fb}</div>`;
+  }
+  const won = VAULT.filter(v => vault[v.id].status === 'won').length;
+  return `<p style="margin-top:0"><b>The best prizes can’t be bought.</b> Reach a milestone, then answer a science question to win them. Toys need ⭐⭐ explaining, trophies need ⭐⭐⭐ applying and analyzing, and gem displays need ⭐⭐⭐⭐ evaluating and designing. A wrong answer locks the prize until you gather new evidence, you never get the same question twice, and each prize allows ${MAX_TRIES} tries. Won so far: <b>${won} / ${VAULT.length}</b>.</p>
+    ${[1, 2, 3].map(t => `<h3>${['', '🧸 Tier 1: Toys', '🏆 Tier 2: Trophies', '💎 Tier 3: Gem displays'][t]}</h3><div class="grid">${VAULT.filter(v => v.tier === t).map(vaultCard).join('')}</div>`).join('')}`;
+}
+function vaultClick(val) {
+  const [act, arg] = val.split(':');
+  if (act === 'try') { const v = VID[arg], st = vault[arg], [h, n] = v.prog();
+    if (st.status !== 'open' || h < n || (st.evAt !== null && evidence <= st.evAt)) return;
+    const q = vaultQuestion(v.tier);
+    if (!q) { toast('🔍 You’ve seen every question we can make from your discoveries right now. Discover more, then try again!', 5000); return; }
+    vaultAsked.add(q.q); vaultActive = {id:arg, q, answered:null}; }
+  else if (act === 'ans' && vaultActive && vaultActive.answered === null) {
+    const A = vaultActive, st = vault[A.id], k = +arg; A.answered = k; st.tries++;
+    if (k === A.q.ans) { st.status = 'won'; shopState.display.add(A.id); sfx('right'); burst(player.x, player.y, ['#ffcc33', '#fff', '#8b5cc4'], 30); if (pet) petSay(`We won the ${VID[A.id].name}!`, 'happy', 4); }
+    else { st.evAt = evidence; if (st.tries >= MAX_TRIES) st.status = 'gone'; sfx('wrong'); }
+  }
+  else if (act === 'back') vaultActive = null;
+  else if (act === 'show') shopState.display.add(arg);
+  else if (act === 'hide') shopState.display.delete(arg);
+  const host = current; RENDER[host] && RENDER[host]();
+  const f = $(`#${host} [data-vault="${val}"]`) || $(`#${host} [data-vault^="ans:"]:not([disabled])`) || $(`#${host} [data-vault="back"]`); f && f.focus({preventScroll:true});
+  if (act === 'try' || act === 'ans') { const box = $(`#${host} .goalcard`); box && box.scrollIntoView({block:'nearest'}); }
 }
 
 /* ---------- 15c. ONE-PAGE PDF EXIT TICKET --------------------------
@@ -2097,7 +2488,7 @@ function makeExitTicketPDF() {
   rect(M, y - 6, W - 2 * M, 24, [1, 0.8, 0.2]); text(`Field Guide Quiz   Score: ${sc3 === null ? 'not finished' : sc3 + ' / 3'}`, M + 10, y + 1, 13, true); y -= 26;
   quiz.qs.forEach((q, i) => {
     const a = quiz.answers[i], ok = a === q.ans;
-    para(`${i + 1}. ${q.q}`, M, 11, true, W - 2 * M, 14);
+    para(`${i + 1}. [${['Remember', 'Explain', 'Apply & analyze'][q.tier]}] ${q.q}`, M, 11, true, W - 2 * M, 14);
     q.opts.forEach((o, k) => { const mark = k === a ? (ok ? '[student answer - correct]' : '[student answer]') : k === q.ans && a !== null && !ok ? '[correct answer]' : ''; text(`${String.fromCharCode(65 + k)}. ${o}  ${mark}`.slice(0, 110), M + 14, y, 10, k === a || (k === q.ans && a !== null)); y -= 13; });
     text(a === null ? 'Not answered.' : ok ? 'Correct.' : 'Incorrect.', M + 14, y, 10, true, ok ? '0.1 0.42 0.7' : '0.75 0.35 0'); y -= 12;
     para(q.why, M + 14, 9, false, W - 2 * M - 14, 11, '0.3 0.34 0.4'); y -= 6;
@@ -2143,7 +2534,7 @@ function downloadPDF() {
 
 /* ---------- 16. START ---------------------------------------------- */
 function drawTitleArt() {
-  const c = $('#titleArt').getContext('2d');
+  const c = $('#titleArt').getContext('2d'); c.clearRect(0, 0, 600, 190);
   c.fillStyle = '#86c26a'; rr(c, 0, 130, 600, 60, 18); c.fill();
   const show = ['quartz', 'pyrite', 'gneiss', 'obsidian', 'fluorite', 'conglomerate'];
   const xs = [10, 95, 180, 410, 495, 0];
@@ -2154,7 +2545,7 @@ function drawTitleArt() {
 genWorld(); buildSprites(); buildExtraSprites(); buildBadges(); resize(); setMotion(reduceMotion);
 player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1;
 cam.x = Math.max(0, player.x - viewW / 2); cam.y = player.y - viewH / 2;
-drawTitleArt(); current = 'title'; $('#startBtn').focus();
+drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); current = 'title'; $('#startBtn').focus();
 requestAnimationFrame(loop);
 </script>
 </body>
