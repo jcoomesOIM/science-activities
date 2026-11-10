@@ -14,13 +14,16 @@ h1,h2,h3,button{font-family:"Trebuchet MS","Segoe UI",sans-serif}
 #hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:rgba(16,24,40,.92);border-bottom:4px solid var(--hat)}
 #stats{margin-right:auto;font-size:17px;line-height:1.35;min-width:260px}
 #mission{color:var(--hat);font-weight:bold}
+.menus{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-left:auto}
+.mrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .menu{position:relative}
 .mbtn{font-size:18px;padding:7px 14px}
 .mbtn[aria-expanded="true"]{background:var(--hat)}
-.mlist{position:absolute;right:0;top:calc(100% + 8px);z-index:20;background:var(--paper);border:4px solid var(--ink);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:300px;white-space:nowrap;box-shadow:0 6px 0 rgba(0,0,0,.45)}
+.mlist{position:fixed;overflow-y:auto;z-index:20;background:var(--paper);border:4px solid var(--ink);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:300px;white-space:nowrap;box-shadow:0 6px 0 rgba(0,0,0,.45)}
 .mlist[hidden]{display:none}
 .mlist button{display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;box-shadow:none}
 .mlist kbd{font-size:14px}
+@media (max-width:700px){.mlist{min-width:0;width:calc(100vw - 16px);white-space:normal}}
 details.entry{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px 12px;margin:8px 0}
 details.entry summary{cursor:pointer;font-weight:bold;font-size:19px}
 .result{max-width:820px}
@@ -110,6 +113,7 @@ th{background:var(--ink);color:var(--paper)}
 
 <div id="hud">
   <div id="stats"><div id="where">Depth</div><div id="mission"></div></div>
+  <div class="menus"><div class="mrow">
   <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab">🧪 Lab equipment <span id="bagN"></span> ▾</button>
     <div class="mlist" id="mLab" hidden>
       <button data-open="lab"><span>🔬 Test specimens</span><kbd>L</kbd></button>
@@ -124,8 +128,10 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="dex"><span>📚 Rock Dex</span><kbd>X</kbd></button>
       <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
       <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
+      <button data-open="levels"><span>🏅 Levels and badges</span><kbd>V</kbd></button>
       <button data-open="report"><span>📋 Rock Hound Report</span><kbd>Q</kbd></button>
     </div></div>
+  </div><div class="mrow">
   <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl">🎮 Controls ▾</button>
     <div class="mlist" id="mCtl" hidden>
       <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
@@ -137,6 +143,7 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="report"><span>📋 End session: Rock Hound Report</span><kbd>Q</kbd></button>
       <button data-open="keys"><span>⌨️ Keyboard help</span></button>
     </div></div>
+  </div></div>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="caption" aria-hidden="true"></div>
@@ -152,7 +159,7 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>↓</kbd> or <kbd>S</kbd></span><span>Dig down</span>
       <span><kbd>↑</kbd> <kbd>W</kbd> <kbd>Space</kbd></span><span>Jump (or dig up if rock is above you)</span>
       <span><kbd>L</kbd> <kbd>N</kbd> <kbd>H</kbd></span><span>Test specimens, Lab notebook, How it works</span>
-      <span><kbd>Q</kbd></span><span>Rock Hound Report (save your progress here)</span>
+      <span><kbd>Q</kbd> / <kbd>V</kbd></span><span>Rock Hound Report (save your progress) / Levels and badges</span>
       <span><kbd>E</kbd> / <kbd>G</kbd></span><span>Rock Cycle Machine (at camp) / Rock cycle guide</span>
       <span><kbd>X</kbd> <kbd>C</kbd> <kbd>P</kbd></span><span>Rock Dex, Collection box, Pet rock</span>
       <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
@@ -201,6 +208,7 @@ th{background:var(--ink);color:var(--paper)}
 </div>
 <p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
 </section>
+<section class="panel" id="levels" aria-label="Levels and badges"><button class="close" data-close>✖ Close (Esc)</button><h2>🏅 Levels and badges</h2><div id="levelsBody"></div></section>
 <section class="panel" id="report" aria-label="Rock Hound Report"><button class="close noprint" data-close>✖ Close (Esc)</button><h2>📋 Rock Hound Report</h2><div id="reportBody"></div></section>
 <section class="panel" id="notebook" aria-label="Lab notebook"><button class="close" data-close>✖ Close (Esc)</button><h2>📓 Lab notebook</h2><div id="notebookBody"></div></section>
 <section class="panel" id="keys" aria-label="Keyboard help"><button class="close" data-close>✖ Close (Esc)</button><h2>⌨️ Keyboard help</h2><div id="keysBody"></div></section>
@@ -1027,7 +1035,7 @@ function identify() {
     sfx('right'); burst(player.x + player.w / 2, player.y, ['#ffcc33', '#fff', '#3a86c8'], 30); setMood('happy', 3);
     if (pet) { petSay(`We did it! ${a.name}!`, 'happy', 4); pet.hop = .4; }
     const lvAfter = levelOf(xp);
-    if (lvAfter > lvBefore) setTimeout(() => { toast(`⬆️ Level up! You are now a ${LEVELS[lvAfter][1]}!`, 4500); sfx('right'); }, 900);
+    if (lvAfter > lvBefore) setTimeout(() => { toast(`⬆️ Level up! You earned the ${LEVELS[lvAfter][1]} badge! 🏅 (see Levels and badges)`, 5000); sfx('right'); }, 900);
     checkMissions();
   } else {
     sfx('wrong'); setMood('think', 2); if (pet) petSay('Hmm, let’s check the evidence!', 'think', 3);
@@ -1149,7 +1157,7 @@ function animate(A, done) {
     drawRC(t, A); if (t < 1) requestAnimationFrame(stepF); else done(); };
   requestAnimationFrame(stepF);
 }
-function addXP(n) { const lv = levelOf(xp); xp += n; if (levelOf(xp) > lv) toast(`⬆️ Level up! You are now a ${LEVELS[levelOf(xp)][1]}!`, 4500); }
+function addXP(n) { const lv = levelOf(xp); xp += n; if (levelOf(xp) > lv) toast(`⬆️ Level up! You earned the ${LEVELS[levelOf(xp)][1]} badge! 🏅 (see Levels and badges)`, 5000); }
 
 /* ----- Free mode: change one of YOUR rocks (it really changes, like an evolution) ----- */
 let rc = {phase:'pick'}, rcCorrect = 0;
@@ -1479,7 +1487,7 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
 }
-const RENDER = {report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
   if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
   if (id === 'machine' && ch && ch.phase === 'run') ch.phase = 'play';
@@ -1509,7 +1517,7 @@ addEventListener('keydown', e => {
   if (current === 'title') return;
   if (!current && !document.activeElement.closest('.mlist')) { if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault(); keys[k] = true; }
   if (e.repeat) return;
-  const map = {q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
+  const map = {v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
   if (map[k]) { if (current === map[k]) closeTop(); else openPanel(map[k], false); }
   if (k === 'r') ropeUp();
   if (k === 'm') setSound(!soundOn);
@@ -1520,15 +1528,27 @@ document.addEventListener('change', e => {
   const el = e.target; if (!el.dataset || el.dataset.plan === undefined || !ch) return;
   ch.plan[+el.dataset.plan] = el.value || null; const id = el.id; renderMachine(); const f = $('#' + id); f && f.focus();
 });
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.tk; if (!k) return;
+  ticket[k] = e.target.value; if (k === 'learned') $('#tkCount').textContent = ticket.learned.length;
+});
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function saveName() { const v = $('#petName').value.trim().slice(0, 16); if (pet && v) { pet.name = v; pet.lastAns = `<b>${esc(v)}:</b> I love my new name!`; sfx('pet'); petSay(`Call me ${v}!`, 'happy', 3); renderPet(); } }
+function placeMenu(btn, list) {
+  const b = btn.getBoundingClientRect(), pad = 8;
+  list.style.maxHeight = (innerHeight - b.bottom - 16) + 'px'; list.style.top = (b.bottom + 8) + 'px'; list.style.left = '0px';
+  const w = list.offsetWidth; let left = b.right - w;               // line up with the button's right edge
+  left = Math.max(pad, Math.min(left, innerWidth - w - pad));       // ...but never past either screen edge
+  list.style.left = left + 'px';
+}
+addEventListener('resize', () => { const m = document.querySelector('.mbtn[aria-expanded="true"]'); if (m) placeMenu(m, $('#' + m.dataset.menu)); });
 function closeMenus(except) { document.querySelectorAll('.mbtn').forEach(m => { if (m.dataset.menu !== except) { m.setAttribute('aria-expanded', 'false'); $('#' + m.dataset.menu).hidden = true; } }); }
 document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (b && Object.keys(b.dataset).some(k => /^(rc|ch|mmode)/.test(k))) { closeMenus(); rcClick(b); return; }
   if (b && b.dataset.quiz) { quizClick(b.dataset.quiz); return; }
-  if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
+  if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) placeMenu(b, $('#' + b.dataset.menu)); if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
   closeMenus();
   if (!b) return;
   if (b.dataset.open) { openPanel(b.dataset.open, !!b.closest('.panel')); return; }
@@ -1798,7 +1818,7 @@ function renderReport() {
   <p class="noprint"><button id="saveBtn">💾 Download save file</button> <button class="loadBtn">📂 Load a save file</button> <button id="pdfBtn" class="pdfBtn">📄 Download 1-page exit ticket (PDF)</button></p></div>
   ${editedFlag ? '<div class="fb bad" role="status">⚠️ This progress came from a save file that was changed outside the game.</div>' : ''}
   <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
-    ${card('⭐ Level', `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}`)}
+    ${card(`<img src="${badgeURL[levelOf(xp)]}" alt="" style="width:44px;height:44px;vertical-align:middle"> Level`, `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}<br><button data-open="levels" style="margin-top:6px">🏅 See all levels</button>`)}
     ${card('📚 Rock Dex', `${found.size} / ${DEX.length}`, `Minerals: ${DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length} · Rocks: ${DEX.filter(s => s.kind === 'rock' && found.has(s.id)).length}`)}
     ${card('🔬 Identifications', `${idTotal}`, `Right on the first guess: ${pct(stats.firstTry, idTotal)} · Average tests per ID: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '—'}`)}
     ${card('♻️ Rock cycle predictions', `${stats.predOk} / ${stats.preds} correct`, `Paths discovered: ${rcSeen.size}`)}
@@ -1895,34 +1915,44 @@ addEventListener('beforeunload', e => { if ((xp > 0 || found.size > 0) && saveSi
    3 questions built from THIS student's own discoveries.
    If they haven't found enough yet, general rock cycle questions fill in. */
 let quiz = null; let quizXPGiven = false;
+const STREAK_NAME = {white:'White or colorless', greenblack:'Greenish-black', black:'Black', redbrown:'Reddish-brown', gray:'Lead-gray'};
+// Would this clue ALSO be true for mineral s? (Then it can't be a wrong answer.)
+const CLUE_TESTS = [[/glass/i, s => s.H > 5.5], [/heavy/i, s => s.sg >= 3.5], [/magnetic/i, s => s.mag], [/fizz/i, s => s.fizz], [/fingernail/i, s => s.H < 2.5],
+  [/cubes/i, s => s.bk === 'cleave3c'], [/sheets/i, s => s.bk === 'cleave1'], [/soapy|softest/i, s => s.H <= 1], [/red-brown/i, s => s.sk === 'redbrown'], [/fool/i, s => s.id === 'pyrite'], [/mohs 4/i, s => s.H === 4], [/double image/i, s => s.id === 'calcite']];
+function clueFits(clue, s) { return CLUE_TESTS.some(([re, f]) => re.test(clue) && f(s)); }
+// Safety net: remove any repeated choice text and keep the right answer
+function tidyQ(q) { const right = q.opts[q.ans], seen = new Set(); q.opts = q.opts.filter(o => { const k = o.trim().toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; }); q.ans = q.opts.indexOf(right); return q; }
+// Typed only for the exit ticket. Kept on screen while the page is open: never saved in the save file or sent anywhere.
+const ticket = {name:'', period:'', learned:''};
 function parentsOf(id) { return Object.keys(META).filter(k => META[k][0] === id && k !== id); }
 function quizMake() {
   const have = DEX.filter(s => found.has(s.id)), rocks = have.filter(s => s.kind === 'rock'), mins = have.filter(s => s.kind === 'mineral');
-  const gens = [];
+  const gens = [], addQ = (sid, f) => { f.sid = sid; gens.push(f); };
   const pickOthers = (pool, right, n) => shuffle(pool.filter(x => x !== right)).slice(0, n);
   // 1. What type of rock is it?
-  rocks.forEach(s => gens.push(() => ({type:'Rock types', q:`Your Rock Dex has ${s.name}. What type of rock is it?`,
+  rocks.forEach(s => addQ(s.id, () => ({type:'Rock types', q:`Your Rock Dex has ${s.name}. What type of rock is it?`,
     opts:['Igneous', 'Sedimentary', 'Metamorphic'], ans:['igneous', 'sedimentary', 'metamorphic'].indexOf(s.grp), why:`${s.name}: ${s.info}`})));
   // 2. Which rock did it come from? (metamorphic "evolutions")
-  rocks.filter(s => parentsOf(s.id).length).forEach(s => gens.push(() => {
-    const par = parentsOf(s.id)[0], wrong = pickOthers(['shale', 'limestone', 'sandstone', 'granite', 'basalt', 'conglomerate', 'obsidian', 'pumice'], par, 3);
+  rocks.filter(s => parentsOf(s.id).length).forEach(s => addQ(s.id, () => {
+    const pars = parentsOf(s.id), par = pars[0], wrong = pickOthers(['shale', 'limestone', 'sandstone', 'granite', 'basalt', 'conglomerate', 'obsidian', 'pumice', 'gabbro'].filter(id => !pars.includes(id) && id !== s.id), par, 3); // other parents also count, so never use them as wrong answers
     const opts = shuffle([par, ...wrong]);
     return {type:'Rock cycle', q:`Your Rock Dex has ${s.name}. Heat and pressure made it from which rock?`, opts:opts.map(rname), ans:opts.indexOf(par), why:META[par][1]};
   }));
   // 3. How did an igneous rock form?
-  rocks.filter(s => s.grp === 'igneous').forEach(s => gens.push(() => {
+  rocks.filter(s => s.grp === 'igneous').forEach(s => addQ(s.id, () => {
     const slow = /intrusive/i.test(s.rtype);
     const opts = ['Magma cooled slowly underground', 'Lava cooled quickly at the surface', 'Heat and pressure changed it without melting', 'Sediment was compacted and cemented'];
     return {type:'Igneous rocks', q:`How did ${s.name} form?`, opts, ans:slow ? 0 : 1, why:`${s.name}: ${s.info}`};
   }));
   // 4. Mineral clue
-  mins.forEach(s => gens.push(() => {
-    const others = pickOthers(SPECIES.filter(m => m.kind === 'mineral' && m.id !== s.id).map(m => m.sp), s.sp, 3), opts = shuffle([s.sp, ...others]);
+  mins.forEach(s => addQ(s.id, () => {
+    const others = pickOthers(SPECIES.filter(m => m.kind === 'mineral' && m.id !== s.id && !clueFits(m.sp, s)).map(m => m.sp), s.sp, 3), opts = shuffle([s.sp, ...others]);
     return {type:'Mineral ID', q:`Which clue would help you identify ${s.name}?`, opts, ans:opts.indexOf(s.sp), why:`${s.name}: streak ${s.streak.toLowerCase()}, hardness ${s.hd}. ${s.sp}.`};
   }));
-  mins.forEach(s => gens.push(() => {
-    const opts = shuffle([...new Set([s.streak, ...pickOthers([...new Set(SPECIES.filter(m => m.kind === 'mineral').map(m => m.streak))], s.streak, 3)])]);
-    return {type:'Streak test', q:`You rub ${s.name} on a streak plate. What color is the powder?`, opts, ans:opts.indexOf(s.streak), why:`The streak is the color of the mineral’s powder. ${s.name}’s streak is ${s.streak.toLowerCase()}.`};
+  mins.forEach(s => addQ(s.id, () => {
+    // Streak choices are color families, so "White" never appears twice in different wording
+    const right = STREAK_NAME[s.sk], opts = shuffle([right, ...pickOthers(Object.values(STREAK_NAME), right, 3)]);
+    return {type:'Streak test', q:`You rub ${s.name} on a streak plate. What color is the powder?`, opts, ans:opts.indexOf(right), why:`The streak is the color of the mineral’s powder. ${s.name}’s streak is ${s.streak.toLowerCase()}.`};
   }));
   // General questions (used when a student hasn't discovered enough yet)
   const general = [
@@ -1930,7 +1960,11 @@ function quizMake() {
     {type:'Igneous rocks', q:'Why does granite have bigger crystals than basalt?', opts:['Granite’s magma cooled slowly underground', 'Granite cooled quickly at the surface', 'Granite was squeezed by heat and pressure', 'Granite is made of cemented sand'], ans:0, why:'Slow cooling underground gives crystals time to grow large.'},
     {type:'Rock vs. mineral', q:'What is the difference between a rock and a mineral?', opts:['A rock is a mixture of minerals; a mineral is one pure substance', 'A mineral is a mixture of rocks', 'Rocks are always harder than minerals', 'There is no difference'], ans:0, why:'Minerals are the building blocks; rocks are mixtures of minerals (or glass, or rock pieces).'}
   ];
-  const qs = shuffle(gens).slice(0, 3).map(f => f());
+  // Prefer 3 DIFFERENT specimens, then allow repeats if needed
+  const used = new Set(), picked = [];
+  for (const f of shuffle(gens)) if (picked.length < 3 && !used.has(f.sid)) { used.add(f.sid); picked.push(f); }
+  for (const f of gens) if (picked.length < 3 && !picked.includes(f)) picked.push(f);
+  const qs = picked.map(f => tidyQ(f()));
   for (const g of shuffle(general)) if (qs.length < 3) qs.push(g);
   return {qs, answers:[null, null, null], foundN:found.size};
 }
@@ -1945,7 +1979,15 @@ function quizHTML() {
     return `<div class="card" style="text-align:left"><p style="margin:0 0 8px"><b>${i + 1}. ${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${opts}</div>${fb}</div>`;
   }).join('');
   return `<div class="goalcard"><h3>🧠 Field Guide Quiz${quizDone() ? `: ${quizScore()} / 3` : ''}</h3><p style="margin-top:0">Three questions from your own discoveries. Your answers and score go on your exit ticket.</p>
-    <div class="grid" style="grid-template-columns:1fr">${qhtml}</div>${quizDone() ? '<p><button class="pdfBtn">📄 Download my exit ticket (PDF)</button> <button data-quiz="new">🔄 Try a new quiz</button></p>' : ''}</div>`;
+    <div class="grid" style="grid-template-columns:1fr">${qhtml}</div>${quizDone() ? '<p><button data-quiz="new">🔄 Try a new quiz</button></p>' : ''}</div>
+  <div class="goalcard"><h3>✏️ My exit ticket</h3>
+    <p style="margin-top:0">Type your details. They print on your PDF exit ticket and are not saved or sent anywhere.</p>
+    <p><label for="tkName"><b>Name:</b></label> <input id="tkName" data-tk="name" maxlength="40" autocomplete="off" value="${esc(ticket.name)}" style="width:min(320px,100%)">
+       <label for="tkPeriod" style="margin-left:10px"><b>Class/period:</b></label> <input id="tkPeriod" data-tk="period" maxlength="20" autocomplete="off" value="${esc(ticket.period)}" style="width:140px"></p>
+    <p style="margin-bottom:4px"><label for="tkLearned"><b>One thing I learned about rocks today:</b></label></p>
+    <textarea id="tkLearned" data-tk="learned" maxlength="400" rows="3" style="width:100%;font:inherit;font-size:19px;padding:8px;border:3px solid var(--ink);border-radius:10px;box-sizing:border-box">${esc(ticket.learned)}</textarea>
+    <p style="margin:4px 0 10px;font-size:15px"><span id="tkCount">${ticket.learned.length}</span> / 400 characters</p>
+    <button class="pdfBtn">📄 Download my exit ticket (PDF)</button></div>`;
 }
 function quizClick(v) {
   if (v === 'new') { quiz = quizMake(); renderReport(); const f = $('#reportBody [data-quiz]'); f && f.focus(); return; }
@@ -1954,6 +1996,56 @@ function quizClick(v) {
   if (quizDone() && !quizXPGiven) { quizXPGiven = true; const gain = quizScore() * 10; if (gain) { addXP(gain); toast(`🧠 Quiz complete: ${quizScore()} / 3, +${gain} XP`, 4000); } }
   const top = $('#report').scrollTop; renderReport(); $('#report').scrollTop = top;
   const nx = $(`#reportBody [data-quiz^="${i + 1}:"]`) || $('#reportBody .goalcard .pdfBtn'); nx && nx.focus({preventScroll:true});
+}
+
+/* ---------- 15d. LEVELS AND BADGES ---------------------------------
+   Original badge art, one per level, drawn with code.                 */
+const BADGE_STYLE = [
+  {col:'#9aa3ad', dark:'#5b6474'}, {col:'#c98a4b', dark:'#8a5a2b'}, {col:'#8b5cc4', dark:'#5a3a8a'},
+  {col:'#3a86c8', dark:'#1f5c94'}, {col:'#ffcc33', dark:'#c99a10'}
+];
+function drawBadge(c, lv, S, bg) {
+  c.save(); if (bg) { c.fillStyle = bg; c.fillRect(0, 0, S, S); } c.scale(S / 100, S / 100); c.lineJoin = 'round';
+  const st = BADGE_STYLE[lv];
+  c.fillStyle = '#e8711c'; c.beginPath(); c.moveTo(36, 62); c.lineTo(28, 97); c.lineTo(37, 91); c.lineTo(44, 98); c.lineTo(48, 66); c.closePath(); c.fill();
+  c.fillStyle = '#3a86c8'; c.beginPath(); c.moveTo(64, 62); c.lineTo(72, 97); c.lineTo(63, 91); c.lineTo(56, 98); c.lineTo(52, 66); c.closePath(); c.fill();
+  c.strokeStyle = '#f2f7f5'; c.lineWidth = 1.5; c.stroke();
+  c.fillStyle = st.dark; c.beginPath(); c.arc(50, 44, 36, 0, 7); c.fill(); c.strokeStyle = '#f2f7f5'; c.lineWidth = 2.5; c.stroke();
+  c.strokeStyle = '#ffcc33'; c.lineWidth = 2; c.setLineDash([3, 3]); c.beginPath(); c.arc(50, 44, 31, 0, 7); c.stroke(); c.setLineDash([]);
+  c.fillStyle = st.col; c.beginPath(); c.arc(50, 44, 27, 0, 7); c.fill();
+  c.strokeStyle = '#1c2541'; c.lineWidth = 2;
+  if (lv === 0) { c.fillStyle = '#d2ccc2'; c.beginPath(); c.ellipse(50, 47, 15, 11, -.2, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#1c2541'; c.beginPath(); c.arc(45, 45, 1.8, 0, 7); c.arc(55, 45, 1.8, 0, 7); c.fill(); c.beginPath(); c.arc(50, 48, 4, .3, 2.8); c.stroke(); }
+  else if (lv === 1) { [[50, 56, 16, 7, '#b5793f'], [48, 45, 12, 6, '#d39a5c'], [51, 35, 8, 5, '#ecc08b']].forEach(([x, y, rx, ry, col]) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, 7); c.fill(); c.stroke(); }); }
+  else if (lv === 2) { crystal(c, 42, 60, 10, 20, -.35, 'rgba(240,236,250,.95)'); crystal(c, 58, 60, 9, 17, .4, 'rgba(240,236,250,.95)'); crystal(c, 50, 61, 12, 26, .02, 'rgba(250,248,255,.97)'); }
+  else if (lv === 3) { c.save(); c.translate(50, 45); c.rotate(-.6); c.fillStyle = '#7a5233'; c.fillRect(-2.5, -4, 5, 26); c.strokeRect(-2.5, -4, 5, 26); c.fillStyle = '#c9d0d9'; c.fillRect(-12, -10, 24, 8); c.strokeRect(-12, -10, 24, 8); c.restore();
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.beginPath(); c.arc(56, 40, 8, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(62, 46); c.lineTo(68, 53); c.stroke(); }
+  else { c.fillStyle = '#fff4cc'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 9 : 21; c.lineTo(50 + Math.cos(a) * r, 46 + Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#a3243a'; c.beginPath(); c.moveTo(50, 39); c.lineTo(56, 45); c.lineTo(50, 53); c.lineTo(44, 45); c.closePath(); c.fill(); c.stroke(); shine(c, 48, 43, 2.5); }
+  c.fillStyle = '#f2f7f5'; rr(c, 30, 68, 40, 12, 5); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.stroke();
+  c.fillStyle = '#1c2541'; c.font = 'bold 8px Verdana, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LEVEL ' + (lv + 1), 50, 74.5);
+  c.restore();
+}
+const badgeURL = [];
+function buildBadges() { for (let i = 0; i < LEVELS.length; i++) { const cv = document.createElement('canvas'); cv.width = cv.height = 200; drawBadge(cv.getContext('2d'), i, 200); badgeURL[i] = cv.toDataURL(); } }
+// How XP is earned (shown to students so the goals are clear)
+const XP_RULES = [
+  ['🔬 Identify a specimen', '+100 XP, plus an evidence bonus up to +60 for using few tests (only if your results match just one chart entry). 2nd guess: half XP. 3rd guess or more: one quarter. A guess with no tests: +10.'],
+  ['🔮 Predict a rock change', '+40 XP for a correct prediction on a new path, +10 for repeating a path.'],
+  ['🏆 Rock cycle challenge', '+80 XP at par, +50 with one extra step, +30 with two extra steps. Replays: +10.'],
+  ['🧠 Explain your path', '+20 XP for a correct science check after a challenge (+5 on replays).'],
+  ['📋 Field Guide Quiz', '+10 XP for each correct answer on your first quiz of the session.']
+];
+function renderLevels() {
+  const L = levelOf(xp), next = LEVELS[L + 1], base = LEVELS[L][0], prog = next ? Math.round(100 * (xp - base) / (next[0] - base)) : 100;
+  $('#levelsBody').innerHTML = `<div class="detail"><img src="${badgeURL[L]}" alt="${LEVELS[L][1]} badge" style="width:150px;height:150px"><div>
+    <h3>You are a ${LEVELS[L][1]}!</h3><p class="big" style="margin:4px 0">⭐ <b>${xp} XP</b></p>
+    ${next ? `<p style="margin:4px 0">${next[0] - xp} XP to reach <b>${next[1]}</b></p>
+      <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="Progress to next level" style="height:22px;border:3px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden"><div style="height:100%;width:${prog}%;background:var(--hat)"></div></div><p style="margin:4px 0">${prog}% of the way there</p>`
+      : '<p>You reached the top level. Amazing work!</p>'}</div></div>
+  <h3>All levels</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">${LEVELS.map(([need, name], i) => `<div class="card" style="${i > L ? 'background:#e3e7ea' : ''}">
+    <img src="${badgeURL[i]}" alt="" style="width:110px;height:110px;${i > L ? 'filter:grayscale(1);opacity:.45' : ''}"><b>Level ${i + 1}: ${name}</b><br>${need} XP needed<br>${i <= L ? '✔ Earned' : '🔒 ' + (need - xp) + ' XP to go'}</div>`).join('')}</div>
+  <h3>How to earn XP</h3><table><tr><th>Activity</th><th>XP</th></tr>${XP_RULES.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}</table>
+  <p><b>Tip:</b> careful scientists earn the most XP. Choose tests that rule things out, predict before you run the machine, and explain your thinking!</p>`;
 }
 
 /* ---------- 15c. ONE-PAGE PDF EXIT TICKET --------------------------
@@ -1980,7 +2072,8 @@ function makeExitTicketPDF() {
   text('Rock Hound Report: Exit Ticket', M, H - 38, 22, true, '1 0.8 0.2');
   text(`${new Date().toLocaleDateString()}   |   Time this session: ${mins(Date.now() - sessionStart)} min   |   All sessions: ${mins(Date.now() - sessionStart + stats.priorMs)} min`, M, H - 58, 10, false, '0.95 0.97 0.96');
   y = H - 100;
-  text('Name: ________________________________     Class/period: ____________', M, y, 12, false); y -= 26;
+  text('Name:', M, y, 12, false); text(ticket.name.trim().slice(0, 40), M + 40, y, 12, true); ops.push(`0.6 0.64 0.7 RG 0.8 w ${M + 38} ${y - 3} m ${M + 300} ${y - 3} l S`);
+  text('Class/period:', M + 320, y, 12, false); text(ticket.period.trim().slice(0, 20), M + 400, y, 12, true); ops.push(`0.6 0.64 0.7 RG 0.8 w ${M + 398} ${y - 3} m ${W - M} ${y - 3} l S`); y -= 26;
   // Stats grid (2 columns)
   const lv = LEVELS[levelOf(xp)], chStars = Object.values(chBest).reduce((a, b) => a + b, 0);
   const rows = [['Level', `${lv[1]} (${xp} XP)`], ['Rock Dex', `${found.size} of ${DEX.length} discovered`],
@@ -2011,8 +2104,14 @@ function makeExitTicketPDF() {
   });
   // Reflection lines for handwriting
   y -= 2; text('One thing I learned about rocks today:', M, y, 11, true); y -= 20;
-  for (let i = 0; i < 4 && y > 60; i++) { ops.push(`0.6 0.64 0.7 RG 0.8 w ${M} ${y} m ${W - M} ${y} l S`); y -= 22; }
-  text(editedFlag ? 'Note: progress was loaded from a save file that was changed outside the game.' : 'Made by Rock Hound. No student data was collected or sent.', M, 28, 8, false, '0.4 0.44 0.5');
+  const learnedLines = wrapPDF(ticket.learned.replace(/\s+/g, ' ').trim(), 11, false, W - 2 * M - 4).slice(0, 6);
+  for (let i = 0; i < Math.max(4, learnedLines.length) && y > 50; i++) { if (learnedLines[i]) text(learnedLines[i], M + 2, y + 4, 11, false); ops.push(`0.6 0.64 0.7 RG 0.8 w ${M} ${y} m ${W - M} ${y} l S`); y -= 20; }
+  text(editedFlag ? 'Note: progress was loaded from a save file that was changed outside the game.' : 'Made by Rock Hound. Nothing typed here was saved or sent anywhere.', M, 28, 8, false, '0.4 0.44 0.5');
+  // Level badge stamp in the top-right corner (drawn on the header color so it blends in)
+  const bcv = document.createElement('canvas'); bcv.width = bcv.height = 160; drawBadge(bcv.getContext('2d'), levelOf(xp), 160, '#1c2541');
+  const bjpg = atob(bcv.toDataURL('image/jpeg', .92).split(',')[1]);
+  ops.push(`q 64 0 0 64 ${W - M - 64} ${H - 68} cm /Im2 Do Q`);
+  text(LEVELS[levelOf(xp)][1], W - M - 140 - textW(LEVELS[levelOf(xp)][1], 11, true) + 70, H - 38, 11, true, '1 0.8 0.2');
   // Assemble the PDF file (objects + cross-reference table)
   const content = ops.join('\n');
   const parts = [], offsets = []; let len = 0;
@@ -2021,19 +2120,23 @@ function makeExitTicketPDF() {
   add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
   obj(1, () => add('<< /Type /Catalog /Pages 2 0 R >>'));
   obj(2, () => add('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
-  obj(3, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> /XObject << /Im1 7 0 R >> >> /Contents 6 0 R >>`));
+  obj(3, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> /XObject << /Im1 7 0 R /Im2 8 0 R >> >> /Contents 6 0 R >>`));
   obj(4, () => add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'));
   obj(5, () => add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'));
   obj(6, () => { add(`<< /Length ${content.length} >>\nstream\n`); add(content); add('\nendstream'); });
   obj(7, () => { add(`<< /Type /XObject /Subtype /Image /Width ${strip.width} /Height ${strip.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); add(jpg); add('\nendstream'); });
-  const xref = len; let x = 'xref\n0 8\n0000000000 65535 f \n'; for (let i = 1; i <= 7; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
-  add(x + `trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  obj(8, () => { add(`<< /Type /XObject /Subtype /Image /Width 160 /Height 160 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bjpg.length} >>\nstream\n`); add(bjpg); add('\nendstream'); });
+  const xref = len; let x = 'xref\n0 9\n0000000000 65535 f \n'; for (let i = 1; i <= 8; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+  add(x + `trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
   return new Blob(parts, {type:'application/pdf'});
 }
 function downloadPDF() {
+  const need = !ticket.name.trim() ? '#tkName' : !ticket.learned.trim() ? '#tkLearned' : null;
+  if (quizDone() && need) { toast(need === '#tkName' ? '✏️ Type your name first so your teacher knows whose ticket it is.' : '✏️ Write one thing you learned about rocks today first.', 4500); const f = $(need); f.scrollIntoView({block:'center'}); f.focus(); return; }
   if (!quizDone()) { toast('🧠 Finish all 3 Field Guide Quiz questions first. They go on your exit ticket!', 4500); const q = $('#reportBody [data-quiz]:not([disabled])'); if (q) { q.scrollIntoView({block:'center'}); q.focus({preventScroll:true}); } return; }
   const blob = makeExitTicketPDF(), a = document.createElement('a'), d = new Date(), pad = v => String(v).padStart(2, '0');
-  a.href = URL.createObjectURL(blob); a.download = `rock-hound-exit-ticket-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.pdf`;
+  a.href = URL.createObjectURL(blob); const who = ticket.name.trim().replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+  a.download = `rock-hound-exit-ticket-${who ? who + '-' : ''}${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.pdf`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   sfx('right'); toast('📄 Exit ticket PDF downloaded! Hand it in or print it.', 4500);
 }
@@ -2048,7 +2151,7 @@ function drawTitleArt() {
   drawPerson(c, 300, 158, 1, 'happy', 0, 0, 2);
   c.drawImage(spriteCv.granite, 330, 108, 60, 60); drawFace(c, 360, 140, 1.2, 'happy', -1, false);
 }
-genWorld(); buildSprites(); buildExtraSprites(); resize(); setMotion(reduceMotion);
+genWorld(); buildSprites(); buildExtraSprites(); buildBadges(); resize(); setMotion(reduceMotion);
 player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1;
 cam.x = Math.max(0, player.x - viewW / 2); cam.y = player.y - viewH / 2;
 drawTitleArt(); current = 'title'; $('#startBtn').focus();
