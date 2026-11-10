@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rock Hound: Dig and Discover</title>
+<style>
+/* Palette: field-notebook ink, lab paper, hard-hat yellow, sky blue, signal orange */
+:root{--ink:#1c2541;--paper:#f2f7f5;--hat:#ffcc33;--sky:#3a86c8;--signal:#e8711c;--hudH:60px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#101828;overflow:hidden;font-family:Verdana,"Segoe UI",sans-serif;color:var(--paper)}
+h1,h2,h3,button{font-family:"Trebuchet MS","Segoe UI",sans-serif}
+#game{position:fixed;inset:0;width:100vw;height:100vh;display:block;outline:none}
+#hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:rgba(16,24,40,.92);border-bottom:4px solid var(--hat)}
+#stats{margin-right:auto;font-size:17px;line-height:1.35;min-width:260px}
+#mission{color:var(--hat);font-weight:bold}
+.menu{position:relative}
+.mbtn{font-size:18px;padding:7px 14px}
+.mbtn[aria-expanded="true"]{background:var(--hat)}
+.mlist{position:absolute;right:0;top:calc(100% + 8px);z-index:20;background:var(--paper);border:4px solid var(--ink);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:300px;white-space:nowrap;box-shadow:0 6px 0 rgba(0,0,0,.45)}
+.mlist[hidden]{display:none}
+.mlist button{display:flex;justify-content:space-between;align-items:center;gap:14px;text-align:left;box-shadow:none}
+.mlist kbd{font-size:14px}
+details.entry{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px 12px;margin:8px 0}
+details.entry summary{cursor:pointer;font-weight:bold;font-size:19px}
+.result{max-width:820px}
+button,select,input{font:inherit}
+button{font-size:17px;font-weight:bold;background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:5px 11px;cursor:pointer;box-shadow:0 3px 0 #000}
+button:hover{background:#fff}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}
+button.on{background:var(--hat)}
+button:disabled{cursor:default;color:var(--ink);opacity:1}
+:focus-visible{outline:4px solid var(--signal)!important;outline-offset:2px}
+.panel{position:fixed;top:calc(var(--hudH) + 8px);left:14px;right:14px;bottom:14px;z-index:10;display:none;overflow:auto;background:var(--paper);color:var(--ink);border:5px solid var(--ink);border-radius:22px;padding:16px 22px;font-size:18px;line-height:1.45;box-shadow:0 8px 0 rgba(0,0,0,.45)}
+.panel.open{display:block}
+.panel h2{margin:0 0 10px;font-size:30px}
+.panel h3{margin:16px 0 6px;font-size:22px}
+.close{float:right;margin-left:12px}
+#title{top:0;left:0;right:0;bottom:0;border-radius:0;border:none;z-index:30;background:radial-gradient(circle at 50% 25%,#2d4a7a,#101828 70%);color:var(--paper);text-align:center}
+#title .inner{max-width:880px;margin:0 auto;padding:16px}
+#title h1{font-size:clamp(44px,7vw,80px);margin:6px 0 0;color:var(--hat);text-shadow:0 5px 0 #000;letter-spacing:1px}
+#title .sub{font-size:24px;margin:0 0 10px}
+#title p{font-size:20px}
+#titleArt{width:min(600px,92vw);height:auto}
+.keys{display:inline-grid;grid-template-columns:auto auto;gap:5px 16px;text-align:left;font-size:18px;background:rgba(0,0,0,.35);padding:12px 18px;border-radius:14px;margin:6px 0 14px}
+kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:1px 7px;font-weight:bold;border:2px solid #000;font-family:inherit}
+#startBtn{font-size:28px;padding:10px 26px;background:var(--hat)}
+.big{font-size:21px}
+.lab{display:grid;grid-template-columns:minmax(220px,290px) 1fr;gap:18px}
+@media (max-width:800px){.lab{grid-template-columns:1fr}}
+.specbox{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px;text-align:center;align-self:start}
+.specimg{width:100%;max-width:240px}
+.tests{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px}
+.tests button{text-align:left}
+.tests button.done,.tabs button.done{background:#cfe3f0}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.notes{background:#fff;border:3px dashed var(--ink);border-radius:14px;padding:10px 10px 10px 34px;margin:0}
+.notes li{margin:5px 0}
+select,input{font-size:19px;padding:5px 8px;border:3px solid var(--ink);border-radius:10px;max-width:100%;background:#fff;color:var(--ink)}
+.fb{margin:10px 0;padding:12px 14px;border-radius:14px;border:4px solid var(--ink);background:#fff}
+.good{border-color:var(--sky);background:#e2f0fb}
+.bad{border-color:var(--signal);background:#fff1e3}
+.pop{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+body.reduce .pop{animation:none}
+table{border-collapse:collapse;width:100%;font-size:16px;background:#fff}
+th,td{border:2px solid var(--ink);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--ink);color:var(--paper)}
+.scroll{overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+.card{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px;text-align:center;font-size:16px;color:var(--ink);box-shadow:0 3px 0 #000}
+.card img{width:96px;height:96px;display:block;margin:0 auto}
+.card.locked{background:#e3e7ea}
+.blank{width:96px;height:96px;margin:0 auto;border:3px dashed #8a93a3;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:44px;color:#8a93a3}
+.detail{display:flex;gap:18px;flex-wrap:wrap;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px;margin-bottom:12px}
+.detail img{width:170px;height:170px}
+.detail>div{flex:1;min-width:260px}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;border:2px solid var(--ink);font-size:15px;font-weight:bold;background:#fff}
+.qs{display:flex;flex-wrap:wrap;gap:8px}
+.answer{margin-top:12px;padding:14px;border-radius:14px;border:4px solid var(--sky);background:#fff;font-size:19px}
+.steps{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}.steps span{padding:3px 12px;border-radius:999px;border:2px solid var(--ink);font-weight:bold;background:#fff}.steps span.now{background:var(--hat)}
+#rcCv{width:100%;max-width:640px;height:auto;border:4px solid var(--ink);border-radius:16px;background:#1c2541;display:block}
+.choice{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.choice img{width:56px;height:56px;vertical-align:middle}
+.goalcard{background:#fff;border:4px solid var(--ink);border-radius:18px;padding:12px 14px;margin-bottom:10px}
+.goalcard h3{margin:0 0 8px}
+.path{display:flex;align-items:stretch;gap:6px;overflow-x:auto;overflow-y:visible;padding:6px 6px 12px}
+.node{flex:0 0 auto;width:132px;min-height:150px;justify-content:flex-start;border:3px solid var(--ink);border-radius:14px;padding:6px;text-align:center;background:var(--paper);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:15px}
+.node img{width:58px;height:58px}
+.node small{font-size:13px}
+.node select{font-size:14px;padding:2px 4px;width:100%;margin-top:auto}
+.node.blank{border-style:dashed;background:#fff}
+.node.bonus{border-color:#5b6474}
+.node.now{outline:4px solid var(--signal);outline-offset:1px}
+.node.start{background:#e2f0fb}
+.node.target{background:#fff4cc;border-width:4px}
+.node.target.hit{background:var(--hat)}
+.node .q{font-size:28px;font-weight:bold;color:#5b6474;line-height:58px}
+.pi{font-size:17px}
+.arrow{align-self:center;font-size:26px;font-weight:bold}
+.legend{font-size:15px;margin:4px 0 0}
+.sr{position:absolute;left:-9999px}
+@media print{body{background:#fff;overflow:visible}#game,#hud,#toast,#caption,.panel:not(#report),.noprint{display:none!important}#report{display:block!important;position:static;border:none;box-shadow:none;overflow:visible}}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:15;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;font-size:20px;font-weight:bold;max-width:90vw;text-align:center;display:none;box-shadow:0 5px 0 rgba(0,0,0,.5)}
+#caption{position:fixed;left:14px;bottom:90px;z-index:8;background:rgba(0,0,0,.8);color:#fff;padding:6px 12px;border-radius:10px;font-size:18px;display:none}
+</style>
+</head>
+<body>
+<canvas id="game" tabindex="0" aria-label="Dig site. Arrow keys move and dig."></canvas>
+
+<div id="hud">
+  <div id="stats"><div id="where">Depth</div><div id="mission"></div></div>
+  <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab">🧪 Lab equipment <span id="bagN"></span> ▾</button>
+    <div class="mlist" id="mLab" hidden>
+      <button data-open="lab"><span>🔬 Test specimens</span><kbd>L</kbd></button>
+      <button data-open="chart"><span>📖 Reference chart</span></button>
+      <button data-open="notebook"><span>📓 Lab notebook</span><kbd>N</kbd></button>
+      <button id="bMachine"><span>♻️ Rock cycle machine (at camp)</span><kbd>E</kbd></button>
+      <button data-open="guide"><span>🗺️ Rock cycle guide</span><kbd>G</kbd></button>
+      <button data-open="how"><span>❓ How this model works</span><kbd>H</kbd></button>
+    </div></div>
+  <div class="menu"><button class="mbtn" data-menu="mCol" aria-expanded="false" aria-controls="mCol">🎒 My collection ▾</button>
+    <div class="mlist" id="mCol" hidden>
+      <button data-open="dex"><span>📚 Rock Dex</span><kbd>X</kbd></button>
+      <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
+      <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
+      <button data-open="report"><span>📋 Rock Hound Report</span><kbd>Q</kbd></button>
+    </div></div>
+  <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl">🎮 Controls ▾</button>
+    <div class="mlist" id="mCtl" hidden>
+      <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
+      <button id="bRope"><span>🪢 Rope up to camp</span><kbd>R</kbd></button>
+      <button id="bSound"><span>🔇 Sound: off</span><kbd>M</kbd></button>
+      <button id="bMotion"><span>🎞️ Motion: full</span></button>
+      <button id="bSave"><span>💾 Download save file</span></button>
+      <button class="loadBtn"><span>📂 Load a save file</span></button>
+      <button data-open="report"><span>📋 End session: Rock Hound Report</span><kbd>Q</kbd></button>
+      <button data-open="keys"><span>⌨️ Keyboard help</span></button>
+    </div></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="caption" aria-hidden="true"></div>
+
+<section class="panel open" id="title" aria-label="Title screen">
+  <div class="inner">
+    <h1>Rock Hound</h1>
+    <p class="sub">Dig, test, and identify rocks and minerals</p>
+    <canvas id="titleArt" width="600" height="190" aria-hidden="true"></canvas>
+    <p>You are the new junior field geologist at Pebble Creek Survey Camp. The town dug a well and hit layer after layer of mystery stones! Dig down through the rock layers, test every mystery specimen like a real geologist, and identify it with the reference chart. Each correct ID goes into your Collection Box and fills a page of the Rock Dex. Use the Rock Cycle Machine at camp to predict how rocks change. Pick a favorite to be your pet rock. It will follow you and answer your science questions. Earn XP for every correct ID: the fewer tests and guesses you need, the more XP you get!</p>
+    <div class="keys">
+      <span><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></span><span>Walk, and dig sideways into rock</span>
+      <span><kbd>↓</kbd> or <kbd>S</kbd></span><span>Dig down</span>
+      <span><kbd>↑</kbd> <kbd>W</kbd> <kbd>Space</kbd></span><span>Jump (or dig up if rock is above you)</span>
+      <span><kbd>L</kbd> <kbd>N</kbd> <kbd>H</kbd></span><span>Test specimens, Lab notebook, How it works</span>
+      <span><kbd>Q</kbd></span><span>Rock Hound Report (save your progress here)</span>
+      <span><kbd>E</kbd> / <kbd>G</kbd></span><span>Rock Cycle Machine (at camp) / Rock cycle guide</span>
+      <span><kbd>X</kbd> <kbd>C</kbd> <kbd>P</kbd></span><span>Rock Dex, Collection box, Pet rock</span>
+      <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
+      <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
+    </div><br>
+    <button id="startBtn">⛏️ Start a new dig</button> <button class="loadBtn" style="font-size:22px;padding:10px 20px">📂 Continue from a save file</button>
+    <p style="font-size:16px">Sound starts off (press M). Nothing is stored in the browser or sent anywhere. To keep your progress, download a save file from the 📋 Rock Hound Report and load it next time.</p>
+  </div>
+</section>
+
+<section class="panel" id="lab" aria-label="Field lab"><button class="close" data-close>✖ Close (Esc)</button><h2>🧪 Field lab</h2><div id="labBody"></div></section>
+<section class="panel" id="machine" aria-label="Rock cycle machine"><button class="close" data-close>✖ Close (Esc)</button><h2>♻️ Rock cycle machine</h2><div id="machineBody"></div></section>
+<section class="panel" id="guide" aria-label="Rock cycle guide"><button class="close" data-close>✖ Close (Esc)</button><h2>🗺️ Rock cycle guide</h2>
+<p>Rocks are always slowly changing from one kind to another. Each arrow is a process. Any rock can take many paths, and the cycle has no start or finish.</p>
+<svg viewBox="0 0 640 360" width="100%" style="max-width:700px;display:block" role="img" aria-label="Rock cycle diagram with sedimentary, metamorphic and igneous rock, magma and sediment, connected by processes.">
+ <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#1c2541"/></marker></defs>
+ <g font-family="Trebuchet MS" font-size="17" font-weight="bold" text-anchor="middle" fill="#1c2541">
+  <rect x="245" y="8" width="150" height="44" rx="14" fill="#ffcc33" stroke="#1c2541" stroke-width="3"/><text x="320" y="36">Igneous rock</text>
+  <rect x="20" y="150" width="140" height="44" rx="14" fill="#e3c9a3" stroke="#1c2541" stroke-width="3"/><text x="90" y="178">Sediment</text>
+  <rect x="20" y="300" width="160" height="44" rx="14" fill="#fff" stroke="#1c2541" stroke-width="3"/><text x="100" y="328">Sedimentary rock</text>
+  <rect x="460" y="300" width="164" height="44" rx="14" fill="#9cc8ea" stroke="#1c2541" stroke-width="3"/><text x="542" y="328">Metamorphic rock</text>
+  <rect x="480" y="150" width="140" height="44" rx="14" fill="#e8711c" stroke="#1c2541" stroke-width="3"/><text x="550" y="178">Magma</text>
+  <g stroke="#1c2541" stroke-width="3" fill="none" marker-end="url(#ar2)">
+   <path d="M250 40 Q120 70 95 146"/><path d="M90 196 L95 296"/><path d="M182 322 L456 322"/><path d="M545 296 L550 198"/><path d="M520 150 Q470 60 398 36"/>
+   <path d="M320 54 Q420 200 470 296"/><path d="M460 306 Q300 240 150 196"/><path d="M180 306 Q330 220 478 186"/>
+  </g>
+  <g font-size="13" font-weight="normal">
+   <text x="200" y="98">weathering</text><text x="200" y="114">and erosion</text>
+   <text x="104" y="240" text-anchor="start">deposition,</text><text x="104" y="256" text-anchor="start">compaction,</text><text x="104" y="272" text-anchor="start">cementation</text>
+   <text x="320" y="315">heat and pressure</text>
+   <text x="590" y="250">melting</text>
+   <text x="480" y="80">cooling</text>
+   <text x="410" y="160">heat and</text><text x="410" y="176">pressure</text>
+   <text x="300" y="270">weathering</text>
+   <text x="360" y="232">melting</text>
+  </g>
+ </g>
+</svg>
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+ <div class="card" style="text-align:left"><h3>🌧️ Weathering and erosion</h3><p>Water, ice, wind and plants break rock into pieces called sediment: pebbles, sand, or tiny mud and clay. Some minerals dissolve into the water. Moving water, wind and ice carry the sediment away.</p></div>
+ <div class="card" style="text-align:left"><h3>🏞️ Deposition</h3><p>Fast water can carry big pebbles; calm water only drops the tiniest mud. So where sediment settles decides its grain size. In warm seas, living things use dissolved minerals to build shells.</p></div>
+ <div class="card" style="text-align:left"><h3>🧱 Compaction and cementation</h3><p>Layers pile up, get buried, squeezed and glued together into sedimentary rock. The rock’s name depends on what it is made of and the size of its grains. Check the 📖 reference chart!</p></div>
+ <div class="card" style="text-align:left"><h3>⬇🔥 Heat and pressure</h3><p>Deep burial changes a rock’s minerals WITHOUT melting it, making metamorphic rock. Minerals may line up in layers (foliated) or grow into locked crystals (non-foliated). Some rocks change step by step: a little heat and pressure makes one rock, and more makes another.</p></div>
+ <div class="card" style="text-align:left"><h3>🌋 Melting</h3><p>Very high heat melts rock into magma. Dark, iron-rich rocks make dark magma; other rocks make light-colored magma. Not every rock melts the same way: rocks made mostly of calcite break apart and give off gas instead.</p></div>
+ <div class="card" style="text-align:left"><h3>❄️ Cooling</h3><p>Magma that cools SLOWLY underground grows big crystals (intrusive igneous rock). Lava that cools FAST at the surface has tiny crystals or none (extrusive igneous rock). Trapped gas leaves holes.</p></div>
+</div>
+<p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
+</section>
+<section class="panel" id="report" aria-label="Rock Hound Report"><button class="close noprint" data-close>✖ Close (Esc)</button><h2>📋 Rock Hound Report</h2><div id="reportBody"></div></section>
+<section class="panel" id="notebook" aria-label="Lab notebook"><button class="close" data-close>✖ Close (Esc)</button><h2>📓 Lab notebook</h2><div id="notebookBody"></div></section>
+<section class="panel" id="keys" aria-label="Keyboard help"><button class="close" data-close>✖ Close (Esc)</button><h2>⌨️ Keyboard help</h2><div id="keysBody"></div></section>
+<section class="panel" id="chart" aria-label="Reference chart"><button class="close" data-close>✖ Close (Esc)</button><h2>📖 Identification reference chart</h2><div id="chartBody"></div></section>
+<section class="panel" id="dex" aria-label="Rock Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>📚 Rock Dex</h2><div id="dexBody"></div></section>
+<section class="panel" id="box" aria-label="Collection box"><button class="close" data-close>✖ Close (Esc)</button><h2>📦 Collection box</h2><div id="boxBody"></div></section>
+<section class="panel" id="pet" aria-label="Pet rock"><button class="close" data-close>✖ Close (Esc)</button><h2>🐾 Pet rock</h2><div id="petBody"></div></section>
+<section class="panel" id="how" aria-label="How this model works"><button class="close" data-close>✖ Close (Esc)</button><h2>❓ How this model works</h2>
+<svg viewBox="0 0 520 290" width="100%" style="max-width:540px;display:block" role="img" aria-label="Rock cycle: igneous rock weathers into sediment that becomes sedimentary rock; heat and pressure make metamorphic rock; melting and cooling make igneous rock again.">
+ <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#1c2541"/></marker></defs>
+ <g font-family="Trebuchet MS" font-size="18" font-weight="bold" text-anchor="middle" fill="#1c2541">
+  <rect x="185" y="8" width="150" height="46" rx="14" fill="#ffcc33" stroke="#1c2541" stroke-width="3"/><text x="260" y="38">Igneous</text>
+  <rect x="8" y="232" width="170" height="46" rx="14" fill="#fff" stroke="#1c2541" stroke-width="3"/><text x="93" y="262">Sedimentary</text>
+  <rect x="342" y="232" width="170" height="46" rx="14" fill="#9cc8ea" stroke="#1c2541" stroke-width="3"/><text x="427" y="262">Metamorphic</text>
+  <g stroke="#1c2541" stroke-width="3" fill="none" marker-end="url(#ar)"><path d="M190 48 Q95 110 93 226"/><path d="M182 255 L336 255"/><path d="M427 226 Q425 110 332 48"/></g>
+  <g font-size="14" font-weight="normal"><text x="190" y="128">weathering, erosion,</text><text x="190" y="146">compaction, cementation</text><text x="260" y="246">heat and pressure</text><text x="350" y="128">melting,</text><text x="350" y="146">then cooling</text></g>
+ </g>
+</svg>
+<p>Any rock can take any path. For example, heat and pressure can change igneous rock straight into metamorphic rock.</p>
+<h3>The science rules in this model</h3>
+<ul>
+<li><b>Hardness (Mohs scale 1–10):</b> a tool scratches a specimen only when the specimen is softer: scratch happens if H<sub>specimen</sub> &lt; H<sub>tool</sub>. Kit: fingernail 2.5, copper penny 3.5, glass plate 5.5, steel file 6.5. If the two hardness values are within 0.25, the result is “unclear,” just like real life.</li>
+<li><b>Streak:</b> the color of a mineral’s powder on an unglazed porcelain plate (plate hardness about 6.5–7). Minerals harder than the plate leave no colored streak.</li>
+<li><b>Fizz test:</b> calcite reacts with dilute acid: CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂ (the bubbles are carbon dioxide gas).</li>
+<li><b>Heft:</b> specific gravity = density of the specimen ÷ density of water. Most rocks are about 2.5–3; metal ores (5–7.5) feel heavy. Anything less dense than water (under 1 g/cm³), like pumice, floats.</li>
+<li><b>Magnetism:</b> magnetite is the only strongly magnetic specimen in this set.</li>
+<li><b>Rock vs. mineral:</b> a mineral is one natural, solid, crystalline substance with a definite makeup. A rock is a mixture of minerals (or natural glass, or rock pieces).</li>
+<li><b>Where rocks form:</b> sedimentary rock forms near the surface in flat layers, and lower layers are usually older (law of superposition). Metamorphic rock forms deeper, changed by heat and pressure without melting. Intrusive igneous rock forms when magma cools slowly underground (big crystals). Extrusive igneous rock forms when lava cools quickly at volcanoes (tiny or no crystals).</li>
+<li><b>Temperature:</b> about 15 °C at the surface plus about 25 °C for every kilometer deeper (average geothermal gradient).</li>
+</ul>
+<h3>Rock Cycle Machine rules</h3>
+<ul>
+<li><b>Heat and pressure</b> (deep burial, no melting) → metamorphic rock. Rocks change step by step, so more heat and pressure can change a metamorphic rock again. Extreme heat starts to melt it.</li>
+<li><b>Melting, then cooling:</b> slow cooling underground → intrusive igneous rock with large crystals; fast cooling at the surface → extrusive igneous rock with tiny or no crystals. Dark, iron-rich rocks melt into dark magma and make dark igneous rocks; all other rocks make light-colored ones.</li>
+<li><b>Weathering, erosion, deposition, compaction and cementation</b> → sedimentary rock. The grain size or material that settles decides which rock forms.</li>
+<li>Rocks made of calcite don’t melt into ordinary magma; heat breaks calcite into lime and carbon dioxide gas instead.</li>
+<li>Exact results for each rock are discovered by experimenting and recorded in the Rock Dex evolution chart.</li>
+<li>XP: +40 for a correct prediction on a new path, +10 for a repeat. Challenges: +80 at par, +50 for one extra step, +30 for two (+10 for replays). Explaining a step correctly afterward: +20 bonus (+5 on replays).</li>
+</ul>
+<h3>How you earn XP</h3>
+<ul>
+<li><b>Correct identification:</b> +100 XP.</li>
+<li><b>Evidence bonus:</b> up to +60 XP for using few tests (1–2 tests: +60, then 10 less for each extra test). You only earn it if your test results match just ONE entry on the chart, so choose tests that rule things out.</li>
+<li><b>Guesses:</b> 2nd guess earns half XP; 3rd guess or later earns one quarter.</li>
+<li>A correct guess with no tests at all earns only 10 XP.</li>
+</ul>
+<h3>Simplifications (what is not realistic)</h3>
+<ul>
+<li>Not to scale: each block stands for about 100 m of depth, but the geologist is drawn big enough to see. Real magma chambers are usually several kilometers or more down and are not under every place.</li>
+<li>The layers are neat bands. Real layers are tilted, folded, faulted and partly eroded, and the order varies from place to place.</li>
+<li>Each specimen shows textbook-typical properties. Real samples vary (colors change a lot, and some hematite and basalt are weakly magnetic).</li>
+<li>A rock gets one overall hardness result even though its grains differ.</li>
+<li>In class, the acid test uses dilute hydrochloric acid handled by the teacher with goggles, or vinegar, which fizzes more weakly.</li>
+<li>♻️ The Rock Cycle Machine shows each change in seconds, but in nature it takes thousands to millions of years. Changed rocks join your collection and Rock Dex so you can complete it, but real rocks can’t be traded this way!</li>
+<li>♻️ What melted rock becomes also depends on its chemistry. The machine uses two simple rules: dark, iron-rich basalt melts into dark rock (basalt or gabbro), and every other rock melts into light-colored magma (granite or obsidian). Light-colored lava often cools into rhyolite, a fine-grained rock not in our Rock Dex.</li>
+<li>🧱 Rebuilding puts back the rock that was originally in that spot so you can climb out or reach new places. In real life, dug-out rock can’t be put back the way it was!</li>
+<li>Real rocks take thousands to millions of years to form and change. The game skips the waiting!</li>
+<li>Your pet rock’s answers are pre-written (no AI, no internet). Nothing is saved or sent anywhere.</li>
+</ul>
+</section>
+
+<script>
+'use strict';
+/* =====================================================================
+   ROCK HOUND - a 7th-grade rock cycle and mineral identification game.
+   All art is drawn with code; all sound is made with the Web Audio API.
+   No data is saved, collected or sent anywhere.
+   ===================================================================== */
+
+/* ---------- 1. SCIENCE DATA ----------------------------------------
+   Properties follow standard middle-school identification charts.
+   H  = Mohs hardness (1 = talc ... 10 = diamond)
+   sg = specific gravity (how many times heavier than the same volume of water)
+   Short "k" fields (ck, lk, lu, sk, bk) are category keys the game uses
+   to compare test results fairly between specimens.                  */
+const SPECIES = [
+ // ----- MINERALS -----
+ {id:'quartz',name:'Quartz',kind:'mineral',color:'Colorless, white, or tinted (purple, pink, smoky)',ck:'clear',lens:'One substance all the way through. Six-sided crystal columns with pointed tips.',luster:'Glassy',lu:'glassy',streak:'White / none (quartz is harder than the plate)',sk:'white',H:7,hd:'7',brk:'Fracture: curved, shell-like breaks (conchoidal). No cleavage.',bk:'conchoidal',sg:2.65,sp:'Scratches glass easily',info:'The most common mineral in Earth’s crust. It is found in granite, sandstone and quartzite.',cycle:'Very tough: when rocks weather away, quartz grains survive and become sand.'},
+ {id:'feldspar',name:'Orthoclase feldspar',kind:'mineral',color:'Pink, salmon, or white',ck:'pink',lens:'One substance all the way through. Blocky crystals with flat faces.',luster:'Glassy to pearly',lu:'glassy',streak:'White',sk:'white',H:6,hd:'6',brk:'Cleavage: 2 directions at right angles (flat, blocky faces).',bk:'cleave2',sg:2.56,sp:'Scratches glass',info:'The feldspar group is the most abundant mineral group in the crust. Orthoclase gives granite its pink color.',cycle:'Weathers slowly into clay, which can become shale.'},
+ {id:'calcite',name:'Calcite',kind:'mineral',color:'Colorless, white, or honey-yellow',ck:'white',lens:'One substance all the way through. Clear pieces make a double image of lines behind them.',luster:'Glassy',lu:'glassy',streak:'White',sk:'white',H:3,hd:'3',brk:'Cleavage: 3 directions NOT at right angles (slanted boxes called rhombs).',bk:'cleave3r',fizz:true,sg:2.71,sp:'Fizzes in dilute acid; double image',info:'Calcium carbonate (CaCO₃), the main mineral in limestone and marble.',cycle:'Shells build limestone; heat and pressure turn limestone into marble.'},
+ {id:'gypsum',name:'Gypsum',kind:'mineral',color:'White, colorless, or gray',ck:'white',lens:'One substance all the way through. Flat or fibrous, silky crystals.',luster:'Pearly to silky',lu:'pearly',streak:'White',sk:'white',H:2,hd:'2',brk:'Cleavage: 1 perfect direction (thin, bendable flakes).',bk:'cleave1',sg:2.3,sp:'Fingernail scratches it',info:'Forms when salty water evaporates. Used to make drywall and plaster.',cycle:'An evaporite mineral that forms in sedimentary layers.'},
+ {id:'talc',name:'Talc',kind:'mineral',color:'Pale green, white, or gray',ck:'green',lens:'One substance all the way through. Soft, flaky layers.',luster:'Pearly to greasy',lu:'pearly',streak:'White',sk:'white',H:1,hd:'1',brk:'Cleavage: 1 direction; flakes off easily.',bk:'cleave1',sg:2.75,sp:'Feels soapy; softest mineral',info:'Number 1 on the Mohs scale, the softest mineral. Ground up to make talcum powder.',cycle:'Forms when heat and water change other minerals (metamorphism).'},
+ {id:'muscovite',name:'Muscovite mica',kind:'mineral',color:'Silvery, colorless, or light brown',ck:'silver',lens:'One substance all the way through. Stacked like the pages of a book.',luster:'Pearly to glassy',lu:'pearly',streak:'White',sk:'white',H:2.25,hd:'2–2.5',brk:'Cleavage: 1 perfect direction. Peels into thin, clear, bendable sheets.',bk:'cleave1',sg:2.8,sp:'Peels into see-through sheets',info:'A mica. It makes the sparkles in granite and schist.',cycle:'Grows in cooling magma and during metamorphism.'},
+ {id:'pyrite',name:'Pyrite',kind:'mineral',color:'Brassy gold-yellow',ck:'gold',lens:'One substance all the way through. Often perfect cubes with fine lines.',luster:'Metallic',lu:'metallic',streak:'Greenish-black',sk:'greenblack',H:6.25,hd:'6–6.5',brk:'Fracture: uneven, rough breaks.',bk:'fracture',sg:5.0,sp:'“Fool’s gold”; heavy',info:'Iron sulfide (FeS₂), nicknamed fool’s gold. Real gold is soft and has a gold streak.',cycle:'Found in shale, coal, and mineral veins.'},
+ {id:'magnetite',name:'Magnetite',kind:'mineral',color:'Black',ck:'black',lens:'One substance all the way through. Eight-sided crystals or grains.',luster:'Metallic',lu:'metallic',streak:'Black',sk:'black',H:6,hd:'5.5–6.5',brk:'Fracture: uneven.',bk:'fracture',mag:true,sg:5.2,sp:'Strongly magnetic; heavy',info:'Iron oxide (Fe₃O₄), the most magnetic natural mineral. Natural magnets are called lodestones.',cycle:'Crystallizes from magma; its grains make black sand.'},
+ {id:'hematite',name:'Hematite',kind:'mineral',color:'Steel-gray, silver, or reddish-brown',ck:'gray',lens:'One substance all the way through. Bumpy, kidney-shaped, or earthy.',luster:'Metallic to dull (earthy)',lu:'metallic',streak:'Reddish-brown',sk:'redbrown',H:6,hd:'5.5–6.5',brk:'Fracture: uneven.',bk:'fracture',sg:5.2,sp:'Red-brown streak; heavy',info:'Iron oxide (Fe₂O₃), the main ore of iron. It is why red rocks (and Mars) look red.',cycle:'Forms in sedimentary layers when iron settles out of water.'},
+ {id:'galena',name:'Galena',kind:'mineral',color:'Lead-gray, silvery',ck:'gray',lens:'One substance all the way through. Shiny cubes.',luster:'Metallic',lu:'metallic',streak:'Lead-gray',sk:'gray',H:2.6,hd:'2.5–2.75',brk:'Cleavage: 3 directions at right angles (breaks into cubes).',bk:'cleave3c',sg:7.5,sp:'VERY heavy; breaks into cubes',info:'Lead sulfide (PbS), the main ore of lead.',cycle:'Forms from hot, mineral-rich water in veins, often in limestone.'},
+ {id:'fluorite',name:'Fluorite',kind:'mineral',color:'Purple, green, yellow, or blue',ck:'purple',lens:'One substance all the way through. See-through cube-shaped crystals.',luster:'Glassy',lu:'glassy',streak:'White',sk:'white',H:4,hd:'4',brk:'Cleavage: 4 directions (breaks into 8-sided diamond shapes).',bk:'cleave4',sg:3.2,sp:'Mohs 4; many colors',info:'Calcium fluoride, number 4 on the Mohs scale. Many samples glow under ultraviolet light.',cycle:'Forms from hot, mineral-rich water in veins.'},
+ {id:'garnet',name:'Garnet',kind:'mineral',color:'Dark red to reddish-brown',ck:'red',lens:'One substance all the way through. Round, 12-sided crystals.',luster:'Glassy',lu:'glassy',streak:'White / none (harder than the plate)',sk:'white',H:7,hd:'6.5–7.5',brk:'Fracture: no cleavage; uneven or shell-like breaks.',bk:'fracture',sg:4.0,sp:'Scratches glass; heavy for its size',info:'A gemstone (January’s birthstone). Crushed garnet is used as sandpaper grit.',cycle:'Grows inside metamorphic rocks like schist and gneiss under heat and pressure.'},
+ // ----- ROCKS -----
+ {id:'granite',name:'Granite',kind:'rock',grp:'igneous',rtype:'Igneous (intrusive)',color:'Speckled pink, white, gray, and black',ck:'speckled',lens:'Large interlocking crystals you can see: pink feldspar, glassy quartz, black specks. No layers.',lk:'coarse',luster:'Mixed: glassy grains',lu:'mixed',H:6,brk:'Breaks unevenly, right across the crystals.',bk:'uneven',sg:2.7,sp:'Big visible crystals; scratches glass',info:'Magma cooled SLOWLY deep underground, so crystals had time to grow large.',cycle:'Heat and pressure → gneiss. Weathering → sand → sandstone.'},
+ {id:'basalt',name:'Basalt',kind:'rock',grp:'igneous',rtype:'Igneous (extrusive)',color:'Dark gray to black',ck:'black',lens:'Very fine grains, too small to see. May have a few small gas holes.',lk:'fine',luster:'Dull',lu:'dull',H:6,brk:'Breaks unevenly.',bk:'uneven',sg:3.0,sp:'Dark, fine-grained, fairly heavy',info:'Lava cooled QUICKLY at the surface, so crystals stayed tiny. Most of the ocean floor is basalt.',cycle:'Weathering → sediment. Heat and pressure → metamorphic rock.'},
+ {id:'obsidian',name:'Obsidian',kind:'rock',grp:'igneous',rtype:'Igneous (extrusive)',color:'Shiny black (sometimes with brown streaks)',ck:'black',lens:'No grains or crystals at all. Smooth volcanic glass.',lk:'glassy',luster:'Glassy',lu:'glassy',H:5.5,brk:'Conchoidal fracture: curved, razor-sharp edges.',bk:'conchoidal',sg:2.4,sp:'Natural glass; sharp curved breaks',info:'Lava cooled so FAST that no crystals could form, so it is natural glass.',cycle:'Very slowly turns crystalline; weathers into sediment.'},
+ {id:'pumice',name:'Pumice',kind:'rock',grp:'igneous',rtype:'Igneous (extrusive)',color:'Light gray, cream, or white',ck:'light',lens:'Full of tiny gas holes (vesicles), like a sponge.',lk:'holes',luster:'Dull',lu:'dull',H:6,brk:'Rough and crumbly.',bk:'crumbly',float:true,sg:0.6,sp:'Floats on water!',info:'Gas-filled lava frothed up and cooled fast, trapping bubbles.',cycle:'Breaks down into volcanic ash and sediment.'},
+ {id:'sandstone',name:'Sandstone',kind:'rock',grp:'sedimentary',rtype:'Sedimentary',color:'Tan, red, or brown',ck:'tan',lens:'Sand-sized grains cemented together. Feels gritty like sandpaper.',lk:'grains',luster:'Dull',lu:'dull',H:6,brk:'Crumbles; grains rub off.',bk:'crumbly',sg:2.3,sp:'Gritty; grains rub off',info:'Sand was deposited, buried, compacted and cemented together.',cycle:'Heat and pressure → quartzite.'},
+ {id:'shale',name:'Shale',kind:'rock',grp:'sedimentary',rtype:'Sedimentary',color:'Gray to black',ck:'gray',lens:'Grains too tiny to see (clay and mud). Thin, flat layers.',lk:'layers',luster:'Dull',lu:'dull',H:3,brk:'Splits into thin layers; crumbles easily.',bk:'layers',sg:2.4,sp:'Soft; thin layers',info:'Mud and clay settled in calm water, then were squeezed together.',cycle:'Heat and pressure → slate.'},
+ {id:'limestone',name:'Limestone',kind:'rock',grp:'sedimentary',rtype:'Sedimentary',color:'Light gray, tan, or white',ck:'light',lens:'Fine grains, often with shell or fossil pieces.',lk:'fossils',luster:'Dull',lu:'dull',H:3,brk:'Breaks unevenly.',bk:'uneven',fizz:true,sg:2.6,sp:'Fizzes in acid; may have fossils',info:'Made of calcite, often from the shells of sea life that piled up on the ocean floor.',cycle:'Heat and pressure → marble.'},
+ {id:'conglomerate',name:'Conglomerate',kind:'rock',grp:'sedimentary',rtype:'Sedimentary',color:'Mixed colors',ck:'mixed',lens:'Rounded pebbles cemented into finer sand.',lk:'pebbles',luster:'Mixed',lu:'mixed',H:6,brk:'Breaks around the pebbles.',bk:'uneven',sg:2.6,sp:'Rounded pebbles',info:'Pebbles were rounded by tumbling in rivers or on beaches, then cemented together.',cycle:'Heat and pressure → metaconglomerate.'},
+ {id:'slate',name:'Slate',kind:'rock',grp:'metamorphic',rtype:'Metamorphic (foliated)',color:'Dark gray (sometimes green or purple)',ck:'gray',lens:'Very fine grains. Smooth, flat surfaces with a slight sheen (foliated).',lk:'foliated',luster:'Dull to slightly shiny',lu:'dull',H:4,brk:'Splits into smooth, flat sheets.',bk:'sheets',sg:2.8,sp:'Splits into flat sheets; used for roofs',info:'Shale changed by heat and pressure.',cycle:'More heat and pressure → phyllite → schist.'},
+ {id:'marble',name:'Marble',kind:'rock',grp:'metamorphic',rtype:'Metamorphic (non-foliated)',color:'White, pink, or gray, sometimes swirled',ck:'white',lens:'Interlocking sugary crystals. No layers.',lk:'crystalline',luster:'Sparkly (glassy grains)',lu:'sparkly',H:3,brk:'Breaks unevenly across sugary grains.',bk:'uneven',fizz:true,sg:2.7,sp:'Fizzes in acid; sugary sparkle',info:'Limestone changed by heat and pressure; the calcite crystals regrew and locked together.',cycle:'Melting → magma. Weathering → sediment.'},
+ {id:'gneiss',name:'Gneiss',kind:'rock',grp:'metamorphic',rtype:'Metamorphic (foliated)',color:'Light and dark stripes',ck:'banded',lens:'Coarse crystals lined up in light and dark bands.',lk:'bands',luster:'Mixed',lu:'mixed',H:6,brk:'Breaks unevenly, often along the bands.',bk:'uneven',sg:2.8,sp:'Wavy light and dark bands',info:'Granite or other rocks under very high heat and pressure; the minerals separated into bands.',cycle:'Even more heat → melts → magma → igneous rock.'},
+ {id:'quartzite',name:'Quartzite',kind:'rock',grp:'metamorphic',rtype:'Metamorphic (non-foliated)',color:'White, pink, or tan',ck:'light',lens:'Sugary grains fused tightly together. No layers.',lk:'crystalline',luster:'Sparkly, glassy',lu:'sparkly',H:7,brk:'Breaks right THROUGH the grains, not around them.',bk:'uneven',sg:2.65,sp:'Very hard; scratches glass; no fizz',info:'Sandstone changed by heat and pressure.',cycle:'Weathers very slowly back into sand.'}
+];
+const SP = {};
+SPECIES.forEach((s, i) => { s.n = i + 1; SP[s.id] = s; if (s.kind === 'mineral') { s.lk = 'single'; s.rtype = 'Mineral'; s.grp = 'mineral'; } });
+
+// The tests students can run. h = Mohs hardness of each scratch tool.
+const TESTS = [
+ {id:'look',icon:'👀',name:'Look at color'},
+ {id:'lens',icon:'🔍',name:'Hand lens'},
+ {id:'luster',icon:'✨',name:'Luster (shine)'},
+ {id:'streak',icon:'⬜',name:'Streak plate'},
+ {id:'h_nail',icon:'💅',name:'Fingernail (2.5)',h:2.5,tool:'fingernail'},
+ {id:'h_penny',icon:'🪙',name:'Copper penny (3.5)',h:3.5,tool:'copper penny'},
+ {id:'h_glass',icon:'🪟',name:'Glass plate (5.5)',h:5.5,tool:'glass plate'},
+ {id:'h_file',icon:'🔩',name:'Steel file (6.5)',h:6.5,tool:'steel file'},
+ {id:'break',icon:'🔨',name:'Break it'},
+ {id:'magnet',icon:'🧲',name:'Magnet'},
+ {id:'fizz',icon:'🧪',name:'Acid fizz test'},
+ {id:'heft',icon:'💧',name:'Water and heft'}
+];
+const TB = {}; TESTS.forEach(t => TB[t.id] = t);
+
+/* SCIENCE RULE: what each test shows for a specimen.
+   Returns {k: category key, txt: what the student reads}. */
+function result(s, tid) {
+  const t = TB[tid];
+  switch (tid) {
+    case 'look': return {k:s.ck, txt:`Color: ${s.color}.` + (s.kind === 'mineral' ? ' (Careful: color alone can fool you!)' : '')};
+    case 'lens': return {k:s.lk, txt:s.lens};
+    case 'luster': return {k:s.lu, txt:`Luster: ${s.luster}.`};
+    case 'streak': return s.kind === 'mineral' ? {k:s.sk, txt:`Streak: ${s.streak}.`}
+      : {k:'mixed', txt:'Patchy, mixed powder: different grains leave different colors. (Streak works best on single minerals.)'};
+    case 'h_nail': case 'h_penny': case 'h_file': {
+      // Mohs rule: the tool scratches the specimen only if the specimen is softer.
+      const d = s.H - t.h; let k, txt;
+      if (Math.abs(d) <= 0.25) { k = 'same'; txt = `About the same hardness as the ${t.tool}; the scratch is unclear. Try another tool.`; }
+      else if (d < 0) { k = 'yes'; txt = `The ${t.tool} SCRATCHES it → hardness is less than ${t.h}.`; }
+      else { k = 'no'; txt = `The ${t.tool} does NOT scratch it → hardness is more than ${t.h}.`; }
+      if (s.kind === 'rock') txt += ' (A rock is a mix, so this is an overall result.)';
+      return {k, txt};
+    }
+    case 'h_glass': {
+      // Reverse test: does the specimen scratch glass (hardness 5.5)?
+      const d = s.H - 5.5; let k, txt;
+      if (Math.abs(d) <= 0.25) { k = 'same'; txt = 'About as hard as glass; the scratch is unclear. Try another tool.'; }
+      else if (d > 0) { k = 'yes'; txt = 'It SCRATCHES the glass → hardness is more than 5.5.'; }
+      else { k = 'no'; txt = 'It does NOT scratch the glass → hardness is less than 5.5.'; }
+      if (s.kind === 'rock') txt += ' (A rock is a mix, so this is an overall result.)';
+      return {k, txt};
+    }
+    case 'break': return {k:s.bk, txt:s.brk};
+    case 'magnet': return s.mag ? {k:'yes', txt:'The magnet STICKS to it! Strongly magnetic.'} : {k:'no', txt:'No pull. Not magnetic.'};
+    case 'fizz': return s.fizz ? {k:'yes', txt:'It FIZZES! Bubbles of carbon dioxide gas mean it contains calcite (calcium carbonate).'} : {k:'no', txt:'No fizzing, so no calcite.'};
+    case 'heft':
+      // Density rule: floats if less dense than water (specific gravity < 1).
+      if (s.float) return {k:'float', txt:'It FLOATS! Trapped gas bubbles make it less dense than water.'};
+      if (s.sg >= 4.5) return {k:'vheavy', txt:`It sinks and feels VERY heavy for its size (specific gravity about ${s.sg}).`};
+      if (s.sg >= 3.5) return {k:'heavy', txt:`It sinks and feels a bit heavy for its size (specific gravity about ${s.sg}).`};
+      return {k:'normal', txt:`It sinks and feels like normal rock weight (specific gravity about ${s.sg}).`};
+  }
+}
+
+// Which specimens still match every test this specimen has had?
+function candidates(sp) {
+  const a = SP[sp.sid];
+  return SPECIES.filter(s => [...sp.done].every(t => result(s, t).k === result(a, t).k));
+}
+// The untried test that best splits the remaining possibilities.
+function bestTest(sp, cands) {
+  let best = null, bestScore = 1e9;
+  for (const t of TESTS) {
+    if (sp.done.has(t.id)) continue;
+    const groups = {};
+    cands.forEach(s => { const k = result(s, t.id).k; groups[k] = (groups[k] || 0) + 1; });
+    const n = Object.keys(groups).length; if (n < 2) continue;
+    const score = Math.max(...Object.values(groups));
+    if (score < bestScore) { bestScore = score; best = t; }
+  }
+  return best;
+}
+
+/* ---------- 2. THE DIG SITE ---------------------------------------- */
+const T = 48, COLS = 46, ROWS = 64, SURF = 9;        // SURF = grass row
+const SED_END = SURF + 18, MET_END = SURF + 34, MAG_START = ROWS - 5;
+const KM_PER_ROW = 0.1;                                // each block ≈ 100 m (squished!)
+const AIR=0,GRASS=1,SOIL=2,SAND=3,SHALE=4,LIME=5,SLATE=6,MARB=7,GNEI=8,GRAN=9,MAGMA=10,BASA=11;
+const TI = {
+  [GRASS]:{c:'#7a5233',hits:1},[SOIL]:{c:'#8a5a35',hits:1},
+  [SAND]:{c:'#d39a5e',hits:2},[SHALE]:{c:'#6a6f79',hits:2},[LIME]:{c:'#cfc7a9',hits:2},
+  [SLATE]:{c:'#4a5262',hits:3},[MARB]:{c:'#e3dfd7',hits:3},[GNEI]:{c:'#9c9189',hits:3},
+  [GRAN]:{c:'#c9a6a0',hits:4},[MAGMA]:{c:'#e8501a',hits:99},[BASA]:{c:'#3c3d44',hits:3}
+};
+function zoneOfType(t) {
+  if (t === GRASS || t === SOIL) return 'soil';
+  if (t === SAND || t === SHALE || t === LIME) return 'sedimentary';
+  if (t === SLATE || t === MARB || t === GNEI) return 'metamorphic';
+  if (t === GRAN) return 'igneous';
+  if (t === BASA) return 'volcanic';
+  if (t === MAGMA) return 'magma';
+  return 'surface';
+}
+const ZONES = {
+  surface:{short:'surface',name:'Surface',chat:'Rain, wind and ice slowly break rocks into sediment up here.',long:'At the surface, weathering and erosion break rocks into sediment (sand, mud, pebbles). Rivers, wind and waves carry it away and drop it in layers.'},
+  soil:{short:'soil',name:'Soil',chat:'Soil is broken-down rock mixed with bits of old plants.',long:'Soil is weathered rock mixed with decayed plants and animals. Below it is solid rock.'},
+  sedimentary:{short:'sedimentary layers',name:'Sedimentary layers',chat:'These flat layers were once sand, mud and shells. Deeper usually means older!',long:'You are in the sedimentary layers. Sand, mud and shells were laid down in flat layers, buried, squeezed (compaction) and glued together (cementation). Look here for sandstone, shale, limestone and conglomerate, plus minerals like gypsum, calcite and hematite.'},
+  metamorphic:{short:'metamorphic zone',name:'Metamorphic zone',chat:'Feel the squeeze? Heat and pressure change rocks down here without melting them.',long:'You are in the metamorphic zone. Heat and pressure change rocks without melting them: shale becomes slate, limestone becomes marble, sandstone becomes quartzite, and granite becomes gneiss. Garnet and talc grow here too.'},
+  igneous:{short:'igneous zone',name:'Igneous zone',chat:'Magma cooled slowly down here, so the crystals grew big!',long:'You are in the igneous zone. Magma cooled SLOWLY underground, so crystals grew large. That makes intrusive igneous rock like granite, with minerals like feldspar, quartz, mica and magnetite.'},
+  volcanic:{short:'old volcano',name:'Old volcano',chat:'Lava cooled fast here, so the crystals are tiny or missing!',long:'You are on an old volcano. Lava erupted and cooled QUICKLY at the surface, making extrusive igneous rocks with tiny crystals or none at all: basalt, obsidian and pumice.'},
+  magma:{short:'magma chamber',name:'Magma chamber',chat:'Magma! When it cools it becomes igneous rock.',long:'Below you is magma, melted rock at about 700–1,200 °C. When it cools and hardens, it becomes igneous rock.'}
+};
+// Which specimens can be found in each zone (based on where they really form)
+const ZONE_SPECIES = {
+  sedimentary:['sandstone','shale','limestone','conglomerate','gypsum','calcite','hematite','galena','fluorite','quartz','pyrite'],
+  metamorphic:['slate','marble','gneiss','quartzite','garnet','talc','muscovite','pyrite'],
+  igneous:['granite','feldspar','quartz','magnetite','muscovite'],
+  volcanic:['basalt','obsidian','pumice']
+};
+const VC = COLS - 7; // center column of the old volcano
+let tile, back, spec, dmg;
+
+function genWorld() {
+  tile = []; back = []; spec = []; dmg = [];
+  for (let r = 0; r < ROWS; r++) {
+    tile.push([]); spec.push([]); dmg.push([]);
+    for (let c = 0; c < COLS; c++) {
+      let t = AIR;
+      const fold = Math.round(Math.sin(c * 0.33) * 2);          // gentle folds in metamorphic bands
+      if (r === SURF) t = GRASS;
+      else if (r > SURF && r <= SURF + 2) t = SOIL;
+      else if (r > SURF + 2 && r <= SED_END) t = [SAND, SHALE, LIME][Math.floor((r - SURF - 3) / 3) % 3]; // flat beds
+      else if (r > SED_END && r <= MET_END) t = [SLATE, MARB, GNEI][(((Math.floor((r - SED_END + fold + 4) / 3)) % 3) + 3) % 3];
+      else if (r > MET_END && r < MAG_START + ((c * 7) % 3 === 0 ? -1 : 0)) t = GRAN;
+      else if (r > MET_END) t = MAGMA;
+      tile[r].push(t); spec[r].push(null); dmg[r].push(0);
+    }
+  }
+  // Old volcano: a cone of basalt (cooled lava) on the east side
+  for (let c = VC - 6; c < COLS; c++) {
+    const d = Math.abs(c - VC);
+    let h = Math.max(0, 7 - d); if (d <= 1) h = 4; else if (d === 2) h = 5;
+    for (let r = SURF - h; r <= SURF + 2; r++) tile[r][c] = BASA;
+  }
+  back = tile.map(row => row.slice());
+  // Hide specimens in each zone; every species appears at least once
+  const counts = {sedimentary:26, metamorphic:24, igneous:18, volcanic:8};
+  for (const z in counts) {
+    const cells = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (zoneOfType(tile[r][c]) === z) cells.push([r, c]);
+    shuffle(cells);
+    const list = shuffle(ZONE_SPECIES[z].slice());
+    for (let i = 0; i < counts[z] && i < cells.length; i++) spec[cells[i][0]][cells[i][1]] = list[i % list.length];
+  }
+  // One easy specimen right near camp for a quick first find
+  spec[SURF + 4][SPAWN_C + 2] = ['sandstone', 'shale', 'limestone'][Math.floor(Math.random() * 3)];
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ---------- 3. GAME STATE ------------------------------------------ */
+const SPAWN_C = 7;
+const player = {x:0, y:0, w:30, h:40, vx:0, vy:0, face:1, onGround:false, mood:'happy', moodT:0};
+let pet = null, bag = [], labIdx = 0, uidN = 0, labResult = null;
+const notebook = []; // finished identifications: tests, guesses and XP
+const found = new Set(), counts = {}, idBy = {};
+let idTotal = 0, xp = 0, mi = 0;
+// XP levels (titles students work toward)
+const LEVELS = [[0, 'Rock Rookie'], [300, 'Pebble Pro'], [800, 'Crystal Collector'], [1500, 'Field Geologist'], [2500, 'Master Rock Hound']];
+function levelOf(x) { let i = 0; while (i + 1 < LEVELS.length && x >= LEVELS[i + 1][0]) i++; return i; }
+// Evidence bonus: fewer tests = more XP (1–2 tests: 60, then 10 less per extra test)
+function effBonus(n) { return n <= 2 ? 60 : Math.max(0, 60 - 10 * (n - 2)); }
+// XP RULE: base 100 + evidence bonus (only if the evidence points to ONE match), cut for extra guesses
+function xpFor(sp) {
+  const n = sp.done.size;
+  if (n === 0) return {xp:10, lines:['Correct, but it was a guess with no evidence: +10 XP. Test first to earn much more!']};
+  const left = candidates(sp).length, bonus = left === 1 ? effBonus(n) : 0;
+  const mult = sp.tries === 1 ? 1 : sp.tries === 2 ? .5 : .25;
+  const lines = ['Correct identification: +100 XP'];
+  lines.push(left === 1 ? `Evidence bonus (${n} test${n > 1 ? 's' : ''}, results matched only one chart entry): +${bonus} XP`
+    : `No evidence bonus: your ${n} test${n > 1 ? 's' : ''} still matched ${left} chart entries, so part of this was a guess. Pick tests that rule things out!`);
+  if (mult < 1) lines.push(`Guess ${sp.tries}: XP ×${mult}`);
+  return {xp:Math.round((100 + bonus) * mult), lines};
+}
+let time = 0, digCool = 0, digAnim = 0, hotCool = 0, idleT = 0, magmaTalkT = 0;
+let current = null, stack = [], reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const keys = {}, particles = [], floats = [];
+const cam = {x:0, y:0};
+const MISSIONS = [
+  {t:'Dig down and identify your first mystery specimen.', ok:() => idTotal >= 1},
+  {t:'Identify 3 specimens from the sedimentary layers.', ok:() => (idBy.sedimentary || 0) >= 3},
+  {t:'Visit the Rock Cycle Machine at camp and correctly predict a change.', ok:() => rcCorrect >= 1},
+  {t:'Dig deeper and identify a specimen from the metamorphic zone.', ok:() => (idBy.metamorphic || 0) >= 1},
+  {t:'Go deep and identify a specimen from the igneous zone.', ok:() => (idBy.igneous || 0) >= 1},
+  {t:'Walk east to the old volcano and identify a lava rock.', ok:() => (idBy.volcanic || 0) >= 1},
+  {t:'Complete a Rock Cycle Challenge at the machine.', ok:() => chWins >= 1},
+  {t:'Complete the Rock Dex: discover all 30!', ok:() => found.size >= DEX.length}
+];
+
+/* ---------- 4. SOUND (Web Audio, all generated) -------------------- */
+let AC = null, master = null, soundOn = false;
+function audioInit() {
+  if (AC) return;
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  master = AC.createGain(); master.gain.value = 0; master.connect(AC.destination);
+  startMusic();
+}
+function setSound(on) {
+  soundOn = on; audioInit();
+  if (AC) { if (AC.state === 'suspended') AC.resume(); master.gain.setTargetAtTime(on ? 1 : 0, AC.currentTime, 0.05); }
+  $('#bSound').innerHTML = (on ? '<span>🔊 Sound: on</span>' : '<span>🔇 Sound: off</span>') + '<kbd>M</kbd>';
+  $('#bSound').classList.toggle('on', on);
+}
+function tone(f, dur, o = {}) {
+  if (!AC || !soundOn) return;
+  const t0 = AC.currentTime + (o.when || 0), osc = AC.createOscillator(), g = AC.createGain();
+  osc.type = o.type || 'sine'; osc.frequency.setValueAtTime(f, t0);
+  if (o.slide) osc.frequency.exponentialRampToValueAtTime(o.slide, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(o.vol || 0.15, t0 + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(g); g.connect(master); osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function noise(dur, vol, freq) {
+  if (!AC || !soundOn) return;
+  const buf = AC.createBuffer(1, Math.floor(AC.sampleRate * dur), AC.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+  src.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol;
+  src.connect(f); f.connect(g); g.connect(master); src.start();
+}
+const SFX = {
+  machine:() => { noise(1.2, .12, 300); [0, .4, .8, 1.2, 1.6].forEach((w, i) => tone(200 + i * 60, .25, {type:'triangle', vol:.07, when:w})); },
+  sense:() => { tone(1568, .15, {vol:.06}); tone(2093, .2, {vol:.05, when:.08}); },
+  build:() => { noise(.08, .3, 900); tone(240, .12, {type:'square', vol:.05}); },
+  tap:() => noise(.07, .35, 700),
+  break:() => { noise(.25, .45, 500); tone(110, .2, {type:'triangle', vol:.2}); },
+  find:() => [660, 880, 1320].forEach((f, i) => tone(f, .3, {type:'triangle', vol:.14, when:i * .09})),
+  right:() => [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, {type:'triangle', vol:.15, when:i * .1})),
+  wrong:() => { tone(330, .18, {type:'square', vol:.05}); tone(247, .3, {type:'square', vol:.05, when:.18}); },
+  test:() => tone(620, .12, {vol:.12}),
+  fizz:() => noise(.7, .2, 5000),
+  magnet:() => tone(180, .35, {type:'sawtooth', vol:.05, slide:420}),
+  jump:() => tone(300, .12, {vol:.07, slide:520}),
+  hot:() => noise(.5, .3, 2500),
+  rope:() => tone(200, .6, {type:'triangle', vol:.12, slide:800}),
+  pet:() => { tone(880, .1, {vol:.1}); tone(1175, .12, {vol:.1, when:.1}); }
+};
+const CAPTIONS = {machine:'machine whirring', sense:'twinkle: pet senses a specimen', build:'clunk: rock placed', break:'crunch', find:'discovery chime', right:'success fanfare', wrong:'“hmm” buzz', fizz:'fizzzz', magnet:'magnet zing', hot:'sizzle', rope:'whoosh up the rope', pet:'pet rock squeak', test:'lab beep'};
+let capTimer = 0;
+function sfx(n) {
+  SFX[n] && SFX[n]();
+  if (CAPTIONS[n]) { const el = $('#caption'); el.textContent = '🔊 [' + CAPTIONS[n] + ']'; el.style.display = 'block'; clearTimeout(capTimer); capTimer = setTimeout(() => el.style.display = 'none', 1400); }
+}
+// Soft background loop: gentle pentatonic melody over a slow bass
+const MEL = [0,4,7,9, 7,4,2,null, 0,2,4,7, 9,7,4,null, 12,9,7,4, 2,4,7,null, 4,2,0,2, 4,null,0,null];
+const BASS = [0, -3, -7, -5];
+function startMusic() {
+  let step = 0, next = AC.currentTime + 0.2; const beat = 0.42;
+  setInterval(() => {
+    if (!soundOn) { next = AC.currentTime + 0.2; return; }
+    while (next < AC.currentTime + 0.6) {
+      const w = next - AC.currentTime, n = MEL[step % MEL.length];
+      if (n !== null) tone(262 * Math.pow(2, n / 12), beat * 0.9, {type:'triangle', vol:.03, when:w});
+      if (step % 8 === 0) tone(131 * Math.pow(2, BASS[(step / 8) % 4] / 12), beat * 7, {vol:.05, when:w});
+      next += beat; step++;
+    }
+  }, 120);
+}
+
+/* ---------- 5. SPECIMEN ART (drawn to look like real samples) ------ */
+function rng(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function blobP(R, cx, cy, rx, ry, n, j) {
+  const pts = [];
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, k = 1 - j + R() * 2 * j; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+  const mid = i => { const a = pts[i % n], b = pts[(i + 1) % n]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; };
+  const p = new Path2D(); let m = mid(0); p.moveTo(m[0], m[1]);
+  for (let i = 1; i <= n; i++) { const q = pts[i % n]; m = mid(i); p.quadraticCurveTo(q[0], q[1], m[0], m[1]); }
+  p.closePath(); return p;
+}
+function polyP(pts) { const p = new Path2D(); p.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) p.lineTo(pts[i][0], pts[i][1]); p.closePath(); return p; }
+function rockShape(c, R, base, tex, o = {}) {
+  const p = o.path || blobP(R, 50, 56, 40, o.ry || 30, o.n || 11, o.j || 0.14);
+  c.fillStyle = base; c.fill(p); c.save(); c.clip(p); tex();
+  const g = c.createRadialGradient(35, 38, 4, 55, 62, 54);
+  g.addColorStop(0, 'rgba(255,255,255,.28)'); g.addColorStop(.55, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.32)');
+  c.fillStyle = g; c.fillRect(0, 0, 100, 100); c.restore();
+  c.lineWidth = 2.5; c.strokeStyle = 'rgba(15,18,30,.6)'; c.stroke(p);
+}
+function dots(c, R, n, cols, r0, r1) { for (let i = 0; i < n; i++) { c.fillStyle = cols[Math.floor(R() * cols.length)]; c.beginPath(); c.arc(R() * 100, R() * 100, r0 + R() * (r1 - r0), 0, 7); c.fill(); } }
+function chips(c, R, n, cols, s0, s1) { for (let i = 0; i < n; i++) { const x = R() * 100, y = R() * 100, s = s0 + R() * (s1 - s0); c.fillStyle = cols[Math.floor(R() * cols.length)]; c.fill(polyP([[x, y - s], [x + s * (.6 + R() * .6), y - s * .2], [x + s * .3, y + s], [x - s * (.6 + R() * .5), y + s * .3]])); } }
+function box(c, x, y, w, h, d, f, t, sd) {
+  const e = d * .6;
+  c.fillStyle = f; c.fillRect(x, y, w, h);
+  c.fillStyle = t; c.fill(polyP([[x, y], [x + d, y - e], [x + w + d, y - e], [x + w, y]]));
+  c.fillStyle = sd; c.fill(polyP([[x + w, y], [x + w + d, y - e], [x + w + d, y + h - e], [x + w, y + h]]));
+  c.strokeStyle = 'rgba(15,18,30,.65)'; c.lineWidth = 2;
+  c.stroke(polyP([[x, y], [x + d, y - e], [x + w + d, y - e], [x + w + d, y + h - e], [x + w, y + h], [x, y + h]]));
+  c.beginPath(); c.moveTo(x, y); c.lineTo(x + w, y); c.lineTo(x + w, y + h); c.moveTo(x + w, y); c.lineTo(x + w + d, y - e); c.stroke();
+}
+function crystal(c, x, by, w, h, ang, col) {
+  c.save(); c.translate(x, by); c.rotate(ang); const tip = w * .75;
+  const P = polyP([[-w / 2, 0], [-w / 2, -h], [0, -h - tip], [w / 2, -h], [w / 2, 0]]);
+  c.fillStyle = col; c.fill(P);
+  c.fillStyle = 'rgba(255,255,255,.5)'; c.fill(polyP([[-w / 2, 0], [-w / 2, -h], [0, -h - tip], [-w / 6, -h], [-w / 6, 0]]));
+  c.fillStyle = 'rgba(60,70,100,.2)'; c.fill(polyP([[w / 6, 0], [w / 6, -h], [0, -h - tip], [w / 2, -h], [w / 2, 0]]));
+  c.strokeStyle = 'rgba(70,80,110,.8)'; c.lineWidth = 1.6; c.stroke(P);
+  c.beginPath(); c.moveTo(-w / 6, 0); c.lineTo(-w / 6, -h); c.lineTo(0, -h - tip); c.lineTo(w / 6, -h); c.lineTo(w / 6, 0);
+  c.moveTo(-w / 2, -h); c.lineTo(-w / 6, -h); c.moveTo(w / 6, -h); c.lineTo(w / 2, -h); c.stroke(); c.restore();
+}
+function shine(c, x, y, s) { c.fillStyle = 'rgba(255,255,255,.92)'; c.fill(polyP([[x, y - s], [x + s * .25, y - s * .25], [x + s, y], [x + s * .25, y + s * .25], [x, y + s], [x - s * .25, y + s * .25], [x - s, y], [x - s * .25, y - s * .25]])); }
+
+const ART = {
+  quartz(c, R) { rockShape(c, R, '#bdb6aa', () => dots(c, R, 60, ['#a39b8e', '#d2ccc2'], .6, 1.6), {path:blobP(R, 50, 80, 38, 12, 9, .12)});
+    crystal(c, 32, 82, 17, 40, -.38, 'rgba(234,239,248,.95)'); crystal(c, 68, 82, 15, 32, .42, 'rgba(234,239,248,.95)'); crystal(c, 50, 84, 21, 52, .04, 'rgba(244,246,252,.96)'); shine(c, 46, 32, 6); },
+  feldspar(c, R) { box(c, 16, 42, 46, 42, 22, '#e3a089', '#f2c4b2', '#c47f69'); c.strokeStyle = 'rgba(255,236,226,.75)'; c.lineWidth = 2;
+    for (let i = 0; i < 6; i++) { const y = 49 + i * 6 + R() * 2; c.beginPath(); c.moveTo(20, y); c.bezierCurveTo(32, y - 3, 46, y + 3, 58, y); c.stroke(); } shine(c, 28, 47, 4); },
+  calcite(c, R) { c.save(); c.translate(8, 0); c.transform(1, 0, -.35, 1, 0, 0); box(c, 38, 40, 38, 38, 18, 'rgba(246,234,206,.96)', 'rgba(255,249,232,.96)', 'rgba(222,204,164,.96)'); c.restore();
+    c.strokeStyle = 'rgba(60,50,30,.55)'; c.lineWidth = 2; c.beginPath(); c.moveTo(30, 60); c.lineTo(54, 60); c.stroke(); c.beginPath(); c.moveTo(32, 66); c.lineTo(56, 66); c.stroke(); shine(c, 40, 46, 5); },
+  gypsum(c, R) { for (let i = 0; i < 7; i++) { const a = -.5 + i * .17 + R() * .05; c.save(); c.translate(50, 88); c.rotate(a); const w = 9 + R() * 4, h = 56 + R() * 14;
+      const P = polyP([[-w / 2, 0], [-w / 2 + 2, -h], [w / 2 - 1, -h - 5], [w / 2, 0]]); const g = c.createLinearGradient(-w / 2, 0, w / 2, 0);
+      g.addColorStop(0, '#f3f1ea'); g.addColorStop(.5, '#ffffff'); g.addColorStop(1, '#d2cec4'); c.fillStyle = g; c.fill(P);
+      c.strokeStyle = 'rgba(80,80,90,.55)'; c.lineWidth = 1.4; c.stroke(P); c.strokeStyle = 'rgba(170,165,155,.6)'; c.lineWidth = .8;
+      for (let k = 1; k < 3; k++) { c.beginPath(); c.moveTo(-w / 2 + k * w / 3, 0); c.lineTo(-w / 2 + k * w / 3, -h); c.stroke(); } c.restore(); } },
+  talc(c, R) { rockShape(c, R, '#cddfc3', () => { c.strokeStyle = 'rgba(140,165,130,.6)'; c.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const y = 28 + i * 7; c.beginPath(); c.moveTo(0, y + R() * 4); c.lineTo(100, y + R() * 4); c.stroke(); }
+      c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(30 + R() * 40, 42 + R() * 26, 10 + R() * 12, 3.6, 5.2); c.stroke(); } }, {j:.1}); },
+  muscovite(c, R) { const hex = (cy, rx, ry) => polyP([[50 - rx, cy], [50 - rx * .5, cy - ry], [50 + rx * .5, cy - ry], [50 + rx, cy], [50 + rx * .5, cy + ry], [50 - rx * .5, cy + ry]]);
+    for (let i = 0; i < 12; i++) { c.fillStyle = i % 2 ? '#a8936c' : '#7f6c4b'; c.fill(hex(76 - i * 2, 38, 19)); }
+    const top = hex(52, 38, 19), g = c.createLinearGradient(15, 35, 85, 70); g.addColorStop(0, '#f1ece0'); g.addColorStop(.5, '#cfc4ab'); g.addColorStop(1, '#efe8d6');
+    c.fillStyle = g; c.fill(top); c.strokeStyle = 'rgba(40,30,20,.6)'; c.lineWidth = 2; c.stroke(top); c.stroke(hex(76, 38, 19));
+    c.save(); c.translate(14, -10); c.rotate(-.12); c.fillStyle = 'rgba(240,235,222,.6)'; const fl = hex(46, 20, 10); c.fill(fl); c.lineWidth = 1.3; c.stroke(fl); c.restore(); shine(c, 40, 46, 5); },
+  pyrite(c, R) { const f = '#c9a227', t = '#ead27a', s = '#977414'; box(c, 50, 30, 22, 22, 11, f, t, s); box(c, 40, 48, 34, 34, 16, f, t, s); box(c, 12, 58, 28, 28, 13, f, t, s);
+    c.strokeStyle = 'rgba(110,80,10,.45)'; c.lineWidth = 1; for (let y = 62; y < 86; y += 4) { c.beginPath(); c.moveTo(13, y); c.lineTo(39, y); c.stroke(); } shine(c, 20, 63, 5); shine(c, 50, 52, 4); },
+  magnetite(c, R) { const A = [50, 12], L = [18, 52], Rt = [82, 52], B = [50, 90], F = [44, 56];
+    c.fillStyle = '#4a4a52'; c.fill(polyP([A, L, F])); c.fillStyle = '#2c2c31'; c.fill(polyP([A, F, Rt])); c.fillStyle = '#1b1b1f'; c.fill(polyP([L, F, B])); c.fillStyle = '#101013'; c.fill(polyP([F, Rt, B]));
+    c.strokeStyle = '#7a7a84'; c.lineWidth = 2; c.stroke(polyP([A, L, B, Rt])); c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(F[0], F[1]); c.lineTo(B[0], B[1]); c.moveTo(L[0], L[1]); c.lineTo(F[0], F[1]); c.lineTo(Rt[0], Rt[1]); c.stroke(); shine(c, 36, 36, 5); },
+  hematite(c, R) { rockShape(c, R, '#7a3a2e', () => dots(c, R, 40, ['#8f4636', '#6a2f25'], 1, 3), {ry:26});
+    for (let i = 0; i < 9; i++) { const x = 26 + R() * 48, y = 40 + R() * 24, r = 9 + R() * 7, g = c.createRadialGradient(x - r * .4, y - r * .4, 1, x, y, r);
+      g.addColorStop(0, '#d8dbe2'); g.addColorStop(.35, '#6e7079'); g.addColorStop(1, '#34353b'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); } },
+  galena(c, R) { const f = '#959ca6', t = '#c9d0d9', s = '#666d77'; box(c, 46, 30, 28, 28, 14, f, t, s); box(c, 16, 46, 34, 34, 16, f, t, s); box(c, 52, 60, 24, 24, 12, f, t, s); shine(c, 26, 50, 6); shine(c, 60, 64, 4); },
+  fluorite(c, R) { const f = 'rgba(139,92,196,.93)', t = 'rgba(178,142,224,.93)', s = 'rgba(104,62,158,.93)'; box(c, 46, 34, 32, 32, 15, f, t, s); box(c, 16, 48, 36, 36, 17, f, t, s);
+    c.fillStyle = 'rgba(121,199,157,.6)'; c.fillRect(19, 71, 30, 11); shine(c, 26, 55, 5); },
+  garnet(c, R) { rockShape(c, R, '#8e8a82', () => { c.strokeStyle = 'rgba(220,215,200,.5)'; c.lineWidth = 1.5; for (let i = 0; i < 9; i++) { const y = 46 + i * 6; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(30, y - 4, 60, y + 4, 100, y); c.stroke(); } }, {path:blobP(R, 50, 68, 42, 20, 10, .12)});
+    const cx = 52, cy = 50, r = 28, V = []; for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; V.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+    const C = [cx, cy - 2], cols = ['#a3243a', '#7d1528', '#5a0f1c', '#6b1322', '#8f1d31', '#b8344a'];
+    for (let i = 0; i < 6; i++) { c.fillStyle = cols[i]; c.fill(polyP([C, V[i], V[(i + 1) % 6]])); }
+    c.strokeStyle = 'rgba(30,5,10,.85)'; c.lineWidth = 2; c.stroke(polyP(V)); c.beginPath(); for (const v of V) { c.moveTo(C[0], C[1]); c.lineTo(v[0], v[1]); } c.stroke(); shine(c, 42, 38, 5); },
+  granite(c, R) { rockShape(c, R, '#d8c4bb', () => chips(c, R, 95, ['#e39a8a', '#e39a8a', '#f5f2ec', '#1e1e22', '#a8a8b0'], 2.5, 5.5)); },
+  basalt(c, R) { rockShape(c, R, '#3e3f46', () => { dots(c, R, 260, ['#2b2c31', '#50515a'], .5, 1.3); for (let i = 0; i < 5; i++) { c.fillStyle = '#1d1e22'; c.beginPath(); c.ellipse(R() * 100, R() * 100, 2 + R() * 2, 1.4 + R(), 0, 0, 7); c.fill(); } }); },
+  obsidian(c, R) { rockShape(c, R, '#131317', () => { c.strokeStyle = 'rgba(255,255,255,.13)'; c.lineWidth = 2; for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(72, 72, 12 + i * 9, 3.3, 4.6); c.stroke(); }
+      c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 3.5; c.beginPath(); c.arc(48, 60, 26, 3.6, 4.4); c.stroke(); }, {n:7, j:.22}); },
+  pumice(c, R) { rockShape(c, R, '#e7e0d1', () => { for (let i = 0; i < 70; i++) { const x = R() * 100, y = R() * 100, r = 1 + R() * 2.6;
+      c.fillStyle = '#b5ab98'; c.beginPath(); c.ellipse(x, y, r * 1.4, r, 0, 0, 7); c.fill(); c.fillStyle = '#8f8676'; c.beginPath(); c.ellipse(x + .4, y + .4, r * .7, r * .5, 0, 0, 7); c.fill(); } }); },
+  sandstone(c, R) { rockShape(c, R, '#d39a5c', () => { c.strokeStyle = 'rgba(150,85,40,.28)'; c.lineWidth = 3; for (let y = 24; y < 100; y += 11) { c.beginPath(); c.moveTo(0, y); c.lineTo(100, y + 3); c.stroke(); }
+      dots(c, R, 420, ['#ecc08b', '#b5793f', '#f5dcb5'], .5, 1.1); }, {ry:27}); },
+  shale(c, R) { rockShape(c, R, '#5d626c', () => { for (let y = 28; y < 100; y += 4.5) { c.strokeStyle = R() < .5 ? '#474b54' : '#727782'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, y); c.lineTo(100, y + R() * 2 - 1); c.stroke(); } }, {ry:21, j:.1, n:8}); },
+  limestone(c, R) { rockShape(c, R, '#cec7ae', () => { dots(c, R, 160, ['#bdb59a', '#ddd7c3'], .5, 1.2); c.strokeStyle = '#8f8569'; c.lineWidth = 1.6;
+      for (const [x, y] of [[34, 50], [62, 64], [46, 74]]) { c.beginPath(); c.arc(x, y + 6, 9, Math.PI + .35, Math.PI * 2 - .35); c.stroke();
+        for (let k = 0; k < 5; k++) { const a = Math.PI + .5 + k * (Math.PI - 1) / 4; c.beginPath(); c.moveTo(x, y + 6); c.lineTo(x + Math.cos(a) * 9, y + 6 + Math.sin(a) * 9); c.stroke(); } }
+      c.beginPath(); c.moveTo(70, 44); for (let a = 0; a < 12; a += .3) { const r = a * .7; c.lineTo(70 + Math.cos(a) * r, 44 + Math.sin(a) * r); } c.stroke(); }); },
+  conglomerate(c, R) { rockShape(c, R, '#b7a37e', () => { dots(c, R, 200, ['#a58f6a', '#cbb894'], .5, 1.1); const cols = ['#8b8c95', '#ddd5c4', '#6c4f3a', '#c48a69', '#4f5561', '#e9e3d6'];
+      for (let i = 0; i < 16; i++) { const x = 10 + R() * 80, y = 25 + R() * 65, rx = 4 + R() * 7, ry = rx * (.6 + R() * .35), a = R() * 3;
+        c.fillStyle = cols[i % cols.length]; c.beginPath(); c.ellipse(x, y, rx, ry, a, 0, 7); c.fill(); c.strokeStyle = 'rgba(40,30,20,.5)'; c.lineWidth = 1.2; c.stroke();
+        c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(x - rx * .3, y - ry * .35, rx * .35, ry * .25, 0, 0, 7); c.fill(); } }); },
+  slate(c, R) { rockShape(c, R, '#3f4653', () => { c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = 2; for (let x = -40; x < 120; x += 7) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 50, 100); c.stroke(); } },
+      {path:polyP([[8, 54], [28, 38], [80, 32], [94, 46], [86, 70], [40, 78], [12, 70]])}); },
+  marble(c, R) { rockShape(c, R, '#efece6', () => { dots(c, R, 140, ['#f9f8f4', '#d8d5ce'], .5, 1.2); c.strokeStyle = 'rgba(130,128,125,.65)'; c.lineWidth = 1.6;
+      for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(0, 30 + i * 22 + R() * 8); c.bezierCurveTo(30, 20 + i * 25, 55, 55 + i * 12, 100, 40 + i * 20); c.stroke(); }
+      for (let i = 0; i < 6; i++) shine(c, 15 + R() * 70, 30 + R() * 50, 1.8); }); },
+  gneiss(c, R) { rockShape(c, R, '#c7bdb1', () => { const bands = [['#38343a', 6], ['#efe8dd', 4], ['#d59f8f', 4], ['#38343a', 5], ['#efe8dd', 3], ['#3e3a3c', 6], ['#d59f8f', 4]]; let y = 28;
+      for (const [col, w] of bands) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); for (let x = 0; x <= 100; x += 4) { const yy = y + Math.sin(x / 14) * 6; if (x) c.lineTo(x, yy); else c.moveTo(x, yy); } c.stroke(); y += w + 5; } }); },
+  quartzite(c, R) { rockShape(c, R, '#e7cfc3', () => { dots(c, R, 320, ['#f6ebe4', '#d5b6a8', '#efdcd2'], .6, 1.4); for (let i = 0; i < 7; i++) shine(c, 15 + R() * 70, 30 + R() * 50, 1.6); }); }
+};
+function drawSpecimen(c, s, S) {
+  const R = rng(hashStr(s.id)); c.save(); c.scale(S / 100, S / 100);
+  c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(50, 91, 36, 6, 0, 0, 7); c.fill();
+  c.lineJoin = 'round'; ART[s.id](c, R); c.restore();
+}
+const spriteCv = {}, spriteURL = {};
+function buildSprites() {
+  for (const s of SPECIES) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 160;
+    drawSpecimen(cv.getContext('2d'), s, 160); spriteCv[s.id] = cv; spriteURL[s.id] = cv.toDataURL();
+  }
+}
+
+/* ---------- 6. CHARACTERS ------------------------------------------ */
+// A face that sits on any rock. White eye patches keep it visible on dark rocks.
+function drawFace(c, x, y, s, mood, look, blink) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  for (const ex of [-7, 7]) {
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(ex, -2, 4.6, blink ? 1 : (mood === 'wow' ? 6.2 : 5.4), 0, 0, 7); c.fill();
+    c.strokeStyle = '#1c2541'; c.lineWidth = 1.2; c.stroke();
+    if (!blink) { c.fillStyle = '#1c2541'; c.beginPath(); c.arc(ex + look * 1.6, -1, 2.5, 0, 7); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(ex + look * 1.6 + .9, -2, .9, 0, 7); c.fill(); }
+  }
+  c.fillStyle = 'rgba(255,120,140,.65)'; for (const bx of [-12, 12]) { c.beginPath(); c.ellipse(bx, 5, 3, 2, 0, 0, 7); c.fill(); }
+  mouth(c, 0, 7, mood);
+  c.restore();
+}
+function mouth(c, x, y, mood) {
+  for (const [col, lw] of [['#fff', 4], ['#1c2541', 2]]) {
+    c.strokeStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.beginPath();
+    if (mood === 'wow') c.ellipse(x, y + 1, 2.4, 3, 0, 0, 7);
+    else if (mood === 'sad') c.arc(x, y + 4, 4, Math.PI * 1.2, Math.PI * 1.8);
+    else if (mood === 'hot') { c.moveTo(x - 4, y); c.lineTo(x - 2, y - 1.5); c.lineTo(x, y); c.lineTo(x + 2, y - 1.5); c.lineTo(x + 4, y); }
+    else if (mood === 'think') { c.moveTo(x - 3, y + 1); c.lineTo(x + 3, y); }
+    else c.arc(x, y - 2, 4, Math.PI * .15, Math.PI * .85);
+    c.stroke();
+  }
+}
+// The geologist: rounded blocky style, hard hat with lamp, pick in hand
+function drawPerson(c, cx, by, face, mood, walk, swing, sc) {
+  c.save(); c.translate(cx, by); c.scale(face * sc, sc);
+  c.fillStyle = '#1c2541'; rr(c, -10, -10 - Math.max(0, walk) * 3, 8, 10, 3); c.fill(); rr(c, 2, -10 - Math.max(0, -walk) * 3, 8, 10, 3); c.fill();
+  c.fillStyle = '#e8711c'; rr(c, -13, -27, 26, 19, 7); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 2.5; c.stroke();
+  c.fillStyle = '#3a86c8'; rr(c, -9, -19, 18, 10, 3); c.fill();
+  c.save(); c.translate(11, -20); c.rotate(swing > 0 ? -1.3 + (0.2 - swing) * 8 : 0.3);
+  c.strokeStyle = '#7a5233'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 9); c.lineTo(0, -8); c.stroke();
+  c.strokeStyle = '#9aa3ad'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(-7, -7); c.quadraticCurveTo(0, -12, 7, -7); c.stroke();
+  c.fillStyle = '#e7b48a'; c.beginPath(); c.arc(0, 2, 3.5, 0, 7); c.fill(); c.restore();
+  c.fillStyle = '#e7b48a'; rr(c, -12, -46, 24, 20, 8); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 2.5; c.stroke();
+  c.fillStyle = '#ffcc33'; c.beginPath(); c.arc(0, -43, 13, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+  rr(c, -15, -45, 30, 5, 2); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(7, -50, 3.2, 0, 7); c.fill(); c.stroke();
+  c.fillStyle = '#1c2541';
+  if (mood === 'hot') { c.lineWidth = 2; c.beginPath(); c.moveTo(-6, -36); c.lineTo(-1, -35); c.moveTo(3, -35); c.lineTo(8, -36); c.stroke();
+    c.fillStyle = '#7cc4f0'; c.beginPath(); c.moveTo(-13, -42); c.quadraticCurveTo(-17, -36, -13, -34); c.quadraticCurveTo(-9, -36, -13, -42); c.fill(); }
+  else { const er = mood === 'wow' ? 2.8 : 2; c.beginPath(); c.arc(-3, -36, er, 0, 7); c.arc(5, -36, er, 0, 7); c.fill(); }
+  mouth(c, 1, -30, mood);
+  c.restore();
+}
+
+/* ---------- 7. HELPERS --------------------------------------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function hr(r, c, k) { let h = (r * 374761393 + c * 668265263 + k * 1442695041) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); return `rgb(${(n >> 16) * f | 0},${((n >> 8) & 255) * f | 0},${(n & 255) * f | 0})`; }
+const BACKC = {}; for (const t in TI) BACKC[t] = shade(TI[t].c, .42);
+let toastT = 0;
+function toast(html, ms = 3500) { const el = $('#toast'); el.innerHTML = html; el.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => el.style.display = 'none', ms); }
+function burst(x, y, cols, n) { if (reduceMotion) return; for (let i = 0; i < n; i++) particles.push({x, y, vx:(Math.random() - .5) * 320, vy:-Math.random() * 320 - 40, life:.7 + Math.random() * .4, col:cols[i % cols.length], s:4 + Math.random() * 4}); }
+function floatText(x, y, txt) { floats.push({x, y, txt, life:1.6}); }
+function setMood(m, t) { player.mood = m; player.moodT = t; }
+function isSolid(r, c) { if (c < 0 || c >= COLS || r >= ROWS) return true; if (r < 0) return false; return tile[r][c] !== AIR; }
+function depthKm(rowFloat) { return Math.max(0, rowFloat - SURF) * KM_PER_ROW; }
+function playerZone() {
+  const r = Math.floor((player.y + player.h / 2) / T), c = Math.floor((player.x + player.w / 2) / T);
+  const b = back[r] && back[r][c];
+  if (b) return zoneOfType(b);
+  return (tile[r + 1] && tile[r + 1][c] === BASA) || (back[SURF] && back[SURF][c] === BASA) ? 'volcanic' : 'surface';
+}
+
+/* ---------- 8. DIGGING AND FINDING --------------------------------- */
+function hit(r, c) {
+  const t = tile[r][c]; if (t === AIR) return;
+  digCool = 0.2; digAnim = 0.2;
+  if (t === MAGMA) { ouch(); return; }
+  dmg[r][c]++;
+  const need = spec[r][c] ? 2 : TI[t].hits;
+  burst(c * T + T / 2, r * T + T / 2, [TI[t].c, shade(TI[t].c, .7)], 4); sfx('tap');
+  if (dmg[r][c] >= need) {
+    tile[r][c] = AIR; dmg[r][c] = 0;
+    burst(c * T + T / 2, r * T + T / 2, [TI[t].c, shade(TI[t].c, .6), '#fff'], 12); sfx('break');
+    if (spec[r][c]) foundSpecimen(r, c);
+  }
+}
+function foundSpecimen(r, c) {
+  const sid = spec[r][c]; spec[r][c] = null;
+  const sp = {uid:++uidN, sid, zone:zoneOfType(back[r][c]), depth:depthKm(r), done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[]};
+  bag.push(sp); labIdx = bag.length - 1;
+  sfx('find'); burst(c * T + T / 2, r * T + T / 2, ['#fff', '#ffcc33', '#3a86c8'], 24);
+  floatText(c * T + T / 2, r * T, 'Mystery specimen!'); setMood('wow', 1.6);
+  toast(`🔍 You found mystery specimen #${sp.uid}! Press <kbd>L</kbd> or 🧪 Lab to test it.`);
+  if (pet) { petSay('Ooh, a mystery! Let’s test it in the lab!', 'wow', 3.5); pet.hop = .4; }
+}
+function ouch() {
+  if (hotCool > 0) return; hotCool = 1.6;
+  player.vy = -520; setMood('hot', 1.6); sfx('hot');
+  toast('🔥 Too hot! Magma is melted rock, about 700–1,200 °C. When it cools, it becomes igneous rock.', 4200);
+  if (pet) petSay('Hot, hot! Magma cools into igneous rock.', 'wow', 3);
+}
+/* REBUILD: put back the rock that was originally in a dug-out space.
+   Only spaces that were once rock can be refilled, and never where you are standing. */
+let buildCool = 0;
+function canPlace(r, c) {
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS || tile[r][c] !== AIR || back[r][c] === AIR) return false;
+  const x = c * T, y = r * T, p = player;
+  return !(x < p.x + p.w && x + T > p.x && y < p.y + p.h && y + T > p.y);
+}
+function place(r, c) {
+  tile[r][c] = back[r][c]; dmg[r][c] = 0; spec[r][c] = null; buildCool = .22;
+  sfx('build'); burst(c * T + T / 2, r * T + T / 2, [TI[tile[r][c]].c, '#fff'], 6);
+}
+function tryBuild(tell) {
+  if (buildCool > 0 || current || rope) return;
+  const p = player, cx = p.x + p.w / 2;
+  if (!p.onGround) { const r = Math.floor((p.y + p.h + 2) / T), c = Math.floor(cx / T); if (canPlace(r, c)) { place(r, c); return; } }
+  const c = Math.floor((p.face > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor((p.y + p.h / 2) / T);
+  if (canPlace(r, c)) { place(r, c); return; }
+  if (canPlace(r + 1, c)) { place(r + 1, c); return; }
+  if (tell) toast('🧱 Nothing to rebuild here. Face an empty dug-out space, or jump and press B to build under your feet.');
+}
+/* ROPE: the camp crew drops a rope down your shaft and pulls you all the way out.
+   You land on the nearest spot where the ground surface is still solid (not dug out). */
+let rope = null;
+function surfaceTop(c) { for (let r = 0; r < ROWS; r++) if (tile[r][c] !== AIR) return r; return ROWS; }
+function safeLanding() {
+  const pc = Math.floor((player.x + player.w / 2) / T);
+  for (let d = 0; d < COLS; d++) for (const c of [pc + d, pc - d]) {
+    if (c < 0 || c >= COLS) continue;
+    const top = surfaceTop(c);
+    if (top <= SURF && top >= 2) return {x:c * T + (T - player.w) / 2, y:top * T - player.h - 1};
+  }
+  return {x:SPAWN_C * T + 9, y:(SURF - 1) * T}; // fallback
+}
+function ropeUp() {
+  if (current || rope) return;
+  if (player.y + player.h <= SURF * T + 2 && player.onGround) { toast('You are already at the surface.'); return; }
+  const land = safeLanding(), skyY = (SURF - 7) * T;
+  rope = {t:0, x:player.x + player.w / 2, startY:player.y, topY:Math.min(land.y, SURF * T) - 2.2 * T, land, skyY, drop:reduceMotion ? .01 : .55, pull:reduceMotion ? .01 : 1.4, swing:reduceMotion ? .01 : .6};
+  player.vx = player.vy = 0; sfx('rope'); toast('🪢 Rope down! The camp crew is pulling you out.');
+}
+function updateRope(dt) {
+  const R = rope, p = player; R.t += dt;
+  const e = x => x * x * (3 - 2 * x), t1 = R.drop, t2 = R.drop + R.pull, t3 = t2 + R.swing;
+  if (R.t < t1) return;                                           // rope falling down the shaft
+  if (R.t < t2) { const k = e((R.t - t1) / R.pull); p.y = R.startY + (R.topY - R.startY) * k; p.x = R.x - p.w / 2; return; } // pulled straight up
+  if (R.t < t3) { const k = e((R.t - t2) / R.swing); p.x = R.x - p.w / 2 + (R.land.x - (R.x - p.w / 2)) * k; p.y = R.topY + (R.land.y - R.topY) * k - Math.sin(k * Math.PI) * 30; return; } // swing to solid ground
+  p.x = R.land.x; p.y = R.land.y; p.vx = p.vy = 0; rope = null; setMood('happy', 2);
+  if (pet) { pet.x = p.x - 30; pet.y = p.y; petSay('Fresh air! Back at the surface.', 'happy', 3); }
+}
+function drawRope() {
+  if (!rope) return; const R = rope, t1 = R.drop;
+  const handY = player.y + 8, handX = player.x + player.w / 2;
+  const endY = R.t < t1 ? R.skyY + (handY - R.skyY) * (R.t / t1) : handY, endX = R.t < t1 ? R.x : handX;
+  g.strokeStyle = '#7a5233'; g.lineWidth = 5; g.beginPath(); g.moveTo(R.x, R.skyY); g.lineTo(endX, endY); g.stroke();
+  g.strokeStyle = '#c9a26b'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(R.x, R.skyY); g.lineTo(endX, endY); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#9aa3ad'; g.beginPath(); g.arc(R.x, R.skyY, 9, 0, 7); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke(); // pulley
+}
+
+/* ---------- 9. PHYSICS AND UPDATE ---------------------------------- */
+let touchMagma = false;
+function moveX(dx) {
+  const p = player; p.x += dx;
+  const r0 = Math.floor(p.y / T), r1 = Math.floor((p.y + p.h - 1) / T);
+  if (dx > 0) { const c = Math.floor((p.x + p.w) / T); for (let r = r0; r <= r1; r++) if (isSolid(r, c)) { if (tile[r] && tile[r][c] === MAGMA) touchMagma = true; p.x = c * T - p.w - .01; p.vx = 0; break; } }
+  else if (dx < 0) { const c = Math.floor(p.x / T); for (let r = r0; r <= r1; r++) if (isSolid(r, c)) { if (tile[r] && tile[r][c] === MAGMA) touchMagma = true; p.x = (c + 1) * T + .01; p.vx = 0; break; } }
+}
+function moveY(dy) {
+  const p = player; p.y += dy; p.onGround = false;
+  const c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 1) / T);
+  if (dy > 0) { const r = Math.floor((p.y + p.h) / T); for (let c = c0; c <= c1; c++) if (isSolid(r, c)) { if (tile[r] && tile[r][c] === MAGMA) touchMagma = true; p.y = r * T - p.h - .01; p.vy = 0; p.onGround = true; break; } }
+  else if (dy < 0) { const r = Math.floor(p.y / T); for (let c = c0; c <= c1; c++) if (isSolid(r, c)) { p.y = (r + 1) * T + .01; p.vy = 0; break; } }
+}
+function update(dt) {
+  const p = player;
+  const L = keys.arrowleft || keys.a, Rt = keys.arrowright || keys.d, U = keys.arrowup || keys.w || keys[' '], D = keys.arrowdown || keys.s;
+  const dir = (Rt ? 1 : 0) - (L ? 1 : 0);
+  if (dir || U || D) idleT = 0; else idleT += dt;
+  if (dir) p.face = dir;
+  p.vx += (dir * 230 - p.vx) * Math.min(1, dt * 12);
+  if (keys.b) tryBuild(false);
+  buildCool -= dt; digCool -= dt; digAnim -= dt; hotCool -= dt; magmaTalkT -= dt;
+  const cx = p.x + p.w / 2, cyMid = p.y + p.h / 2;
+  if (digCool <= 0) {
+    if (dir) { const c = Math.floor((dir > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor(cyMid / T); if (isSolid(r, c) && c >= 0 && c < COLS) hit(r, c); }
+    if (D && p.onGround && digCool <= 0) { const r = Math.floor((p.y + p.h + 3) / T), c = Math.floor(cx / T); if (r < ROWS && isSolid(r, c)) hit(r, c); }
+  }
+  // Up: dig the rock above you, or jump if there is open space
+  if (U && p.onGround) {
+    const r = Math.floor((p.y - 3) / T), cl = Math.floor((p.x + 1) / T), cr = Math.floor((p.x + p.w - 1) / T);
+    const blockL = r >= 0 && isSolid(r, cl), blockR = r >= 0 && isSolid(r, cr);
+    if (blockL || blockR) { if (digCool <= 0) hit(r, blockL ? cl : cr); }
+    else { p.vy = -520; sfx('jump'); if (pet) pet.hop = .4; }
+  }
+  p.vy = Math.min(900, p.vy + 1900 * dt);
+  touchMagma = false; moveX(p.vx * dt); moveY(p.vy * dt);
+  if (touchMagma) ouch();
+  p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy';
+  // Near the magma chamber: the pet comments on the heat
+  if (pet && magmaTalkT <= 0 && (p.y + p.h) / T > MAG_START - 3) { magmaTalkT = 15; petSay('It’s getting hot! Magma is close.', 'wow', 3.5); }
+  updatePet(dt); petSense(dt);
+  zoneEnter();
+  for (const q of particles) { q.vy += 700 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; }
+  for (let i = particles.length - 1; i >= 0; i--) if (particles[i].life <= 0) particles.splice(i, 1);
+  for (const f of floats) { f.life -= dt; if (!reduceMotion) f.y -= 30 * dt; }
+  for (let i = floats.length - 1; i >= 0; i--) if (floats[i].life <= 0) floats.splice(i, 1);
+}
+
+const visited = new Set(['surface']);
+function zoneEnter() {
+  const z = playerZone(); if (visited.has(z) || !ZONE_SPECIES[z]) return; visited.add(z);
+  toast(`🗺️ Entering the ${ZONES[z].short} (${zoneDepth(z)}). ${whyHere(z)}`, 5000);
+}
+
+/* ---------- 10. PET ROCK ------------------------------------------- */
+function setPet(sid) {
+  const name = pet ? pet.name : 'Pebbles';
+  pet = {sid, name, x:player.x - 30, y:player.y, mood:'happy', moodT:0, say:'', sayT:0, hop:.4, blink:2, lastAns:''};
+  sfx('pet'); petSay(`Hi! I’m ${name}. Ask me questions in the 🐾 Pet window!`, 'happy', 4.5);
+  toast(`🐾 ${esc(SP[sid].name)} is now your pet rock!`);
+}
+function petSay(text, mood, t) { if (!pet) return; pet.say = text; pet.sayT = t; pet.mood = mood || 'happy'; pet.moodT = t; }
+function updatePet(dt) {
+  if (!pet) return;
+  const p = player, tx = p.x + p.w / 2 - p.face * 36, ty = p.y + p.h - 22, k = Math.min(1, dt * (reduceMotion ? 9 : 5));
+  pet.x += (tx - pet.x) * k; pet.y += (ty - pet.y) * k; pet.hop = Math.max(0, pet.hop - dt);
+  if (pet.sayT > 0) { pet.sayT -= dt; if (pet.sayT <= 0) pet.say = ''; }
+  pet.moodT -= dt; if (pet.moodT <= 0) pet.mood = 'happy';
+  pet.blink -= dt; if (pet.blink < -0.15) pet.blink = 2 + Math.random() * 3;
+  // When you stand still, your pet rock bounces over and shares a fact about where you are
+  if (idleT > 6 && !pet.say) { petSay(ZONES[playerZone()].chat, 'happy', 4.5); pet.hop = .4; setMood('happy', 2); idleT = -8; }
+}
+const QUESTIONS = [
+  {id:'rockmin', t:'🪨 Is my specimen a rock or a mineral?'},
+  {id:'next', t:'🧭 Which test should I try next?'},
+  {id:'streak', t:'⬜ How does the streak test work?'},
+  {id:'hard', t:'💅 How does the hardness test work?'},
+  {id:'luster', t:'✨ What is luster?'},
+  {id:'cleave', t:'🔨 What is cleavage vs. fracture?'},
+  {id:'fizz', t:'🧪 Why do some specimens fizz?'},
+  {id:'layer', t:'🗺️ What rocks and minerals are in this layer?'},
+  {id:'missing', t:'🔎 Where can I find my missing Dex entries?'},
+  {id:'here', t:'📍 How did this layer form?'},
+  {id:'cycle', t:'♻️ What is the rock cycle?'},
+  {id:'me', t:'💖 Tell me about you!'}
+];
+// Pre-written, science-based answers. Some use your current lab specimen.
+function petAnswer(q) {
+  const sp = bag.length ? bag[labIdx] : null, me = SP[pet.sid];
+  switch (q) {
+    case 'rockmin': {
+      let a = 'A MINERAL is one natural, solid substance with the same makeup and crystal pattern all the way through. A ROCK is a mixture of minerals (or natural glass, or bits of other rocks). Use the 🔍 hand lens: different grains, pebbles, layers or bands usually mean a rock. If it looks the same all the way through, it may be a mineral.';
+      if (sp && sp.done.has('lens')) a += ` Your notes on specimen #${sp.uid} say: “${result(SP[sp.sid], 'lens').txt}” What do you think that means?`;
+      else if (sp) a += ` Try the hand lens on specimen #${sp.uid}!`;
+      return a;
+    }
+    case 'next': {
+      if (!sp) return 'We don’t have a mystery specimen right now. Let’s dig for one! Look for blocks with a ? sparkle.';
+      const cands = candidates(sp), t = bestTest(sp, cands);
+      if (cands.length === 1) return `Your evidence for specimen #${sp.uid} now fits only ONE row of the reference chart. Check the chart and make your call!`;
+      if (!sp.done.size) return `Start with the 🔍 Hand lens. It tells you whether specimen #${sp.uid} is a rock or a mineral, which cuts the chart in half.`;
+      return `Right now ${cands.length} entries on the chart still match your results for specimen #${sp.uid}. Try the ${t.icon} ${t.name} test next. It will split those possibilities apart.`;
+    }
+    case 'streak': return 'Rub the specimen across a white, unglazed porcelain plate. The color of the POWDER is the streak. It is more reliable than the outside color: hematite can look silver or red, but its streak is always reddish-brown. Minerals harder than the plate (about 6.5–7), like quartz, scratch the plate and leave no colored streak.';
+    case 'hard': return 'Hardness is how well a mineral resists scratching. Geologists use the Mohs scale from 1 (talc) to 10 (diamond). Our kit: fingernail 2.5, copper penny 3.5, glass plate 5.5, steel file 6.5. If a tool scratches the specimen, the specimen is SOFTER than the tool. If the specimen scratches glass, it is HARDER than 5.5. Use two tools to trap the hardness between two numbers!';
+    case 'luster': return 'Luster is how a surface reflects light. Metallic luster shines like metal (pyrite, galena). Nonmetallic lusters include glassy (quartz), pearly (mica), greasy (talc) and dull or earthy (most sedimentary rocks).';
+    case 'cleave': return 'CLEAVAGE means a mineral breaks along flat, smooth surfaces, because its atoms line up with weak directions. Mica peels into sheets (1 direction) and galena breaks into cubes (3 directions). FRACTURE means it breaks into rough or curved surfaces with no flat planes. Quartz and obsidian break in shell-like curves called conchoidal fracture.';
+    case 'fizz': return 'Calcite is calcium carbonate (CaCO₃). A drop of dilute acid reacts with it and makes bubbles of carbon dioxide gas: CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂. So calcite, limestone and marble fizz. In a real classroom, the teacher handles the acid and everyone wears goggles!';
+    case 'here': { const z = playerZone(); return ZONES[z].long + (z === 'surface' || z === 'soil' ? ' Dig down to reach the rock layers, or walk east to the old volcano.' : ''); }
+    case 'layer': {
+      const z = playerZone(), list = ZONE_SPECIES[z];
+      if (!list) return z === 'magma' ? 'That’s magma down there, no solid specimens! It cools into igneous rock. Head back up a little into the igneous zone.'
+        : `We’re in the ${ZONES[z].short}, and no specimens hide here. The sedimentary layers start about ${zoneDepth('sedimentary')} deep. Or walk east to the old volcano!`;
+      const have = list.filter(id => found.has(id)).map(id => SP[id].name), miss = list.filter(id => !found.has(id)).map(id => SP[id].name);
+      return `We’re in the ${ZONES[z].short} (about ${zoneDepth(z)}). These form here, so they can be found here:\n` +
+        (miss.length ? `• Not in your Dex yet: ${miss.join(', ')}.\n` : '• You’ve found every kind from this layer!\n') +
+        (have.length ? `• Already in your Dex: ${have.join(', ')}.\n` : '') + whyHere(z);
+    }
+    case 'missing': {
+      if (found.size >= DEX.length) return 'Your Rock Dex is complete! Every rock and mineral is found. You’re a true rock hound!';
+      let a = `You’ve found ${found.size} of ${DEX.length}. Here’s where to dig for the rest:`;
+      for (const z of ['sedimentary', 'metamorphic', 'igneous', 'volcanic']) {
+        const miss = ZONE_SPECIES[z].filter(id => !found.has(id)).map(id => SP[id].name);
+        if (miss.length) a += `\n• ${ZONES[z].name} (${zoneDepth(z)}): ${miss.join(', ')}`;
+      }
+      const made = EXTRAS.filter(s => !found.has(s.id)).length;
+      return a + '\nSome minerals, like quartz and pyrite, show up in more than one layer.' + (made ? `\n• ${made} entr${made > 1 ? 'ies' : 'y'} can’t be dug up at all. Make them by changing rocks in the Rock Cycle Machine!` : '');
+    }
+    case 'cycle': return 'The rock cycle: IGNEOUS rock forms when magma or lava cools. Weathering and erosion break rocks into sediment; buried sediment is compacted and cemented into SEDIMENTARY rock. Heat and pressure deep underground change rocks into METAMORPHIC rock. Enough heat melts rock into magma, and the cycle starts again. Any rock can become any other kind. It takes thousands to millions of years.';
+    case 'me': { const nm = me.name.toLowerCase(), art = /^[aeiou]/.test(nm) ? 'an' : 'a'; return `I’m ${pet.name}, ${art} ${nm}! ${me.kind === 'mineral' ? 'I’m a mineral.' : 'I’m ' + (/^[aeiou]/i.test(me.rtype) ? 'an ' : 'a ') + me.rtype.toLowerCase() + ' rock.'} ${me.info} In the rock cycle: ${me.cycle}`; }
+  }
+}
+// Depth range of each layer, using 1 block = 100 m
+function zoneDepth(z) {
+  const rng = {sedimentary:[SURF + 3, SED_END], metamorphic:[SED_END + 1, MET_END], igneous:[MET_END + 1, MAG_START - 1]}[z];
+  if (!rng) return z === 'volcanic' ? 'at the surface, on the east side' : 'near the surface';
+  return `${(depthKm(rng[0])).toFixed(1)}–${(depthKm(rng[1] + 1)).toFixed(1)} km deep`;
+}
+function whyHere(z) {
+  return {sedimentary:'Why here? Sediment piles up in layers near the surface, then gets buried, compacted and cemented.',
+    metamorphic:'Why here? Deeper down, heat and pressure change rocks without melting them.',
+    igneous:'Why here? Magma cooled slowly this deep, so crystals grew big.',
+    volcanic:'Why here? Lava cooled fast at the surface, so crystals stayed tiny or never formed.'}[z] || '';
+}
+function askPet(q) {
+  if (!pet) return;
+  pet.lastAns = `<b>${esc(pet.name)}:</b> ${esc(petAnswer(q)).replace(/\n/g, '<br>')}`;
+  petSay('Good question!', 'think', 2); sfx('pet'); renderPet();
+  const b = document.querySelector(`[data-q="${q}"]`); b && b.focus();
+}
+
+/* ---------- 11. LAB: TESTS AND IDENTIFYING ------------------------- */
+function runTest(tid) {
+  const sp = bag[labIdx]; if (!sp) return;
+  const t = TB[tid], r = result(SP[sp.sid], tid);
+  if (!sp.done.has(tid)) { sp.done.add(tid); sp.notes.push({t:t.icon + ' ' + t.name, r:r.txt}); }
+  sfx(tid === 'fizz' && r.k === 'yes' ? 'fizz' : tid === 'magnet' && r.k === 'yes' ? 'magnet' : 'test');
+  sp.fb = null; renderLab();
+  const b = document.querySelector(`[data-test="${tid}"]`); b && b.focus();
+}
+function wrongFeedback(sp, G, a) {
+  const done = [...sp.done];
+  if (!done.length) return `✖ Not ${G.name}. You haven’t run any tests yet, so there’s no evidence! Try the 🔍 Hand lens first to see whether it’s a rock or a mineral.`;
+  for (const tid of done) {
+    const rg = result(G, tid), ra = result(a, tid);
+    if (rg.k !== ra.k) return `✖ Not ${G.name}. Your <b>${TB[tid].icon} ${TB[tid].name}</b> evidence doesn’t fit.<br>• You observed: ${ra.txt}<br>• ${G.name} would show: ${rg.txt}`;
+  }
+  const t = TESTS.find(t => !sp.done.has(t.id) && result(G, t.id).k !== result(a, t.id).k);
+  return `✖ Not ${G.name}. Good reasoning, though: ${G.name} matches every test you’ve done so far! Run another test to tell them apart${t ? `, such as the <b>${t.icon} ${t.name}</b>` : ''}.`;
+}
+function identify() {
+  const sp = bag[labIdx]; if (!sp) return;
+  const g = $('#guess').value; sp.guess = g;
+  if (!g) { sp.fb = ['bad', 'Pick a name from the list first.']; renderLab(); return; }
+  sp.tries++;
+  const a = SP[sp.sid], G = SP[g];
+  if (g === sp.sid) {
+    const gain = xpFor(sp), lvBefore = levelOf(xp);
+    xp += gain.xp; idTotal++; idBy[sp.zone] = (idBy[sp.zone] || 0) + 1;
+    const isNew = !found.has(a.id); found.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
+    notebook.push({uid:sp.uid, sid:a.id, zone:sp.zone, depth:sp.depth, tests:[...sp.done], wrong:sp.wrong.slice(), xp:gain.xp, lines:gain.lines});
+    stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++;
+    labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew};
+    bag.splice(labIdx, 1); labIdx = Math.max(0, Math.min(labIdx, bag.length - 1));
+    sfx('right'); burst(player.x + player.w / 2, player.y, ['#ffcc33', '#fff', '#3a86c8'], 30); setMood('happy', 3);
+    if (pet) { petSay(`We did it! ${a.name}!`, 'happy', 4); pet.hop = .4; }
+    const lvAfter = levelOf(xp);
+    if (lvAfter > lvBefore) setTimeout(() => { toast(`⬆️ Level up! You are now a ${LEVELS[lvAfter][1]}!`, 4500); sfx('right'); }, 900);
+    checkMissions();
+  } else {
+    sfx('wrong'); setMood('think', 2); if (pet) petSay('Hmm, let’s check the evidence!', 'think', 3);
+    sp.fb = ['bad', wrongFeedback(sp, G, a)]; sp.wrong.push(G.id); stats.guesses++;
+  }
+  renderLab();
+  const f = $('#idBtn') || $('#lab .close'); f && f.focus();
+  const fb = $('#lab .fb'); if (fb) fb.scrollIntoView({block:'nearest'});
+}
+function checkMissions() {
+  while (mi < MISSIONS.length && MISSIONS[mi].ok()) {
+    mi++; sfx('right');
+    toast(mi < MISSIONS.length ? `🏅 Mission complete! Next: ${MISSIONS[mi].t}` : '🏆 All missions complete! You are a Master Rock Hound!', 5000);
+  }
+}
+
+/* ---------- 11b. ROCK CYCLE MACHINE --------------------------------
+   Rocks you can only MAKE (not dig up here). They join the Rock Dex
+   when you change a rock into them, like an evolution.              */
+const EXTRAS = [
+ {id:'schist',name:'Schist',grp:'metamorphic',rtype:'Metamorphic (foliated)',color:'Silvery gray and sparkly',lens:'Shiny mica flakes you can see, lined up in wavy layers; often has small garnets.',brk:'Splits along shiny, wavy layers.',sp:'Sparkly and flaky',info:'Rock that got more heat and pressure than slate does, so its mica crystals grew big enough to see.',cycle:'Even more heat and pressure can sort its minerals into light and dark bands.'},
+ {id:'gabbro',name:'Gabbro',grp:'igneous',rtype:'Igneous (intrusive)',color:'Dark green-black with some white',lens:'Large dark and light crystals you can see. No layers.',brk:'Breaks unevenly across big crystals.',sp:'Dark, coarse, heavy',info:'Dark, iron-rich magma that cooled SLOWLY underground. Much of the deep ocean crust is gabbro.',cycle:'It is made of the same stuff as a fast-cooled volcanic rock.'},
+ {id:'greenschist',name:'Greenschist',grp:'metamorphic',rtype:'Metamorphic (foliated)',color:'Green',lens:'Fine green minerals (like chlorite) lined up in layers.',brk:'Splits along its layers.',sp:'Green and foliated',info:'Dark volcanic rock changed by low heat, pressure and hot water.',cycle:'With more heat and pressure, its green minerals change into darker ones.'},
+ {id:'amphibolite',name:'Amphibolite',grp:'metamorphic',rtype:'Metamorphic',color:'Black and white, often streaky',lens:'Coarse, dark, needle-like crystals (amphibole) with some white grains.',brk:'Breaks unevenly.',sp:'Dark, heavy, coarse',info:'Dark, iron-rich rock changed by medium-high heat and pressure.',cycle:'At the highest temperatures it starts to melt.'},
+ {id:'metacong',name:'Metaconglomerate',grp:'metamorphic',rtype:'Metamorphic',color:'Mixed colors, stretched',lens:'Pebbles squashed and stretched into long shapes.',brk:'Breaks right through the stretched pebbles.',sp:'Stretched pebbles',info:'Conglomerate squeezed by heat and pressure until its pebbles stretched out.',cycle:'Much more heat and pressure can smear the pebbles into bands.'},
+ {id:'migmatite',name:'Migmatite',grp:'metamorphic',rtype:'Metamorphic (partly melted)',color:'Swirled light and dark',lens:'Swirls of light, once-melted rock mixed with dark bands.',brk:'Breaks unevenly.',sp:'Swirly bands',info:'Rock heated so much it began to melt: halfway between metamorphic and igneous rock.',cycle:'If it melts completely, it becomes magma.'}
+];
+EXTRAS.forEach((s, i) => { s.n = SPECIES.length + i + 1; s.kind = 'rock'; s.made = true; SP[s.id] = s; });
+const DEX = SPECIES.concat(EXTRAS);
+const EXTRA_ART = {
+  schist(c, R) { rockShape(c, R, '#9a9a9f', () => { for (let y = 26; y < 96; y += 5) { c.strokeStyle = R() < .5 ? '#dfe0e6' : '#6e6f76'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(30, y - 5, 60, y + 5, 100, y); c.stroke(); }
+    for (let i = 0; i < 5; i++) { c.fillStyle = '#8b1e2d'; c.beginPath(); c.arc(20 + R() * 60, 35 + R() * 45, 3, 0, 7); c.fill(); } for (let i = 0; i < 6; i++) shine(c, 15 + R() * 70, 30 + R() * 50, 2); }); },
+  gabbro(c, R) { rockShape(c, R, '#2f3a33', () => chips(c, R, 95, ['#15181a', '#5d6b5f', '#c9cbc4', '#2d4a35'], 2.5, 5.5)); },
+  greenschist(c, R) { rockShape(c, R, '#5f7d5a', () => { for (let y = 26; y < 96; y += 5) { c.strokeStyle = R() < .5 ? '#86a477' : '#3f5a3c'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, y); c.bezierCurveTo(30, y - 4, 60, y + 4, 100, y); c.stroke(); } }); },
+  amphibolite(c, R) { rockShape(c, R, '#26282b', () => { c.strokeStyle = '#0f1012'; c.lineWidth = 2.2; for (let i = 0; i < 40; i++) { const x = R() * 100, y = R() * 100; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 9, y - 2); c.stroke(); } chips(c, R, 25, ['#d9d6cf', '#bcb8b0'], 1.5, 3); }); },
+  metacong(c, R) { rockShape(c, R, '#9b8e7a', () => { const cols = ['#8b8c95', '#ddd5c4', '#6c4f3a', '#c48a69', '#4f5561']; for (let i = 0; i < 14; i++) { c.fillStyle = cols[i % 5]; c.beginPath(); c.ellipse(10 + R() * 80, 28 + R() * 62, 9 + R() * 8, 2.5 + R() * 2, .15, 0, 7); c.fill(); c.strokeStyle = 'rgba(40,30,20,.5)'; c.lineWidth = 1; c.stroke(); } }); },
+  migmatite(c, R) { rockShape(c, R, '#c4b8ac', () => { for (let i = 0; i < 6; i++) { c.strokeStyle = i % 2 ? '#e6c1b1' : '#3a3537'; c.lineWidth = 5 + R() * 3; c.beginPath(); c.moveTo(0, 30 + i * 11); c.bezierCurveTo(25, 10 + i * 14 + R() * 20, 55, 40 + i * 9 - R() * 20, 100, 28 + i * 11); c.stroke(); } }); }
+};
+function buildExtraSprites() {
+  for (const s of EXTRAS) { const cv = document.createElement('canvas'); cv.width = cv.height = 160; const c = cv.getContext('2d'), R = rng(hashStr(s.id));
+    c.save(); c.scale(1.6, 1.6); c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(50, 91, 36, 6, 0, 0, 7); c.fill(); EXTRA_ART[s.id](c, R); c.restore(); spriteCv[s.id] = cv; spriteURL[s.id] = cv.toDataURL(); }
+}
+const rname = id => SP[id].name;
+const PROCS = [
+  {id:'meta', icon:'⬇🔥', name:'Heat and pressure', desc:'Bury it deep. Squeeze and heat it, but don’t melt it.'},
+  {id:'slow', icon:'🌋⬇', name:'Melt, then cool slowly underground', desc:'Melt it into magma that cools deep inside Earth.'},
+  {id:'fast', icon:'🌋⬆', name:'Melt, then erupt and cool fast', desc:'Melt it into magma that erupts as lava and cools at the surface.'},
+  {id:'weather', icon:'🌧️', name:'Weathering and erosion', desc:'Break it down, carry the pieces away, and let them settle.'}
+];
+const SETTINGS = [
+  {id:'pebbles', icon:'🏞️', name:'Fast river: pebbles and gravel'},
+  {id:'sand', icon:'🏖️', name:'Beach or desert: sand'},
+  {id:'mud', icon:'🌊', name:'Calm lake: mud and clay'},
+  {id:'sea', icon:'🐚', name:'Warm shallow sea: shells and dissolved calcite'}
+];
+const procLabel = (p, s) => PROCS.find(x => x.id === p).name + (s ? ' → ' + SETTINGS.find(x => x.id === s).name : '');
+// SCIENCE RULES: what each rock becomes. Dark, iron-rich rocks (MAFIC) melt into dark magma;
+// all other rocks melt into light-colored magma. Calcite rocks (CARB) don't melt.
+const MAFIC = new Set(['basalt', 'gabbro', 'greenschist', 'amphibolite']), CARB = new Set(['limestone', 'marble']);
+const META = {
+  shale:['slate', 'Heat and pressure line up the tiny clay minerals into flat sheets, so shale becomes slate.'],
+  slate:['schist', 'More heat and pressure grow bigger, shiny mica crystals, so slate becomes schist.'],
+  schist:['gneiss', 'Even more heat and pressure sort the minerals into light and dark bands, so schist becomes gneiss.'],
+  gneiss:['migmatite', 'So much heat that gneiss starts to melt. Partly melted swirls make migmatite.'],
+  limestone:['marble', 'Heat and pressure make the calcite crystals regrow and lock together, so limestone becomes marble.'],
+  marble:['marble', 'Marble stays marble; its calcite crystals just grow bigger.'],
+  sandstone:['quartzite', 'Heat and pressure fuse the quartz sand grains together, so sandstone becomes quartzite.'],
+  quartzite:['quartzite', 'Quartzite is already fused quartz, so it stays quartzite.'],
+  conglomerate:['metacong', 'The pebbles get squeezed and stretched, so conglomerate becomes metaconglomerate.'],
+  metacong:['gneiss', 'Much more heat and pressure smear the stretched pebbles into bands, making gneiss.'],
+  granite:['gneiss', 'Intense heat and pressure separate the minerals into light and dark bands, so granite becomes gneiss.'],
+  basalt:['greenschist', 'Low heat, pressure and hot water grow green minerals in basalt, making greenschist.'],
+  greenschist:['amphibolite', 'More heat and pressure turn the green minerals into dark amphibole, making amphibolite.'],
+  gabbro:['amphibolite', 'Heat and pressure turn gabbro’s dark minerals into amphibole, making amphibolite.'],
+  amphibolite:['migmatite', 'So much heat that amphibolite starts to melt into swirls: migmatite.'],
+  obsidian:['schist', 'Volcanic glass is unstable. Heat and pressure grow mica and other crystals, making schist.'],
+  pumice:['schist', 'Heat and pressure crush the gas holes and grow mica crystals, making schist.']
+};
+const WEATHER = {pebbles:['conglomerate', 'Weathering breaks the rock into pieces. A fast river rounds the pebbles and drops them. Buried and cemented, they become conglomerate.'],
+  sand:['sandstone', 'Weathering breaks the rock into grains. Waves and wind sort out sand-sized grains. Buried, compacted and cemented, they become sandstone.'],
+  mud:['shale', 'Weathering breaks the rock into the tiniest bits: clay and mud. They settle in calm water and get squeezed into shale.'],
+  sea:['limestone', 'Weathering dissolves calcium out of rocks, and rivers carry it to the sea. Sea creatures build calcite shells that pile up and become limestone.']};
+function rcOutcome(rid, proc, set) {
+  if ((proc === 'slow' || proc === 'fast') && CARB.has(rid)) return {blocked:'Limestone and marble don’t melt into ordinary magma. Heat breaks their calcite into lime and carbon dioxide gas instead.'};
+  if (proc === 'meta') { if (rid === 'migmatite') return {blocked:'Migmatite is already partly melted. More heat would melt it completely, so try a melting process instead.'};
+    const m = META[rid]; return {res:m[0], why:m[1], pool:['slate', 'marble', 'quartzite', 'gneiss', 'schist', 'granite', 'shale', 'basalt', 'obsidian', 'migmatite', 'amphibolite', 'greenschist']}; }
+  if (proc === 'slow') return MAFIC.has(rid)
+    ? {res:'gabbro', why:'This dark rock melts into dark, iron-rich magma. Cooling slowly underground gives crystals time to grow big, making gabbro.', pool:['gabbro', 'granite', 'basalt', 'obsidian', 'gneiss', 'sandstone']}
+    : {res:'granite', why:'Melting makes light-colored magma. Cooling slowly deep underground gives crystals time to grow large, making granite.', pool:['granite', 'basalt', 'obsidian', 'gneiss', 'sandstone', 'gabbro']};
+  if (proc === 'fast') return MAFIC.has(rid)
+    ? {res:'basalt', why:'Dark, iron-rich magma erupts as runny lava and cools fast at the surface. Crystals stay tiny, making basalt.', pool:['basalt', 'granite', 'gabbro', 'obsidian', 'slate', 'shale']}
+    : {res:'obsidian', alt:['pumice'], why:'Light-colored, sticky magma erupts and cools so fast that no crystals form: volcanic glass called obsidian. If gas bubbles froth it up, you get pumice instead.', pool:['obsidian', 'granite', 'gneiss', 'basalt', 'shale', 'sandstone']};
+  const w = WEATHER[set]; return {res:w[0], why:w[1], pool:['conglomerate', 'sandstone', 'shale', 'limestone', 'slate', 'granite']};
+}
+// Paths a student has actually seen happen (shown in the Rock Dex like an evolution chart)
+const rcSeen = new Map();
+function seePath(from, to, proc, set) { rcSeen.set(`${from}|${proc}|${set || ''}`, {from, to, proc, set}); }
+
+/* ----- Challenge mode: reach a target rock in as few steps as possible.
+   "Par" is the fewest steps possible, worked out by searching every path. */
+const ACTIONS = [['meta'], ['slow'], ['fast'], ['weather', 'pebbles'], ['weather', 'sand'], ['weather', 'mud'], ['weather', 'sea']];
+function parOf(from, to) {
+  const dist = {[from]:0}, q = [from];
+  while (q.length) { const r = q.shift(); if (r === to) return dist[r];
+    for (const a of ACTIONS) { const o = rcOutcome(r, a[0], a[1]); if (!o.blocked && dist[o.res] === undefined) { dist[o.res] = dist[r] + 1; q.push(o.res); } } }
+  return null;
+}
+const CHALLENGES = [['shale', 'slate'], ['granite', 'sandstone'], ['granite', 'obsidian'], ['basalt', 'gabbro'], ['gneiss', 'limestone'],
+  ['shale', 'schist'], ['granite', 'quartzite'], ['marble', 'slate'], ['basalt', 'marble'], ['limestone', 'granite'], ['basalt', 'amphibolite'],
+  ['obsidian', 'gneiss'], ['sandstone', 'migmatite'], ['marble', 'gneiss'], ['pumice', 'migmatite']]
+  .map(([from, to]) => ({from, to, par:parOf(from, to)})).filter(c => c.par);
+const chBest = {}; let chWins = 0, ch = null, machineMode = 'free';
+
+/* ----- Shared animation runner ----- */
+function animate(A, done) {
+  sfx('machine'); const start = performance.now(), dur = reduceMotion ? 0 : 2600;
+  const stepF = now => { const t = dur ? Math.min(1, (now - start) / dur) : 1;
+    if (current !== 'machine') { done(); return; }
+    drawRC(t, A); if (t < 1) requestAnimationFrame(stepF); else done(); };
+  requestAnimationFrame(stepF);
+}
+function addXP(n) { const lv = levelOf(xp); xp += n; if (levelOf(xp) > lv) toast(`⬆️ Level up! You are now a ${LEVELS[levelOf(xp)][1]}!`, 4500); }
+
+/* ----- Free mode: change one of YOUR rocks (it really changes, like an evolution) ----- */
+let rc = {phase:'pick'}, rcCorrect = 0;
+const rcPaths = new Set(), rcTried = new Set();
+function rcKey() { return `${rc.rock}|${rc.proc}|${rc.set || ''}`; }
+function rcMakeOptions() {
+  const o = rc.out, alt = o.alt || [], others = shuffle(o.pool.filter(id => id !== o.res && !alt.includes(id) && id !== rc.rock)).slice(0, 3);
+  if (rc.rock !== o.res && Math.random() < .4) others[2] = rc.rock; // "nothing changes" is a common wrong idea
+  rc.opts = shuffle([o.res, ...others]);
+}
+const stepsBar = (names, i) => `<div class="steps">${names.map((n, k) => `<span class="${k === i ? 'now' : ''}">${k + 1}. ${n}</span>`).join('')}</div>`;
+function renderMachine() {
+  const el = $('#machineBody');
+  let h = `<div class="tabs"><button data-mmode="free" class="${machineMode === 'free' ? 'done' : ''}" aria-pressed="${machineMode === 'free'}">🔮 Predict and change my rocks</button>
+    <button data-mmode="challenge" class="${machineMode === 'challenge' ? 'done' : ''}" aria-pressed="${machineMode === 'challenge'}">🏆 Rock cycle challenge</button>
+    <button data-open="guide">🗺️ Rock cycle guide</button></div>`;
+  el.innerHTML = h + (machineMode === 'free' ? freeHTML() : challengeHTML());
+  if (machineMode === 'free' && rc.phase === 'done') drawRC(1, rc.A);
+  if (machineMode === 'challenge' && ch && ch.steps.length && ch.phase !== 'run') { const s = ch.steps[ch.steps.length - 1]; drawRC(1, s); }
+}
+function freeHTML() {
+  const rocks = DEX.filter(s => s.kind === 'rock' && counts[s.id] > 0);
+  let h = `<p>Put one of your rocks in the machine, choose how it changes, and <b>predict</b> what comes out. Your rock really changes: you trade it for the new rock, and new kinds fill your Rock Dex. In nature, these changes take thousands to millions of years!</p>` + stepsBar(['Choose a rock', 'Choose a process', 'Predict', 'Run it'], {pick:0, proc:1, setting:1, predict:2, run:3, done:3}[rc.phase]);
+  if (!rocks.length) return h + '<p class="big">You have no rocks in your Collection Box. The machine only takes ROCKS (minerals are the building blocks of rocks). Dig up and identify a rock first!</p>';
+  if (rc.phase === 'pick') return h + `<h3>1. Choose one of your rocks</h3><div class="choice">${rocks.map(s => `<button data-rcrock="${s.id}"><img src="${spriteURL[s.id]}" alt=""> ${s.name} ×${counts[s.id]}<br><small>${s.rtype}</small></button>`).join('')}</div>`;
+  const s = SP[rc.rock];
+  h += `<p><img src="${spriteURL[s.id]}" alt="" style="width:64px;height:64px;vertical-align:middle"> <b>${s.name}</b> (${s.rtype}) is in the machine. ${rc.phase === 'done' ? '' : '<button data-rc="restart">↩ Choose a different rock</button>'}</p>`;
+  if (rc.phase === 'proc') return h + `<h3>2. How should it change?</h3><div class="choice">${PROCS.map(p => `<button data-rcproc="${p.id}">${p.icon} ${p.name}<br><small>${p.desc}</small></button>`).join('')}</div>${rc.blocked ? `<div class="fb bad pop" role="status">${rc.blocked} Try another process!</div>` : ''}`;
+  if (rc.phase === 'setting') return h + `<h3>2b. Where does the sediment settle?</h3><div class="choice">${SETTINGS.map(p => `<button data-rcset="${p.id}">${p.icon} ${p.name}</button>`).join('')}</div>`;
+  h += `<p><b>Process:</b> ${procLabel(rc.proc, rc.set)}</p>`;
+  if (rc.phase === 'predict') return h + `<h3>3. Predict: what will come out?</h3><div class="choice">${rc.opts.map(id => `<button data-rcguess="${id}">${rname(id)}</button>`).join('')}</div>`;
+  h += `<canvas id="rcCv" width="640" height="260" aria-label="Animation of the rock changing"></canvas>`;
+  if (rc.phase !== 'done') return h + '<p>The machine is running…</p>';
+  const o = rc.out, r = SP[o.res];
+  return h + `<div class="fb ${rc.ok ? 'good' : 'bad'} pop" role="status"><b>${rc.ok ? '✔ Correct prediction!' : '✖ Not quite.'}</b> You predicted <b>${rname(rc.guess)}</b>. It became <b>${r.name}</b>${o.alt ? ` (or ${o.alt.map(rname).join(', ')})` : ''}.<br>${o.why}<br>
+    <b>${rc.xp ? '+' + rc.xp + ' XP' : '0 XP'}</b><br>${rc.changeMsg}</div>
+    <button data-rc="again">♻️ Change another rock</button> <button data-open="dex">📚 Open Rock Dex</button>`;
+}
+function challengeHTML() {
+  if (!ch) return `<p>Each challenge gives you a starting rock and a target. Choose processes one at a time to change it, step by step, until you reach the target. <b>Par</b> is the fewest steps possible. You can use up to 2 extra steps. Use the 🗺️ Rock cycle guide, the 📚 Rock Dex and what you’ve learned to plan your path! Challenge rocks are lab samples, so they don’t change your collection.</p>
+    <div class="grid">${CHALLENGES.map((c, i) => `<button class="card" data-chstart="${i}"><span style="display:flex;justify-content:center;align-items:center;gap:4px"><img src="${spriteURL[c.from]}" alt="" style="width:56px;height:56px">→<img src="${spriteURL[c.to]}" alt="" style="width:56px;height:56px"></span><b>${SP[c.from].name} → ${SP[c.to].name}</b><br>Par ${c.par} step${c.par > 1 ? 's' : ''}<br>${chBest[i] ? '★'.repeat(chBest[i]) + '☆'.repeat(3 - chBest[i]) : 'Not done yet'}</button>`).join('')}</div>`;
+  const c = CHALLENGES[ch.idx], lim = c.par + 2, cur = SP[ch.cur], tg = SP[c.to];
+  let h = goalCard(c, lim, tg) + `<p>Target: <b>${tg.name}</b>, a ${tg.grp} rock. Par: <b>${c.par}</b> step${c.par > 1 ? 's' : ''}. Steps used: <b>${ch.steps.length} of ${lim}</b>. In the machine now: <b>${cur.name}</b> (${cur.rtype}).</p>`;
+  if (ch.phase === 'win') h += `<div class="fb good pop" role="status"><b>🏆 Challenge complete in ${ch.steps.length} step${ch.steps.length > 1 ? 's' : ''} (par ${c.par})!</b> ${'★'.repeat(ch.stars)}${'☆'.repeat(3 - ch.stars)} <b>+${ch.xp} XP</b>${ch.stars < 3 ? '<br>Can you find a shorter path? Try again for 3 stars.' : ''}</div>` + explainHTML();
+  const shown = ch.phase === 'run' ? ch.steps.slice(0, -1) : ch.steps, hideWhy = ch.exp && !ch.exp.answered;
+  if (shown.length) h += `<h3>Your path</h3><ol class="notes">${shown.map(s => `<li><b>${procLabel(s.proc, s.set)}:</b> ${rname(s.from)} → ${rname(s.to)}.${hideWhy ? '' : ' ' + s.why}</li>`).join('')}</ol>${hideWhy ? '<p><i>Explanations appear after you answer the science check.</i></p>' : ''}`;
+  if (ch.steps.length || ch.phase === 'run') h += `<canvas id="rcCv" width="640" height="260" aria-label="Animation of the rock changing"></canvas>`;
+  if (ch.msg) h += `<div class="fb bad pop" role="status">${ch.msg}</div>`;
+  if (ch.phase === 'play') h += ch.pickW
+    ? `<h3>Where does the sediment settle?</h3><div class="choice">${SETTINGS.map(p => `<button data-chset="${p.id}">${p.icon} ${p.name}</button>`).join('')}</div><button data-chproc="back">↩ Back</button>`
+    : `<h3>Choose the next process</h3><div class="choice">${PROCS.map(p => `<button data-chproc="${p.id}">${p.icon} ${p.name}<br><small>${p.desc}</small></button>`).join('')}</div>`;
+  if (ch.phase === 'fail') h += `<div class="fb bad pop" role="status"><b>Out of steps.</b> Your rock ended up as ${cur.name}, not ${tg.name}. ${tg.name} is a <b>${tg.grp}</b> rock: check the 🗺️ Rock cycle guide for which process makes that kind of rock, and read the 📚 Rock Dex entries for clues about what changes into what.</div>`;
+  if (ch.phase !== 'run') h += `<p><button data-ch="retry">↺ Restart this challenge</button> ${ch.phase === 'win' && CHALLENGES[ch.idx + 1] ? '<button data-ch="next">➡ Next challenge</button> ' : ''}<button data-ch="list">📋 All challenges</button> <button data-open="dex">📚 Rock Dex</button></p>`;
+  return h;
+}
+/* ART: the goal card. Start rock → step slots → target rock.
+   Solid slots = par steps, dashed slots = the 2 extra steps allowed.
+   Empty slots have a "plan" menu so students can sketch a path before running it. */
+const PLAN_OPTS = [['meta', '⬇🔥 Heat and pressure'], ['slow', '🌋⬇ Melt, cool slowly'], ['fast', '🌋⬆ Melt, cool fast'],
+  ['weather:pebbles', '🌧️🏞️ Weather → pebbles'], ['weather:sand', '🌧️🏖️ Weather → sand'], ['weather:mud', '🌧️🌊 Weather → mud'], ['weather:sea', '🌧️🐚 Weather → sea shells']];
+const stepIcon = (proc, set) => ({meta:'⬇🔥', slow:'🌋⬇', fast:'🌋⬆'}[proc] || '🌧️' + SETTINGS.find(x => x.id === set).icon);
+function goalCard(c, lim, tg) {
+  const done = ch.steps.length, reached = ch.cur === c.to && done > 0, arrow = '<span class="arrow" aria-hidden="true">→</span>';
+  let slots = '';
+  for (let i = 0; i < lim; i++) {
+    const kind = i < c.par ? 'Par step' : 'Extra step';
+    if (i === done - 1 && ch.phase === 'run') { const st = ch.steps[i]; slots += arrow + `<div class="node now" role="listitem"><span class="pi">${stepIcon(st.proc, st.set)}</span><span class="q">⚙️</span><small>Step ${i + 1}: running…</small></div>`; }
+    else if (i < done) { const st = ch.steps[i]; slots += arrow + `<div class="node done" role="listitem"><span class="pi" title="${procLabel(st.proc, st.set)}">${stepIcon(st.proc, st.set)}</span><img src="${spriteURL[st.to]}" alt=""><b>${rname(st.to)}</b><small>Step ${i + 1}</small></div>`; }
+    else if (reached || ch.phase === 'fail') slots += arrow + `<div class="node blank ${i >= c.par ? 'bonus' : ''}" role="listitem"><span class="q">–</span><small>Not needed</small></div>`;
+    else slots += arrow + `<div class="node blank ${i === done ? 'now' : ''} ${i >= c.par ? 'bonus' : ''}" role="listitem"><span class="q">${ch.plan[i] ? stepIcon(...ch.plan[i].split(':')) : '?'}</span><small>Step ${i + 1}: ${kind}${ch.plan[i] ? '<br><b>Planned</b>' : ''}</small>
+      <label class="sr" for="plan${i}">Plan for step ${i + 1}</label><select id="plan${i}" data-plan="${i}"${ch.phase === 'run' ? ' disabled' : ''}><option value="">Plan…</option>${PLAN_OPTS.map(([v, t]) => `<option value="${v}"${ch.plan[i] === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`;
+  }
+  const canRun = ch.phase === 'play' && ch.plan[done];
+  return `<div class="goalcard"><h3>🏆 Turn ${SP[c.from].name} into ${tg.name}</h3>
+    <div class="path" role="list" aria-label="Your path from start to target">
+      <div class="node start" role="listitem"><img src="${spriteURL[c.from]}" alt=""><b>${SP[c.from].name}</b><small>Start</small></div>${slots}${arrow}
+      <div class="node target ${reached ? 'hit' : ''}" role="listitem"><img src="${spriteURL[tg.id]}" alt=""><b>${tg.name}</b><small>${reached ? '✔ Reached!' : 'Target'}</small></div>
+    </div>
+    <p class="legend">Solid boxes = par steps. Dashed boxes = extra steps.${ch.phase === 'play' || ch.phase === 'run' ? ' Sketch a plan in the empty boxes, then run it, or choose one process at a time below.' : ''}${canRun ? ' <button data-ch="runplan">▶ Run my plan</button>' : ''}</p></div>`;
+}
+function chDo(proc, set) {
+  const c = CHALLENGES[ch.idx], o = rcOutcome(ch.cur, proc, set);
+  ch.msg = ''; ch.pickW = false;
+  if (o.blocked) { ch.msg = o.blocked + ' (No step used.)'; ch.auto = false; sfx('wrong'); renderMachine(); return; }
+  const step = {from:ch.cur, to:o.res, proc, set, why:o.why}; ch.steps.push(step); seePath(step.from, step.to, proc, set);
+  ch.phase = 'run'; renderMachine(); const cvs = $('#rcCv'); cvs && cvs.scrollIntoView({block:'nearest'});
+  animate(step, () => {
+    ch.cur = o.res;
+    if (ch.cur === c.to) {
+      const extra = ch.steps.length - c.par; ch.stars = extra <= 0 ? 3 : extra === 1 ? 2 : 1;
+      const first = !chBest[ch.idx]; ch.xp = first ? [30, 50, 80][ch.stars - 1] : 10;
+      chBest[ch.idx] = Math.max(chBest[ch.idx] || 0, ch.stars); chWins++; addXP(ch.xp); ch.phase = 'win'; sfx('right'); ch.exp = makeExplain();
+      if (pet) petSay('We reached the target! Rock cycle pros!', 'happy', 4); checkMissions();
+    } else if (ch.steps.length >= c.par + 2) { ch.phase = 'fail'; sfx('wrong'); }
+    else ch.phase = 'play';
+    ch.plan[ch.steps.length - 1] = null;
+    if (ch.auto && ch.phase === 'play' && ch.plan[ch.steps.length] && current === 'machine') { renderMachine(); setTimeout(runPlanStep, reduceMotion ? 50 : 500); return; }
+    ch.auto = false;
+    if (current === 'machine') { renderMachine(); const f = $('#machineBody [data-chproc], #machineBody [data-ch]'); f && f.focus({preventScroll:true}); if (ch.phase === 'win' || ch.phase === 'fail') $('#machine').scrollTop = 0; const q = $('#machineBody [data-chexp]'); if (q) q.focus({preventScroll:true}); }
+  });
+}
+function runPlanStep() { const v = ch.plan[ch.steps.length]; if (!v) { ch.auto = false; renderMachine(); return; } const [p, st] = v.split(':'); chDo(p, st); }
+/* SCIENCE CHECK: after a win, explain ONE step of your path.
+   Choices are the general explanation for each of the four processes. */
+const EXPLAIN = {
+  meta:'Its minerals were squeezed and heated deep underground until they changed, but the rock never melted.',
+  slow:'It became liquid, then hardened slowly deep underground, so big crystals had time to grow.',
+  fast:'It became liquid, reached the surface and hardened quickly, so crystals stayed tiny or never formed.',
+  weather:'It was broken into small pieces that were carried away, settled in layers, then squeezed and glued together.'
+};
+// Common wrong ideas, one for each process (used as a tricky choice)
+const MISCON = {
+  meta:'It melted completely, then hardened again in flat layers.',
+  slow:'It was squeezed until big crystals formed, without ever melting.',
+  fast:'It hardened slowly at the surface, so its crystals grew large.',
+  weather:'Heat cracked it into grains, which melted back together.'
+};
+const chExplained = {};
+function makeExplain() {
+  const real = ch.steps.map((s, i) => ({s, i})).filter(o => o.s.from !== o.s.to);
+  if (!real.length) return null;
+  const pick = real[Math.floor(Math.random() * real.length)];
+  const others = shuffle(Object.keys(EXPLAIN).filter(k => k !== pick.s.proc)).slice(0, 2);
+  return {i:pick.i, proc:pick.s.proc, opts:shuffle([pick.s.proc, 'mis', ...others]), answered:null};
+}
+function explainHTML() {
+  const ex = ch.exp; if (!ex) return '';
+  const st = ch.steps[ex.i];
+  let h = `<div class="goalcard"><h3>🧠 Explain your path</h3><p>Step ${ex.i + 1}: <b>What happened to make ${rname(st.from)} become ${rname(st.to)}?</b> ${ex.answered ? '' : `(${chExplained[ch.idx] ? '+5' : '+20'} XP bonus)`}</p>`;
+  if (!ex.answered) return h + `<div class="choice">${ex.opts.map(k => `<button data-chexp="${k}">${k === 'mis' ? MISCON[ex.proc] : EXPLAIN[k]}</button>`).join('')}</div></div>`;
+  const ok = ex.answered === ex.proc;
+  return h + `<div class="fb ${ok ? 'good' : 'bad'} pop" role="status"><b>${ok ? '✔ Great explanation!' : '✖ Not quite.'}</b> ${ok ? '' : `You chose: “${ex.answered === 'mis' ? MISCON[ex.proc] : EXPLAIN[ex.answered]}” ${ex.answered === 'mis' ? 'That’s a common mix-up. ' : 'That describes a different process. '}`}The process was <b>${procLabel(st.proc, st.set)}</b>. ${st.why}<br><b>${ex.xp ? '+' + ex.xp + ' XP' : '0 XP'}</b></div></div>`;
+}
+const newCh = i => ({idx:i, cur:CHALLENGES[i].from, steps:[], phase:'play', plan:[]});
+function rcClick(b) {
+  const d = b.dataset;
+  if (d.mmode) { machineMode = d.mmode; renderMachine(); return; }
+  if (d.chstart !== undefined) { ch = newCh(+d.chstart); renderMachine(); return; }
+  if (d.chexp) {
+    const ex = ch.exp; if (!ex || ex.answered) return; ex.answered = d.chexp;
+    const ok = d.chexp === ex.proc; stats.exps++; if (ok) stats.expOk++; ex.xp = ok ? (chExplained[ch.idx] ? 5 : 20) : 0;
+    if (ok) { chExplained[ch.idx] = true; addXP(ex.xp); sfx('right'); if (pet) petSay('You really get the rock cycle!', 'happy', 3); }
+    else { sfx('wrong'); if (pet) petSay('Let’s read why together!', 'think', 3); }
+    renderMachine(); const fb = $('#machineBody .goalcard:last-of-type .fb'); if (fb) fb.scrollIntoView({block:'nearest'});
+    const nx = $('#machineBody [data-ch="next"], #machineBody [data-ch="list"]'); nx && nx.focus({preventScroll:true}); return;
+  }
+  if (d.ch === 'runplan') { ch.auto = true; runPlanStep(); return; }
+  if (d.chproc) { if (d.chproc === 'back') { ch.pickW = false; renderMachine(); } else if (d.chproc === 'weather') { ch.pickW = true; renderMachine(); } else chDo(d.chproc); return; }
+  if (d.chset) { chDo('weather', d.chset); return; }
+  if (d.ch === 'retry') { ch = newCh(ch.idx); renderMachine(); return; }
+  if (d.ch === 'next') { ch = newCh(ch.idx + 1); renderMachine(); return; }
+  if (d.ch === 'list') { ch = null; renderMachine(); return; }
+  if (d.rcrock) { rc = {phase:'proc', rock:d.rcrock}; }
+  else if (d.rcproc) {
+    rc.proc = d.rcproc; rc.set = null; rc.blocked = null;
+    if (rc.proc === 'weather') rc.phase = 'setting';
+    else { const o = rcOutcome(rc.rock, rc.proc); if (o.blocked) { rc.blocked = o.blocked; sfx('wrong'); } else { rc.out = o; rcMakeOptions(); rc.phase = 'predict'; } }
+  }
+  else if (d.rcset) { rc.set = d.rcset; rc.out = rcOutcome(rc.rock, 'weather', rc.set); rcMakeOptions(); rc.phase = 'predict'; }
+  else if (d.rcguess) {
+    rc.guess = d.rcguess; rc.ok = rc.guess === rc.out.res || (rc.out.alt || []).includes(rc.guess);
+    const k = rcKey(), fresh = !rcPaths.has(k) && !rcTried.has(k); rc.xp = rc.ok ? (fresh ? 40 : 10) : 0;
+    rc.A = {from:rc.rock, to:rc.out.res, proc:rc.proc, set:rc.set};
+    rc.phase = 'run'; renderMachine(); $('#rcCv').scrollIntoView({block:'nearest'});
+    animate(rc.A, () => { rc.phase = 'done'; finishMachine(); if (current === 'machine') { renderMachine(); const f = $('#machineBody [data-rc="again"]'); if (f) { f.focus(); f.scrollIntoView({block:'nearest'}); } } });
+    return;
+  }
+  else if (d.rc === 'again' || d.rc === 'restart') rc = {phase:'pick'};
+  renderMachine();
+  const f = $('#machineBody .choice button'); f && f.focus();
+}
+// After a free-mode run: score the prediction, then really change the rock (evolution!)
+function finishMachine() {
+  stats.preds++; if (rc.ok) stats.predOk++;
+  const k = rcKey(); if (rc.ok) { rcPaths.add(k); rcCorrect++; } else rcTried.add(k);
+  addXP(rc.xp); seePath(rc.rock, rc.out.res, rc.proc, rc.set);
+  const from = SP[rc.rock], to = SP[rc.out.res];
+  if (from.id === to.id) rc.changeMsg = `Your ${from.name} stayed ${from.name}, so nothing was traded.`;
+  else {
+    counts[from.id]--; const isNew = !found.has(to.id); found.add(to.id); counts[to.id] = (counts[to.id] || 0) + 1;
+    rc.changeMsg = `♻️ Your ${from.name} changed into ${to.name}! 📦 It’s in your Collection Box.${isNew ? ` 📚 New Rock Dex entry: ${from.name} evolved into ${to.name}!` : ''}${counts[from.id] === 0 ? ` (That was your last ${from.name}.)` : ''}`;
+    if (isNew) toast(`📚 New Rock Dex entry: ${to.name}!`, 4000);
+  }
+  sfx(rc.ok ? 'right' : 'wrong'); if (pet) petSay(rc.ok ? 'Great prediction!' : 'Ooh, surprise! Let’s read why.', rc.ok ? 'happy' : 'wow', 3); checkMissions();
+}
+// ANIMATION: shows each process. Art follows the science: squeezing (metamorphic),
+// melting then cooling (igneous), breaking apart and settling in layers (sedimentary).
+function drawRC(t, A) {
+  const cvs = $('#rcCv'); if (!cvs) return; const c = cvs.getContext('2d'), W = 640, H = 260, cx = 320, cy = 112;
+  c.clearRect(0, 0, W, H); c.fillStyle = '#1c2541'; c.fillRect(0, 0, W, H);
+  const inS = spriteCv[A.from], outS = spriteCv[A.to], ease = x => x * x * (3 - 2 * x), seg = (a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+  const label = txt => { c.fillStyle = '#f2f7f5'; c.font = 'bold 18px Verdana, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, cx, H - 13); };
+  const rock = (img, s, a, sy) => { c.globalAlpha = a; c.drawImage(img, cx - s / 2, cy - s * (sy || 1) / 2, s, s * (sy || 1)); c.globalAlpha = 1; };
+  const fadeOut = 1 - seg(.72, .86), fadeIn = seg(.78, .95);
+  if (A.proc === 'meta') {
+    const sq = ease(seg(0, .6)), gap = 92 - sq * 30;
+    c.fillStyle = `rgba(232,113,28,${.15 + .35 * sq})`; c.fillRect(0, 0, W, H);
+    rock(inS, 130, fadeOut, 1 - .25 * sq); rock(outS, 130, fadeIn, .85);
+    c.fillStyle = '#9aa3ad'; c.strokeStyle = '#f2f7f5'; c.lineWidth = 3;
+    c.fillRect(cx - 120, cy - gap - 26, 240, 26); c.strokeRect(cx - 120, cy - gap - 26, 240, 26); c.fillRect(cx - 120, cy + gap, 240, 26); c.strokeRect(cx - 120, cy + gap, 240, 26);
+    c.fillStyle = '#f2f7f5'; c.font = 'bold 16px Verdana, sans-serif'; c.textAlign = 'center'; c.fillText('⬇ pressure ⬇', cx, cy - gap - 13); c.fillText('⬆ pressure ⬆', cx, cy + gap + 13);
+    c.fillText('🔥 heat', 70, cy); c.fillText('🔥 heat', W - 70, cy);
+    label(t < .7 ? 'Deep burial: heat and pressure, but no melting' : 'Minerals rearrange into a metamorphic rock');
+  } else if (A.proc === 'slow' || A.proc === 'fast') {
+    const melt = ease(seg(0, .35)), cool = seg(.4, .78), up = A.proc === 'fast' ? ease(seg(.35, .55)) : 0, by = cy + 20 - up * 70;
+    if (A.proc === 'fast') { c.fillStyle = '#3c3d44'; c.beginPath(); c.moveTo(cx - 200, 120); c.lineTo(cx - 40, 40); c.lineTo(cx + 40, 40); c.lineTo(cx + 200, 120); c.closePath(); c.fill(); c.fillStyle = '#86c26a'; c.fillRect(0, 118, W, 6); }
+    else { c.fillStyle = '#4a4040'; c.fillRect(0, 40, W, H - 70); c.fillStyle = '#86c26a'; c.fillRect(0, 34, W, 6); c.fillStyle = '#f2f7f5'; c.font = '14px Verdana, sans-serif'; c.textAlign = 'left'; c.fillText('surface', 10, 24); }
+    rock(inS, 120, (1 - melt) * (t < .4 ? 1 : 0));
+    if (t > .1 && t < .86) {
+      const r = 26 + 22 * melt, col = cool > 0 ? `rgb(${232 - 150 * cool | 0},${80 + 0 * cool | 0},${26 + 40 * cool | 0})` : '#e8501a';
+      c.fillStyle = col; c.beginPath(); for (let a = 0; a <= 6.3; a += .3) { const rr2 = r + (reduceMotion ? 0 : Math.sin(a * 5 + t * 30) * 4 * (1 - cool)); c.lineTo(cx + Math.cos(a) * rr2, by + Math.sin(a) * rr2); } c.fill();
+      if (A.proc === 'slow' && cool > 0) { c.fillStyle = 'rgba(240,235,225,.8)'; for (let i = 0; i < 10; i++) { const s = 8 * cool; c.fillRect(cx - 30 + (i * 37) % 60, by - 25 + (i * 23) % 50, s, s); } }
+    }
+    rock(outS, 120, fadeIn);
+    label(t < .38 ? 'Melting into magma (about 700–1,200 °C)' : t < .8 ? (A.proc === 'slow' ? 'Cooling SLOWLY underground: crystals grow big' : 'Erupting as lava and cooling FAST: tiny or no crystals') : 'Igneous rock!');
+  } else {
+    const rain = seg(0, .35), settle = seg(.3, .7), press = ease(seg(.62, .8));
+    c.fillStyle = '#9cc8ea'; c.fillRect(0, 150, W, 80);
+    rock(inS, 110, 1 - rain);
+    if (!reduceMotion && t < .4) { c.strokeStyle = 'rgba(200,230,255,.8)'; c.lineWidth = 2; for (let i = 0; i < 26; i++) { const x = (i * 53) % W, y = ((t * 900 + i * 37) % 150); c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y + 12); c.stroke(); } }
+    const grain = {pebbles:7, sand:3, mud:1.5, sea:3}[A.set], cols = A.set === 'sea' ? ['#f2eedf', '#d8cfb4'] : ['#c9a97a', '#8f7d63', '#d39a5e'];
+    for (let i = 0; i < 60; i++) { const fx = cx - 200 + (i * 71) % 400, fy = cy + (i % 7) * 4, ty = 215 - (i % 6) * 9 * (1 - press * .5); const y = fy + (ty - fy) * settle;
+      if (t > .15 && t < .86) { c.fillStyle = cols[i % cols.length]; c.globalAlpha = Math.min(1, seg(.15, .3)) * fadeOut; c.beginPath(); c.arc(fx, y, grain, 0, 7); c.fill(); c.globalAlpha = 1; } }
+    if (press > 0 && t < .86) { c.fillStyle = '#f2f7f5'; c.font = 'bold 16px Verdana, sans-serif'; c.textAlign = 'center'; c.fillText('⬇ more layers press down ⬇', cx, 120); }
+    rock(outS, 120, fadeIn);
+    label(t < .3 ? 'Weathering and erosion break the rock apart' : t < .62 ? 'Sediment settles in layers' : t < .8 ? 'Compaction and cementation glue it together' : 'Sedimentary rock!');
+  }
+}
+
+/* ---------- 12. WINDOWS (panels) ----------------------------------- */
+function guessOptions(sel) {
+  const grp = (label, f) => `<optgroup label="${label}">${SPECIES.filter(f).sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${s.name}</option>`).join('')}</optgroup>`;
+  return `<option value="">Choose…</option>` + grp('Minerals', s => s.kind === 'mineral') + grp('Igneous rocks', s => s.grp === 'igneous') + grp('Sedimentary rocks', s => s.grp === 'sedimentary') + grp('Metamorphic rocks', s => s.grp === 'metamorphic');
+}
+function renderLab() {
+  const el = $('#labBody');
+  // Just identified something: show ONLY that result, then let the student move on
+  if (labResult) {
+    const a = SP[labResult.sid], nxt = bag.length ? bag[Math.min(labIdx, bag.length - 1)] : null;
+    el.innerHTML = `<div class="result"><div class="detail good pop" role="status"><img src="${spriteURL[a.id]}" alt="${a.name}"><div>
+      <h3>✔ Specimen #${labResult.uid} is ${a.name}!</h3><p>${a.kind === 'mineral' ? 'A mineral.' : 'A ' + a.rtype.toLowerCase() + ' rock.'} ${a.info}</p>
+      <p><b>+${labResult.xp} XP</b><br>${labResult.lines.join('<br>')}</p>
+      <p>${labResult.isNew ? '📚 New Rock Dex entry! ' : ''}📦 Added to your Collection Box. 📓 Your tests are saved in the Lab notebook.</p></div></div>
+      ${nxt ? `<button id="labNext">🔬 Test specimen #${nxt.uid} next</button> ` : ''}<button data-open="notebook">📓 Open lab notebook</button> <button data-close>⛏️ Back to digging</button></div>`;
+    return;
+  }
+  if (!bag.length) { el.innerHTML = '<p class="big">Your sample bag is empty. ⛏️ Specimens are hidden inside the rock, so dig around to find them. Ask your pet rock which rocks and minerals belong in each layer.</p>'; return; }
+  if (labIdx >= bag.length) labIdx = 0;
+  const sp = bag[labIdx], s = SP[sp.sid];
+  const tabs = bag.length > 1 ? `<div class="tabs" aria-label="Specimens in your bag">${bag.map((b, i) => `<button data-tab="${i}" class="${i === labIdx ? 'done' : ''}" aria-pressed="${i === labIdx}">Specimen #${b.uid}</button>`).join('')}</div>` : '';
+  const nbLink = notebook.length ? ' <button data-open="notebook">📓 Past results</button>' : '';
+  const tests = TESTS.map(t => `<button data-test="${t.id}" class="${sp.done.has(t.id) ? 'done' : ''}">${t.icon} ${t.name}${sp.done.has(t.id) ? ' ✔' : ''}</button>`).join('');
+  const notes = sp.notes.length ? sp.notes.map(n => `<li><b>${n.t}:</b> ${n.r}</li>`).join('') : '<li>No tests yet. Pick a test to start your field notes!</li>';
+  el.innerHTML = `${tabs}<div class="lab">
+    <div class="specbox"><img class="specimg" src="${spriteURL[s.id]}" alt="Picture of the unknown specimen"><p><b>Mystery specimen #${sp.uid}</b>${nbLink}<br>Found ${sp.depth > 0 ? sp.depth.toFixed(1) + ' km deep' : 'at the surface'} in the <b>${ZONES[sp.zone].short}</b>.</p></div>
+    <div><h3>1. Run tests</h3><p style="margin:0 0 8px">Tests used: <b>${sp.done.size}</b>. Evidence bonus right now: <b>+${effBonus(sp.done.size)} XP</b> (fewer tests = more XP, earned only if your results match just one chart entry). Guess ${sp.tries + 1} earns ${sp.tries === 0 ? 'full' : sp.tries === 1 ? 'half' : 'quarter'} XP.</p><div class="tests">${tests}</div>
+    <h3>2. Field notes</h3><ul class="notes">${notes}</ul>
+    <h3>3. Identify it</h3><label for="guess">My specimen is: </label><select id="guess">${guessOptions(sp.guess)}</select>
+    <button id="idBtn">✔ Identify</button> <button data-open="chart">📖 Reference chart</button>
+    ${sp.fb ? `<div class="fb ${sp.fb[0]} pop" role="status">${sp.fb[1]}</div>` : ''}</div></div>`;
+}
+function renderChart() {
+  const min = SPECIES.filter(s => s.kind === 'mineral').sort((a, b) => a.name.localeCompare(b.name));
+  const rocks = SPECIES.filter(s => s.kind === 'rock');
+  $('#chartBody').innerHTML = `<p>Match your test results to one row. Streak and hardness are more reliable than color. Hardness kit: fingernail 2.5, copper penny 3.5, glass plate 5.5, steel file 6.5.</p>
+  <h3>Minerals</h3><div class="scroll"><table><tr><th>Mineral</th><th>Color</th><th>Luster</th><th>Streak</th><th>Hardness</th><th>Breakage</th><th>Other clues</th></tr>
+  ${min.map(s => `<tr><td><b>${s.name}</b></td><td>${s.color}</td><td>${s.luster}</td><td>${s.streak}</td><td>${s.hd}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')}</table></div>
+  <h3>Rocks</h3><div class="scroll"><table><tr><th>Rock</th><th>Type</th><th>Texture (hand lens)</th><th>Color</th><th>Breakage</th><th>Other clues</th></tr>
+  ${['igneous', 'sedimentary', 'metamorphic'].map(g => rocks.filter(s => s.grp === g).map(s => `<tr><td><b>${s.name}</b></td><td>${s.rtype}</td><td>${s.lens}</td><td>${s.color}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')).join('')}</table></div>`;
+}
+function whereFound(id) {
+  if (SP[id].made) return null; for (const z in ZONE_SPECIES) if (ZONE_SPECIES[z].includes(id)) return ZONES[z].short; return 'rock layers'; }
+function propsHTML(s) {
+  return s.kind === 'mineral'
+    ? `<p><b>Color:</b> ${s.color}<br><b>Luster:</b> ${s.luster}<br><b>Streak:</b> ${s.streak}<br><b>Hardness:</b> ${s.hd}<br><b>Breakage:</b> ${s.brk}<br><b>Clues:</b> ${s.sp}</p>`
+    : `<p><b>Texture:</b> ${s.lens}<br><b>Color:</b> ${s.color}<br><b>Breakage:</b> ${s.brk}<br><b>Clues:</b> ${s.sp}</p>`;
+}
+// Evolution chart: only the paths this student has seen happen in the machine
+function evoHTML(s) {
+  const all = [...rcSeen.values()], from = all.filter(p => p.to === s.id && p.from !== s.id), to = all.filter(p => p.from === s.id && p.to !== s.id);
+  const row = (p, other) => `<span class="tag">${procLabel(p.proc, p.set)}</span> ${rname(other)}`;
+  return `<p><b>♻️ Evolution (paths you’ve discovered):</b><br>${from.length ? 'Made from: ' + from.map(p => row(p, p.from)).join(', ') + '<br>' : ''}${to.length ? 'Changes into: ' + to.map(p => row(p, p.to)).join(', ') : ''}${!from.length && !to.length ? 'None yet. Use the Rock Cycle Machine to discover how this rock changes.' : ''}</p>`;
+}
+function renderDex(sel) {
+  let detail = '';
+  if (sel) {
+    const s = SP[sel];
+    detail = found.has(sel)
+      ? `<div class="detail"><img src="${spriteURL[s.id]}" alt="${s.name}"><div><h3>#${String(s.n).padStart(2, '0')} ${s.name} <span class="tag">${s.rtype}</span></h3><p><b>How it forms:</b> ${s.info}<br><b>Rock cycle:</b> ${s.cycle}</p>${propsHTML(s)}${evoHTML(s)}<p>In your collection: ${counts[s.id] || 0}.</p></div></div>`
+      : `<div class="detail"><div class="blank">?</div><div><h3>#${String(s.n).padStart(2, '0')} Not discovered yet</h3><p>${s.made ? 'Hint: this rock can’t be dug up here. Change one of your rocks in the ♻️ Rock Cycle Machine at camp to make it!' : `Hint: search the <b>${whereFound(sel)}</b>.${s.kind === 'rock' ? ' Or try making it by changing another rock in the ♻️ Rock Cycle Machine!' : ' Minerals can only be found by digging.'}`}</p></div></div>`;
+  }
+  $('#dexBody').innerHTML = `<p class="big">Discovered: <b>${found.size} / ${DEX.length}</b>. Select an entry to read it. Entries #25–30 can only be made with the ♻️ Rock Cycle Machine.</p>${detail}<div class="grid">${DEX.map(s => found.has(s.id)
+    ? `<button class="card" data-dex="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${String(s.n).padStart(2, '0')} ${s.name}<br><span class="tag">${s.kind === 'mineral' ? 'Mineral' : s.grp[0].toUpperCase() + s.grp.slice(1)}${s.made ? ' ♻️' : ''}</span></button>`
+    : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>`;
+}
+function renderBox() {
+  const have = DEX.filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
+  $('#boxBody').innerHTML = have.length
+    ? `<p class="big">You have ${total} specimen${total > 1 ? 's' : ''} (${have.length} kinds) and ${xp} XP. Choose one to be your pet rock!</p><div class="grid">${have.map(s => `<div class="card"><img src="${spriteURL[s.id]}" alt="${s.name}"><b>${s.name}</b> ×${counts[s.id]}<br><span class="tag">${s.rtype}</span><br><br>${pet && pet.sid === s.id ? '<b>🐾 Your pet!</b>' : `<button data-pet="${s.id}">🐾 Make my pet</button>`}</div>`).join('')}</div>`
+    : '<p class="big">Your box is empty. Identify a mystery specimen in the 🧪 Lab and it will appear here.</p>';
+}
+function petPortrait() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 160; const c = cv.getContext('2d');
+  c.drawImage(spriteCv[pet.sid], 0, 0); drawFace(c, 80, 92, 2.4, 'happy', 0, false); return cv.toDataURL();
+}
+function renderPet() {
+  const b = $('#petBody');
+  if (!pet) { b.innerHTML = `<p class="big">You don’t have a pet rock yet! Identify a specimen, then open your <button data-open="box">📦 Collection Box</button> and choose one.</p>`; return; }
+  const s = SP[pet.sid];
+  b.innerHTML = `<div class="detail"><img src="${petPortrait()}" alt="Your pet rock ${esc(pet.name)}, a ${s.name}"><div>
+    <label for="petName"><b>Name: </b></label><input id="petName" maxlength="16" value="${esc(pet.name)}"> <button id="nameBtn">Save name</button>
+    <p>${esc(pet.name)} is a <b>${s.name}</b> (${s.rtype}). Ask a question:</p></div></div>
+    <div class="qs">${QUESTIONS.map(q => `<button data-q="${q.id}">${q.t}</button>`).join('')}</div>
+    <div class="answer" role="status" aria-live="polite">${pet.lastAns || 'Pick a question above!'}</div>`;
+}
+function noteList(notes) { return notes.length ? `<ul class="notes">${notes.map(n => `<li><b>${n.t}:</b> ${n.r}</li>`).join('')}</ul>` : '<p>No tests run yet.</p>'; }
+function renderNotebook() {
+  let h = '<p>Every specimen you test is recorded here. Open an entry to see your results.</p>';
+  if (bag.length) h += '<h3>Still being tested</h3>' + bag.map((sp, i) => `<details class="entry"><summary>Mystery specimen #${sp.uid}: ${sp.done.size} test${sp.done.size === 1 ? '' : 's'} so far</summary>
+    <p>Found ${sp.depth > 0 ? sp.depth.toFixed(1) + ' km deep' : 'at the surface'} in the ${ZONES[sp.zone].short}.</p>${noteList(sp.notes)}${sp.wrong.length ? `<p>Ruled out by guessing: ${sp.wrong.map(rname).join(', ')}</p>` : ''}
+    <button data-labgo="${i}">🔬 Keep testing it</button></details>`).join('');
+  h += '<h3>Identified</h3>' + (notebook.length ? notebook.slice().reverse().map(e => { const a = SP[e.sid]; return `<details class="entry"><summary>#${e.uid}: ${a.name} (${a.rtype}), +${e.xp} XP</summary>
+    <p>Found ${e.depth > 0 ? e.depth.toFixed(1) + ' km deep' : 'at the surface'} in the ${ZONES[e.zone].short}.</p>${noteList(notesFor(e.sid, e.tests))}
+    <p>${e.wrong.length ? 'Wrong guesses first: ' + e.wrong.map(rname).join(', ') + '.' : 'Identified on the first guess.'}<br>${e.lines.map(esc).join('<br>')}</p></details>`; }).join('') : '<p>No identifications yet.</p>');
+  $('#notebookBody').innerHTML = h;
+}
+function renderKeys() {
+  $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
+}
+const RENDER = {report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+function openPanel(id, keep) {
+  if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
+  if (id === 'machine' && ch && ch.phase === 'run') ch.phase = 'play';
+  if (id === 'lab' && labResult && current !== 'lab') labResult = null;
+  if (current === 'title') return;
+  if (current === id) return;
+  if (current) { $('#' + current).classList.remove('open'); if (keep) stack.push(current); else stack = []; }
+  current = id; RENDER[id] && RENDER[id]();
+  const el = $('#' + id); el.classList.add('open'); el.scrollTop = 0;
+  for (const k in keys) keys[k] = false;
+  const f = el.querySelector('button'); f && f.focus();
+}
+function closeTop() {
+  if (!current || current === 'title') return;
+  $('#' + current).classList.remove('open');
+  current = stack.pop() || null;
+  if (current) { RENDER[current] && RENDER[current](); $('#' + current).classList.add('open'); }
+  else $('#game').focus();
+}
+function setMotion(v) { reduceMotion = v; document.body.classList.toggle('reduce', v); $('#bMotion').innerHTML = v ? '<span>🎞️ Motion: reduced</span>' : '<span>🎞️ Motion: full</span>'; $('#bMotion').classList.toggle('on', v); }
+
+/* ---------- 13. INPUT ---------------------------------------------- */
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (document.querySelector('.mbtn[aria-expanded="true"]')) { const m = document.querySelector('.mbtn[aria-expanded="true"]'); closeMenus(); m.focus(); return; } closeTop(); return; }
+  if (e.target.matches && e.target.matches('input,select,textarea')) { if (e.key === 'Enter' && e.target.id === 'petName') saveName(); return; }
+  const k = e.key.toLowerCase();
+  if (current === 'title') return;
+  if (!current && !document.activeElement.closest('.mlist')) { if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault(); keys[k] = true; }
+  if (e.repeat) return;
+  const map = {q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
+  if (map[k]) { if (current === map[k]) closeTop(); else openPanel(map[k], false); }
+  if (k === 'r') ropeUp();
+  if (k === 'm') setSound(!soundOn);
+  if (k === 'b' && !current) tryBuild(true);
+  if (k === 'e' && !current) tryMachine();
+});
+document.addEventListener('change', e => {
+  const el = e.target; if (!el.dataset || el.dataset.plan === undefined || !ch) return;
+  ch.plan[+el.dataset.plan] = el.value || null; const id = el.id; renderMachine(); const f = $('#' + id); f && f.focus();
+});
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+function saveName() { const v = $('#petName').value.trim().slice(0, 16); if (pet && v) { pet.name = v; pet.lastAns = `<b>${esc(v)}:</b> I love my new name!`; sfx('pet'); petSay(`Call me ${v}!`, 'happy', 3); renderPet(); } }
+function closeMenus(except) { document.querySelectorAll('.mbtn').forEach(m => { if (m.dataset.menu !== except) { m.setAttribute('aria-expanded', 'false'); $('#' + m.dataset.menu).hidden = true; } }); }
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b && Object.keys(b.dataset).some(k => /^(rc|ch|mmode)/.test(k))) { closeMenus(); rcClick(b); return; }
+  if (b && b.dataset.quiz) { quizClick(b.dataset.quiz); return; }
+  if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
+  closeMenus();
+  if (!b) return;
+  if (b.dataset.open) { openPanel(b.dataset.open, !!b.closest('.panel')); return; }
+  if (b.hasAttribute('data-close')) { closeTop(); return; }
+  if (b.dataset.test) { runTest(b.dataset.test); return; }
+  if (b.dataset.tab) { labIdx = +b.dataset.tab; renderLab(); return; }
+  if (b.dataset.labgo) { labIdx = +b.dataset.labgo; labResult = null; openPanel('lab', false); return; }
+  if (b.dataset.pet) { setPet(b.dataset.pet); renderBox(); return; }
+  if (b.dataset.dex) { renderDex(b.dataset.dex); $('#dex').scrollTop = 0; return; }
+  if (b.dataset.q) { askPet(b.dataset.q); return; }
+  if (b.id === 'labNext') { labResult = null; renderLab(); const f = $('#lab [data-test]'); f && f.focus(); return; }
+  if (b.id === 'idBtn') identify();
+  else if (b.id === 'nameBtn') saveName();
+  else if (b.id === 'startBtn') { audioInit(); $('#title').classList.remove('open'); current = null; $('#game').focus(); toast('🎯 ' + MISSIONS[0].t, 4500); }
+  else if (b.id === 'bSound') setSound(!soundOn);
+  else if (b.id === 'bSave' || b.id === 'saveBtn') downloadSave();
+  else if (b.classList.contains('pdfBtn')) downloadPDF();
+  else if (b.classList.contains('loadBtn')) filePick.click();
+  else if (b.id === 'bMotion') setMotion(!reduceMotion);
+  else if (b.id === 'bRope') ropeUp();
+  else if (b.id === 'bBuild') tryBuild(true);
+  else if (b.id === 'bMachine') tryMachine();
+});
+// Mouse: right-click an empty dug-out space next to you to rebuild it
+$('#game').addEventListener('contextmenu', e => {
+  e.preventDefault(); if (current || buildCool > 0) return;
+  const c = Math.floor((e.clientX / zoom + cam.x) / T), r = Math.floor((e.clientY / zoom + cam.y) / T);
+  const dx = (c + .5) * T - (player.x + player.w / 2), dy = (r + .5) * T - (player.y + player.h / 2);
+  if (Math.hypot(dx, dy) < T * 1.9 && canPlace(r, c)) place(r, c);
+});
+// Mouse: click a block next to you to dig it
+$('#game').addEventListener('mousedown', e => {
+  if (current || rope || e.button !== 0) return;
+  const wx = e.clientX / zoom + cam.x, wy = e.clientY / zoom + cam.y, c = Math.floor(wx / T), r = Math.floor(wy / T);
+  const dx = (c + .5) * T - (player.x + player.w / 2), dy = (r + .5) * T - (player.y + player.h / 2);
+  if (Math.hypot(dx, dy) < T * 1.7 && r >= 0 && r < ROWS && c >= 0 && c < COLS && tile[r][c] !== AIR && digCool <= 0) { player.face = dx >= 0 ? 1 : -1; hit(r, c); }
+});
+
+/* ---------- 14. DRAWING THE WORLD ---------------------------------- */
+const cv = $('#game'), g = cv.getContext('2d');
+let dpr = 1, zoom = 1, viewW = 0, viewH = 0;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  zoom = Math.max(.8, Math.min(1.7, innerWidth / (19 * T))); viewW = innerWidth / zoom; viewH = innerHeight / zoom;
+  document.documentElement.style.setProperty('--hudH', $('#hud').offsetHeight + 'px');
+}
+addEventListener('resize', resize);
+function drawSky() {
+  const top = cam.y, bot = SURF * T + T; if (top > bot) return;
+  const gr = g.createLinearGradient(0, -4 * T, 0, SURF * T); gr.addColorStop(0, '#3a86c8'); gr.addColorStop(1, '#c9e6f6');
+  g.fillStyle = gr; g.fillRect(cam.x, top, viewW, bot - top);
+  g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(cam.x + viewW * .82, SURF * T - 6.5 * T, 34, 0, 7); g.fill();
+  for (const [par, amp, base, col] of [[.3, 40, 150, '#a9d48c'], [.55, 26, 70, '#86c26a']]) {
+    g.fillStyle = col; g.beginPath(); g.moveTo(cam.x, bot);
+    for (let x = cam.x; x <= cam.x + viewW + 20; x += 20) { const xx = x - cam.x * par; g.lineTo(x, SURF * T - base + Math.sin(xx / 110) * amp + Math.sin(xx / 47) * amp * .3); }
+    g.lineTo(cam.x + viewW + 20, bot); g.closePath(); g.fill();
+  }
+  g.fillStyle = 'rgba(255,255,255,.92)';
+  for (let i = 0; i < 6; i++) {
+    const span = COLS * T + 400, x = ((i * 410 + (reduceMotion ? 0 : time * 10)) % span) - 200, y = SURF * T - 8 * T + (i % 3) * 45;
+    for (const [ox, oy, r] of [[0, 0, 22], [24, -10, 26], [50, 0, 20]]) { g.beginPath(); g.arc(x + ox, y + oy, r, 0, 7); g.fill(); }
+  }
+}
+function drawCamp() {
+  const x = 3 * T, y = SURF * T;
+  g.fillStyle = '#e8711c'; g.beginPath(); g.moveTo(x - 30, y); g.lineTo(x + 20, y - 70); g.lineTo(x + 70, y); g.closePath(); g.fill();
+  g.strokeStyle = '#1c2541'; g.lineWidth = 3; g.stroke();
+  g.fillStyle = '#1c2541'; g.beginPath(); g.moveTo(x + 8, y); g.lineTo(x + 20, y - 32); g.lineTo(x + 32, y); g.fill();
+  const sx = 10.5 * T, sy = SURF * T;
+  g.fillStyle = '#7a5233'; g.fillRect(sx - 3, sy - 52, 6, 52);
+  g.fillStyle = '#f2f7f5'; rr(g, sx - 70, sy - 92, 140, 44, 8); g.fill(); g.strokeStyle = '#1c2541'; g.stroke();
+  g.fillStyle = '#1c2541'; g.font = 'bold 14px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Pebble Creek', sx, sy - 79); g.fillText('Survey Camp ⛏', sx, sy - 61);
+  const vx = (VC - 9) * T;
+  g.fillStyle = '#7a5233'; g.fillRect(vx - 3, sy - 52, 6, 52); g.fillStyle = '#f2f7f5'; rr(g, vx - 64, sy - 92, 128, 44, 8); g.fill(); g.stroke();
+  g.fillStyle = '#1c2541'; g.fillText('Old volcano', vx, sy - 79); g.fillText('this way →', vx, sy - 61);
+  drawMachine();
+}
+// ART: the Rock Cycle Machine at camp. Three chambers = the three ways rocks change.
+const MACH_X = 14 * T;
+function drawMachine() {
+  const x = MACH_X - 52, y = SURF * T - 104;
+  g.lineWidth = 3; g.strokeStyle = '#1c2541';
+  g.fillStyle = '#9aa3ad'; g.beginPath(); g.moveTo(x + 30, y); g.lineTo(x + 74, y); g.lineTo(x + 64, y + 18); g.lineTo(x + 40, y + 18); g.closePath(); g.fill(); g.stroke(); // hopper
+  g.fillStyle = '#3a86c8'; rr(g, x, y + 16, 104, 88, 14); g.fill(); g.stroke();
+  const ch = [['#e8711c', '🔥'], ['#ffcc33', '⬇'], ['#9cc8ea', '🌧']];
+  ch.forEach(([col, ic], i) => { g.fillStyle = col; rr(g, x + 8 + i * 32, y + 28, 26, 30, 7); g.fill(); g.stroke();
+    g.fillStyle = '#1c2541'; g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ic, x + 21 + i * 32, y + 44); });
+  g.fillStyle = '#f2f7f5'; g.beginPath(); g.arc(x + 52, y + 80, 15, 0, 7); g.fill(); g.stroke();
+  g.save(); g.translate(x + 52, y + 80); if (!reduceMotion) g.rotate(time * 1.5);
+  g.strokeStyle = '#1c2541'; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 8, 0, 4.8); g.stroke(); g.beginPath(); g.moveTo(8, -1); g.lineTo(4, -6); g.lineTo(11, -6); g.closePath(); g.fillStyle = '#1c2541'; g.fill(); g.restore();
+  g.fillStyle = '#f2f7f5'; rr(g, x - 22, y - 30, 148, 24, 8); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke();
+  g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.fillText('Rock Cycle Machine', x + 52, y - 18);
+  if (nearMachine() && !current) bubble(MACH_X, y - 34, 'Press E to use the machine');
+}
+function nearMachine() { const cx = player.x + player.w / 2, feet = player.y + player.h; return Math.abs(cx - MACH_X) < T * 1.8 && feet <= SURF * T + 2 && feet > SURF * T - 2 * T; }
+function tryMachine() {
+  if (nearMachine()) { openPanel('machine', false); return; }
+  toast('♻️ Walk to the Rock Cycle Machine at camp to use it. Press R to rope up to camp.');
+}
+function drawTile(x, y, t, r, c) {
+  g.fillStyle = TI[t].c; rr(g, x + 1, y + 1, T - 2, T - 2, 8); g.fill();
+  const q = k => hr(r, c, k);
+  const TEX = {[SOIL]:[['#6e4428', '#a06b42'], 5, 2.6], [SAND]:[['#ecc08c', '#b07a45'], 12, 1.4], [LIME]:[['#b5ac8e', '#e0dac8'], 8, 1.6], [GRAN]:[['#e59a8a', '#1f1f22', '#f4f0ea'], 14, 2.6], [BASA]:[['#2a2b30', '#55565e'], 8, 1.6]}[t];
+  if (TEX) for (let i = 0; i < TEX[1]; i++) { g.fillStyle = TEX[0][i % TEX[0].length]; g.beginPath(); g.arc(x + 6 + q(i) * (T - 12), y + 6 + q(i + 50) * (T - 12), TEX[2] * (.6 + q(i + 99) * .6), 0, 7); g.fill(); }
+  g.lineWidth = 2;
+  if (t === GRASS) { g.fillStyle = '#6cc04a'; rr(g, x + 1, y + 1, T - 2, 16, 8); g.fill(); g.fillRect(x + 1, y + 9, T - 2, 8); g.fillStyle = '#57a63b'; for (let i = 0; i < 4; i++) { const bx = x + 5 + i * 11 + q(i) * 4; g.beginPath(); g.moveTo(bx, y + 17); g.lineTo(bx + 3, y + 22); g.lineTo(bx + 6, y + 17); g.fill(); } }
+  else if (t === SHALE) { g.strokeStyle = '#575b64'; for (let i = 1; i < 5; i++) { g.beginPath(); g.moveTo(x + 4, y + i * 9.5); g.lineTo(x + T - 4, y + i * 9.5); g.stroke(); } }
+  else if (t === GNEI) { g.save(); g.beginPath(); g.rect(x + 2, y + 2, T - 4, T - 4); g.clip();
+    for (const [off, col, w] of [[12, '#3f3a39', 6], [24, '#d29c8c', 4], [36, '#3f3a39', 5]]) { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); for (let xx = x; xx <= x + T; xx += 6) { const yy = y + off + Math.sin(xx / 30) * 5; if (xx === x) g.moveTo(xx, yy); else g.lineTo(xx, yy); } g.stroke(); } g.restore(); }
+  else if (t === MAGMA) { for (let i = 0; i < 3; i++) { g.fillStyle = i ? '#ffb52e' : '#ffd23f'; g.beginPath(); g.arc(x + 8 + q(i) * (T - 16), y + 8 + q(i + 9) * (T - 16) + (reduceMotion ? 0 : Math.sin(time * 2 + i + c) * 3), 5 + q(i + 20) * 6, 0, 7); g.fill(); } }
+  drawDetails(x, y, t, r, c, q);
+  if (t !== MAGMA) { g.fillStyle = 'rgba(255,255,255,.14)'; rr(g, x + 5, y + 3, T - 10, 5, 2.5); g.fill(); g.fillStyle = 'rgba(0,0,0,.18)'; rr(g, x + 5, y + T - 8, T - 10, 5, 2.5); g.fill(); }
+  const d = dmg[r][c];
+  if (d > 0) { const need = spec[r][c] ? 2 : TI[t].hits, n = Math.ceil(d / need * 4); g.strokeStyle = 'rgba(0,0,0,.65)'; g.lineWidth = 2.2;
+    for (let i = 0; i < n; i++) { const a = q(i + 200) * 6.28; g.beginPath(); g.moveTo(x + T / 2, y + T / 2); g.lineTo(x + T / 2 + Math.cos(a) * 10, y + T / 2 + Math.sin(a) * 10 + 4); g.lineTo(x + T / 2 + Math.cos(a) * 20, y + T / 2 + Math.sin(a) * 20); g.stroke(); } }
+}
+/* CLUE: specimens hidden in rock catch your headlamp light as a tiny glint.
+   You only see it when you are close (within about 5 blocks), and every
+   specimen glints the same way, so it tells you WHERE to dig, not WHAT it is. */
+function drawGlints(x0, x1, y0, y1) {
+  const px = player.x + player.w / 2, py = player.y + player.h / 2, range = T * 5;
+  for (let r = y0; r <= y1; r++) for (let c = x0; c <= x1; c++) {
+    if (!spec[r][c] || tile[r][c] === AIR) continue;
+    const gx = c * T + 10 + hr(r, c, 5) * (T - 20), gy = r * T + 10 + hr(r, c, 6) * (T - 20), d = Math.hypot(gx - px, gy - py);
+    if (d > range) continue;
+    const near = 1 - d / range, tw = reduceMotion ? .5 : Math.pow(Math.max(0, Math.sin(time * 2.2 + hr(r, c, 7) * 6.28)), 6);
+    g.globalAlpha = Math.min(1, .35 + near);
+    const halo = g.createRadialGradient(gx, gy, 0, gx, gy, 11); halo.addColorStop(0, 'rgba(255,255,230,.75)'); halo.addColorStop(1, 'rgba(255,255,230,0)');
+    g.fillStyle = halo; g.beginPath(); g.arc(gx, gy, 11, 0, 7); g.fill();
+    shine(g, gx, gy, 4.5 + tw * 7);
+    g.globalAlpha = 1;
+  }
+}
+// Pet rock "senses" a hidden specimen within 2 blocks and tells you which way
+const sensed = new Set(); let senseT = 0;
+function petSense(dt) {
+  senseT -= dt; if (!pet || senseT > 0) return; senseT = .5;
+  const pc = Math.floor((player.x + player.w / 2) / T), pr = Math.floor((player.y + player.h / 2) / T);
+  for (let r = pr - 2; r <= pr + 2; r++) for (let c = pc - 2; c <= pc + 2; c++) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || !spec[r][c] || tile[r][c] === AIR || sensed.has(r * COLS + c)) continue;
+    sensed.add(r * COLS + c);
+    const dir = r > pr ? (c === pc ? 'below us' : c < pc ? 'down to the left' : 'down to the right') : r < pr ? (c === pc ? 'above us' : c < pc ? 'up to the left' : 'up to the right') : (c < pc ? 'to the left' : 'to the right');
+    petSay(`I sense a specimen nearby… ${dir}!`, 'wow', 4); pet.hop = .4; sfx('sense'); return;
+  }
+}
+/* ART: layer details. Dashed lines mark where each rock layer begins. */
+function drawLayerLines(x0, x1) {
+  const lines = [[SURF + 3, 'Sedimentary layers begin', 'sedimentary'], [SED_END + 1, 'Metamorphic zone begins', 'metamorphic'], [MET_END + 1, 'Igneous zone begins', 'igneous']];
+  g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'bottom';
+  for (const [row, label, z] of lines) {
+    const y = row * T; if (y < cam.y - T || y > cam.y + viewH + T) continue;
+    g.setLineDash([10, 8]); g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cam.x, y); g.lineTo(cam.x + viewW, y); g.stroke(); g.setLineDash([]);
+    const txt = `${label} (${zoneDepth(z).split('–')[0]} km deep)`, w = g.measureText(txt).width + 16;
+    g.fillStyle = 'rgba(28,37,65,.85)'; rr(g, cam.x + 10, y - 26, w, 24, 8); g.fill(); g.fillStyle = '#f2f7f5'; g.fillText(txt, cam.x + 18, y - 5);
+  }
+}
+// ART: warm orange glow rising from the magma (heat lights up the rock above it)
+function drawMagmaGlow() {
+  const top = (MAG_START - 5) * T, bot = ROWS * T; if (cam.y + viewH < top) return;
+  const gr = g.createLinearGradient(0, top, 0, MAG_START * T);
+  gr.addColorStop(0, 'rgba(255,110,30,0)'); gr.addColorStop(1, 'rgba(255,110,30,.38)');
+  g.fillStyle = gr; g.fillRect(cam.x, top, viewW, MAG_START * T - top);
+  g.fillStyle = 'rgba(255,140,40,.25)'; g.fillRect(cam.x, MAG_START * T, viewW, bot - MAG_START * T);
+  if (!reduceMotion) for (let i = 0; i < 14; i++) {   // drifting embers
+    const ex = cam.x + ((i * 137 + time * 18) % viewW), ey = MAG_START * T - ((time * 40 + i * 53) % (4 * T));
+    g.fillStyle = `rgba(255,${180 + (i % 3) * 20},80,${.5 + (i % 2) * .3})`; g.fillRect(ex, ey, 3, 3);
+  }
+}
+// ART: small real-world features in each kind of rock
+function drawDetails(x, y, t, r, c, q) {
+  g.lineWidth = 1.8;
+  if (t === SOIL && q(31) < .5) { g.strokeStyle = '#5a3a20'; g.beginPath(); g.moveTo(x + 10 + q(32) * 28, y + 2); g.quadraticCurveTo(x + 18, y + 22, x + 12 + q(33) * 24, y + 40); g.stroke(); } // plant roots
+  else if (t === SAND && q(41) < .35) { g.strokeStyle = 'rgba(150,90,40,.5)'; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(x + 6 + i * 10, y + 40); g.lineTo(x + 20 + i * 10, y + 10); g.stroke(); } } // cross-bedding from old dunes
+  else if (t === LIME) { const f = q(61); g.strokeStyle = '#8b8167';
+    if (f < .14) { g.beginPath(); g.moveTo(x + 24, y + 26); for (let a = 0; a < 13; a += .3) { const rr2 = a * .75; g.lineTo(x + 24 + Math.cos(a) * rr2, y + 26 + Math.sin(a) * rr2); } g.stroke(); } // ammonite
+    else if (f < .26) { const bx = x + 24, by = y + 32; g.beginPath(); g.arc(bx, by, 9, Math.PI + .35, Math.PI * 2 - .35); g.stroke(); for (let k = 0; k < 5; k++) { const a = Math.PI + .5 + k * (Math.PI - 1) / 4; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + Math.cos(a) * 9, by + Math.sin(a) * 9); g.stroke(); } } // brachiopod shell
+    else if (f < .34) { g.fillStyle = '#b3a988'; for (let k = 0; k < 5; k++) { g.beginPath(); g.ellipse(x + 12 + k * 6, y + 20 + k * 2, 3, 4, .3, 0, 7); g.fill(); g.stroke(); } } } // crinoid stem
+  else if (t === SLATE || t === MARB) { g.strokeStyle = t === SLATE ? 'rgba(160,170,190,.35)' : 'rgba(150,145,138,.5)'; g.save(); g.beginPath(); g.rect(x + 2, y + 2, T - 4, T - 4); g.clip();
+    for (let k = 0; k < 2; k++) { g.beginPath(); for (let xx = x; xx <= x + T; xx += 6) { const yy = y + 14 + k * 20 + Math.sin(xx / 40 + r * .7) * 8; if (xx === x) g.moveTo(xx, yy); else g.lineTo(xx, yy); } g.stroke(); } g.restore(); } // folds from squeezing
+  else if (t === GRAN && q(71) < .3) { g.fillStyle = 'rgba(240,235,225,.75)'; g.beginPath(); g.moveTo(x + 14, y + 20); g.lineTo(x + 26, y + 14); g.lineTo(x + 32, y + 26); g.lineTo(x + 20, y + 32); g.closePath(); g.fill(); } // big visible crystal
+  else if (t === BASA) { g.strokeStyle = 'rgba(0,0,0,.35)'; if (q(81) < .5) { g.beginPath(); g.moveTo(x + 16, y + 4); g.lineTo(x + 16, y + T - 4); g.moveTo(x + 32, y + 4); g.lineTo(x + 32, y + T - 4); g.stroke(); } // columns from cooling lava
+    else { g.strokeStyle = 'rgba(120,120,135,.6)'; g.beginPath(); for (let k = 0; k < 3; k++) g.arc(x + 24, y + 24 + k * 2, 6 + k * 5, 3.4, 6); g.stroke(); } } // ropy lava swirls
+}
+// ART: tunnel walls keep a dim pattern of their layer (flat beds, folds, or crystals)
+function drawBackDetail(x, y, b, r) {
+  const z = zoneOfType(b); g.lineWidth = 2;
+  if (z === 'sedimentary') { g.strokeStyle = 'rgba(255,255,255,.07)'; for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(x, y + k * 12); g.lineTo(x + T, y + k * 12); g.stroke(); } }
+  else if (z === 'metamorphic') { g.strokeStyle = 'rgba(255,255,255,.08)'; g.beginPath(); for (let xx = x; xx <= x + T; xx += 8) { const yy = y + 24 + Math.sin(xx / 40 + r * .7) * 10; if (xx === x) g.moveTo(xx, yy); else g.lineTo(xx, yy); } g.stroke(); }
+  else if (z === 'igneous') { g.fillStyle = 'rgba(255,255,255,.08)'; for (let k = 0; k < 4; k++) g.fillRect(x + hr(r, x, k) * (T - 6), y + hr(r, x, k + 9) * (T - 6), 5, 5); }
+}
+function wrapText(t, maxW) { const out = []; let line = ''; for (const w of t.split(' ')) { const test = line ? line + ' ' + w : w; if (g.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test; } if (line) out.push(line); return out; }
+function bubble(x, y, text) {
+  g.font = 'bold 15px Verdana, sans-serif'; const lines = wrapText(text, 200);
+  const w = Math.max(...lines.map(l => g.measureText(l).width)) + 20, h = lines.length * 20 + 12, bx = Math.max(cam.x + 4, Math.min(x - w / 2, cam.x + viewW - w - 4)), by = y - h - 14;
+  g.fillStyle = '#f2f7f5'; rr(g, bx, by, w, h, 10); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke();
+  g.beginPath(); g.moveTo(x - 7, by + h - 1); g.lineTo(x, by + h + 10); g.lineTo(x + 7, by + h - 1); g.fill(); g.stroke();
+  g.fillStyle = '#1c2541'; g.textAlign = 'left'; g.textBaseline = 'top'; lines.forEach((l, i) => g.fillText(l, bx + 10, by + 7 + i * 20));
+}
+function draw() {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#101828'; g.fillRect(0, 0, cv.width, cv.height);
+  const s = dpr * zoom; g.setTransform(s, 0, 0, s, -cam.x * s, -cam.y * s);
+  drawSky(); drawCamp();
+  const x0 = Math.max(0, Math.floor(cam.x / T)), x1 = Math.min(COLS - 1, Math.floor((cam.x + viewW) / T));
+  const y0 = Math.max(0, Math.floor(cam.y / T)), y1 = Math.min(ROWS - 1, Math.floor((cam.y + viewH) / T));
+  for (let r = y0; r <= y1; r++) for (let c = x0; c <= x1; c++) {
+    const t = tile[r][c], b = back[r][c], x = c * T, y = r * T;
+    if (t === AIR) { if (b !== AIR && b !== GRASS && !(b === BASA && r < SURF)) { g.fillStyle = BACKC[b]; g.fillRect(x, y, T, T); drawBackDetail(x, y, b, r); } continue; }
+    drawTile(x, y, t, r, c);
+  }
+  drawLayerLines(x0, x1);
+  // Darkness grows with depth; the headlamp lights a circle around you
+  const a = Math.max(0, Math.min(.6, ((player.y + player.h) / T - SURF) / 28));
+  if (a > 0) { const px = player.x + player.w / 2, py = player.y + player.h / 2, gr = g.createRadialGradient(px, py, T * 1.5, px, py, T * 7);
+    gr.addColorStop(0, 'rgba(8,10,24,0)'); gr.addColorStop(1, `rgba(8,10,24,${a})`); g.fillStyle = gr; g.fillRect(cam.x, cam.y, viewW, viewH); }
+  drawMagmaGlow();
+  drawGlints(x0, x1, y0, y1);
+  if (pet) {
+    const moving = Math.abs(player.vx) > 20 && !reduceMotion;
+    const hop = reduceMotion ? 0 : (moving ? -Math.abs(Math.sin(time * 10)) * 5 : 0) + (pet.hop > 0 ? -Math.sin(pet.hop / .4 * Math.PI) * 14 : 0);
+    const px = pet.x, py = pet.y + hop, look = Math.sign(player.x + player.w / 2 - px);
+    g.fillStyle = '#1c2541'; for (const fx of [-8, 8]) { g.beginPath(); g.ellipse(px + fx, pet.y + 21, 5, 3, 0, 0, 7); g.fill(); }
+    g.drawImage(spriteCv[pet.sid], px - 26, py - 26, 52, 52); drawFace(g, px, py + 2, 1, pet.mood, look, pet.blink < 0);
+  }
+  drawRope();
+  drawPerson(g, player.x + player.w / 2, player.y + player.h, player.face, player.mood, Math.abs(player.vx) > 20 && player.onGround && !reduceMotion ? Math.sin(time * 16) : 0, digAnim, .8);
+  for (const q of particles) { g.fillStyle = q.col; g.fillRect(q.x - q.s / 2, q.y - q.s / 2, q.s, q.s); }
+  g.font = 'bold 17px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const f of floats) { g.globalAlpha = Math.min(1, f.life); g.lineWidth = 4; g.strokeStyle = '#1c2541'; g.strokeText(f.txt, f.x, f.y); g.fillStyle = '#ffcc33'; g.fillText(f.txt, f.x, f.y); g.globalAlpha = 1; }
+  if (pet && pet.say) bubble(pet.x, pet.y - 30, `${pet.name}: ${pet.say}`);
+}
+let hudT = 0;
+function updateHUD() {
+  const d = depthKm((player.y + player.h) / T), z = playerZone(), temp = Math.round(15 + 25 * d);
+  $('#where').textContent = `⛏️ Depth ${d.toFixed(1)} km · ${ZONES[z].name} · 🌡️ about ${temp} °C · ⭐ ${xp} XP (${LEVELS[levelOf(xp)][1]}) · 📚 ${found.size}/${DEX.length}`;
+  $('#mission').textContent = mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!';
+  $('#bagN').textContent = bag.length ? `(${bag.length})` : '';
+}
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+  if (rope && !current) { updateRope(dt); updatePet(dt); } else if (!current) update(dt); else updatePet(0);
+  // Camera follows the geologist
+  const tx = Math.max(0, Math.min(COLS * T - viewW, player.x + player.w / 2 - viewW / 2));
+  const ty = Math.max(-3 * T, Math.min(ROWS * T - viewH, player.y - viewH * .5 + 30));
+  const k = reduceMotion ? 1 : Math.min(1, dt * 6); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
+  draw();
+  hudT -= dt; if (hudT <= 0) { updateHUD(); hudT = .2; }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- 15. ROCK HOUND REPORT + SAVE FILES ---------------------
+   The save file is downloaded to the student's own computer. Nothing is
+   stored in the browser or sent anywhere. Loading it rebuilds the game. */
+const stats = {guesses:0, firstTry:0, testsUsed:0, preds:0, predOk:0, exps:0, expOk:0, priorMs:0};
+const sessionStart = Date.now(); let lastSaveSig = '', editedFlag = false;
+const mins = ms => Math.max(0, Math.round(ms / 60000));
+const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '—';
+function renderReport() {
+  if (quiz && !quiz.answers.some(a => a !== null) && quiz.foundN !== found.size) quiz = null; // new discoveries = fresh questions
+  const lv = LEVELS[levelOf(xp)], next = LEVELS[levelOf(xp) + 1], chDone = Object.keys(chBest).length, chStars = Object.values(chBest).reduce((a, b) => a + b, 0);
+  const sess = Date.now() - sessionStart, unsaved = saveSig() !== lastSaveSig;
+  const card = (title, big, small) => `<div class="card" style="text-align:left"><h3>${title}</h3><p class="big" style="margin:4px 0"><b>${big}</b></p><p style="margin:0">${small}</p></div>`;
+  $('#reportBody').innerHTML = `<p>Session report for ${new Date().toLocaleDateString()} · Time this session: <b>${mins(sess)} min</b> · All sessions: <b>${mins(sess + stats.priorMs)} min</b></p>
+  <div class="fb noprint ${unsaved ? 'bad' : 'good'}"><h3 style="margin-top:0">💾 Keep your progress</h3>
+  <p>${unsaved ? '<b>⚠️ You have progress that isn’t in a save file yet.</b> ' : '✔ Your latest progress is saved. '}Download a save file to your computer. Then take the 🧠 Field Guide Quiz below and download your 📄 exit ticket. Next time, choose <b>📂 Continue from a save file</b> on the title screen to pick up where you left off.</p>
+  <p class="noprint"><button id="saveBtn">💾 Download save file</button> <button class="loadBtn">📂 Load a save file</button> <button id="pdfBtn" class="pdfBtn">📄 Download 1-page exit ticket (PDF)</button></p></div>
+  ${editedFlag ? '<div class="fb bad" role="status">⚠️ This progress came from a save file that was changed outside the game.</div>' : ''}
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+    ${card('⭐ Level', `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}`)}
+    ${card('📚 Rock Dex', `${found.size} / ${DEX.length}`, `Minerals: ${DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length} · Rocks: ${DEX.filter(s => s.kind === 'rock' && found.has(s.id)).length}`)}
+    ${card('🔬 Identifications', `${idTotal}`, `Right on the first guess: ${pct(stats.firstTry, idTotal)} · Average tests per ID: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '—'}`)}
+    ${card('♻️ Rock cycle predictions', `${stats.predOk} / ${stats.preds} correct`, `Paths discovered: ${rcSeen.size}`)}
+    ${card('🏆 Rock cycle challenges', `${chDone} / ${CHALLENGES.length}`, `Stars: ${chStars} / ${CHALLENGES.length * 3}`)}
+    ${card('🧠 Science checks', `${stats.expOk} / ${stats.exps} correct`, 'Explaining why each rock changed')}
+    ${card('🎯 Missions', `${Math.min(mi, MISSIONS.length)} / ${MISSIONS.length}`, mi < MISSIONS.length ? 'Next: ' + MISSIONS[mi].t : 'All complete!')}
+    ${card('🐾 Pet rock', pet ? esc(pet.name) : 'None yet', pet ? 'a ' + SP[pet.sid].name.toLowerCase() : 'Choose one in the Collection Box')}
+  </div>
+  ${quizHTML()}
+  <h3>Rock Dex discoveries</h3><div style="display:flex;flex-wrap:wrap;gap:4px">${DEX.map(s => found.has(s.id) ? `<img src="${spriteURL[s.id]}" alt="${s.name}" title="${s.name}" style="width:52px;height:52px">` : '<div class="blank" style="width:52px;height:52px;font-size:22px;margin:0" aria-label="Not discovered">?</div>').join('')}</div>
+`;
+}
+// Everything needed to rebuild the game. Only game data: no names, no personal information.
+function snapshot() {
+  return {
+    xp, mi, idTotal, idBy, found:[...found], counts, chBest, chWins, chExplained, rcCorrect, stats:{...stats, priorMs:stats.priorMs + (Date.now() - sessionStart)},
+    rcPaths:[...rcPaths], rcTried:[...rcTried], rcSeen:[...rcSeen.values()], visited:[...visited], edited:editedFlag,
+    pet:pet ? {sid:pet.sid, name:pet.name} : null,
+    bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong})),
+    notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
+    world:{tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y}
+  };
+}
+function saveSig() { return String(xp) + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
+function downloadSave() {
+  const payload = snapshot(), body = JSON.stringify(payload);
+  const file = {game:'rock-hound', version:1, savedAt:new Date().toISOString(), check:hashStr(body + '|rock-hound'), payload};
+  const blob = new Blob([JSON.stringify(file)], {type:'application/json'}), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); const d = new Date(), pad = n => String(n).padStart(2, '0'); a.download = `rock-hound-save-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  lastSaveSig = saveSig(); sfx('right'); toast('💾 Save file downloaded! Keep it somewhere safe, like your Documents folder.', 5000);
+  if (current === 'report') renderReport();
+}
+// Loading: every value is checked before use, so a broken or edited file can't break the game.
+const isId = id => typeof id === 'string' && !!SP[id];
+const num = (v, lo, hi, d) => Number.isFinite(+v) ? Math.max(lo, Math.min(hi, +v)) : d;
+function applySave(file) {
+  if (!file || file.game !== 'rock-hound' || file.version !== 1 || !file.payload) throw new Error('not a Rock Hound save file');
+  const P = file.payload, edited = hashStr(JSON.stringify(P) + '|rock-hound') !== file.check || !!P.edited;
+  xp = num(P.xp, 0, 1e7, 0); mi = num(P.mi, 0, MISSIONS.length, 0); idTotal = num(P.idTotal, 0, 1e6, 0);
+  for (const k in idBy) delete idBy[k]; for (const z in ZONE_SPECIES) idBy[z] = num(P.idBy && P.idBy[z], 0, 1e6, 0);
+  found.clear(); (P.found || []).filter(isId).forEach(id => found.add(id));
+  for (const k in counts) delete counts[k]; for (const id in (P.counts || {})) if (isId(id)) counts[id] = num(P.counts[id], 0, 9999, 0);
+  for (const k in chBest) delete chBest[k]; for (const i in (P.chBest || {})) if (CHALLENGES[+i]) chBest[+i] = num(P.chBest[i], 1, 3, 1);
+  for (const k in chExplained) delete chExplained[k]; for (const i in (P.chExplained || {})) if (CHALLENGES[+i]) chExplained[+i] = true;
+  chWins = num(P.chWins, 0, 1e6, 0); rcCorrect = num(P.rcCorrect, 0, 1e6, 0);
+  for (const k of Object.keys(stats)) stats[k] = num(P.stats && P.stats[k], 0, 1e12, 0);
+  const keyOk = k => typeof k === 'string' && isId(k.split('|')[0]);
+  rcPaths.clear(); (P.rcPaths || []).filter(keyOk).forEach(k => rcPaths.add(k));
+  rcTried.clear(); (P.rcTried || []).filter(keyOk).forEach(k => rcTried.add(k));
+  rcSeen.clear(); (P.rcSeen || []).forEach(p => { if (p && isId(p.from) && isId(p.to) && PROCS.some(x => x.id === p.proc) && (!p.set || SETTINGS.some(x => x.id === p.set))) seePath(p.from, p.to, p.proc, p.set); });
+  visited.clear(); visited.add('surface'); (P.visited || []).forEach(z => { if (ZONES[z]) visited.add(z); });
+  bag = (P.bag || []).filter(b => b && isId(b.sid) && ZONES[b.zone]).map(b => {
+    const done = new Set((b.done || []).filter(t => TB[t]));
+    return {uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done, notes:notesFor(b.sid, [...done]), tries:num(b.tries, 0, 99, 0), fb:null, guess:'', wrong:(b.wrong || []).filter(isId)};
+  });
+  notebook.length = 0; (P.notebook || []).forEach(e => { if (e && isId(e.sid) && ZONES[e.zone]) notebook.push({uid:num(e.uid, 1, 1e6, 1), sid:e.sid, zone:e.zone, depth:num(e.depth, 0, 99, 0),
+    tests:(e.tests || []).filter(t => TB[t]), wrong:(e.wrong || []).filter(isId), xp:num(e.xp, 0, 999, 0), lines:(e.lines || []).slice(0, 5).map(l => String(l).slice(0, 200))}); });
+  uidN = Math.max(0, ...bag.map(b => b.uid), ...notebook.map(e => e.uid)); labIdx = 0; labResult = null;
+  pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
+  const W = P.world;
+  if (W && typeof W.tiles === 'string' && W.tiles.length === ROWS * COLS) {
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = parseInt(W.tiles[r * COLS + c], 36); tile[r][c] = TI[t] || t === AIR ? t : back[r][c]; spec[r][c] = null; dmg[r][c] = 0; }
+    (W.spec || []).forEach(a => { if (Array.isArray(a) && tile[a[0]] && tile[a[0]][a[1]] !== undefined && isId(a[2])) spec[a[0]][a[1]] = a[2]; });
+    player.x = num(W.px, 0, COLS * T - player.w, player.x); player.y = num(W.py, -3 * T, ROWS * T, player.y);
+    const r = Math.floor((player.y + player.h / 2) / T), c = Math.floor((player.x + player.w / 2) / T);
+    if (!tile[r] || tile[r][c] !== AIR) { const l = safeLanding(); player.x = l.x; player.y = l.y; } // never load inside rock
+  }
+  player.vx = player.vy = 0; rc = {phase:'pick'}; ch = null; sensed.clear();
+  editedFlag = edited; lastSaveSig = saveSig(); updateHUD();
+  return edited;
+}
+function notesFor(sid, tests) { return tests.map(t => ({t:TB[t].icon + ' ' + TB[t].name, r:result(SP[sid], t).txt})); }
+const filePick = document.createElement('input'); filePick.type = 'file'; filePick.accept = '.json,application/json';
+filePick.addEventListener('change', () => {
+  const f = filePick.files[0]; filePick.value = ''; if (!f) return;
+  if (f.size > 2e6) { toast('That file is too big to be a Rock Hound save file.'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const edited = applySave(JSON.parse(rd.result));
+      if (current === 'title') { audioInit(); $('#title').classList.remove('open'); current = null; }
+      else if (current) closeTop();
+      $('#game').focus(); sfx('find');
+      toast(`📂 Welcome back, Rock Hound! ${found.size} Dex entries and ${xp} XP loaded.${edited ? ' ⚠️ This file was changed outside the game.' : ''}`, 5500);
+    } catch (err) { toast('⚠️ That file couldn’t be loaded. Choose a Rock Hound save file (it ends in .json).', 5000); }
+  };
+  rd.readAsText(f);
+});
+// Gentle reminder if you try to close the page with unsaved progress
+addEventListener('beforeunload', e => { if ((xp > 0 || found.size > 0) && saveSig() !== lastSaveSig) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- 15b. FIELD GUIDE QUIZ ----------------------------------
+   3 questions built from THIS student's own discoveries.
+   If they haven't found enough yet, general rock cycle questions fill in. */
+let quiz = null; let quizXPGiven = false;
+function parentsOf(id) { return Object.keys(META).filter(k => META[k][0] === id && k !== id); }
+function quizMake() {
+  const have = DEX.filter(s => found.has(s.id)), rocks = have.filter(s => s.kind === 'rock'), mins = have.filter(s => s.kind === 'mineral');
+  const gens = [];
+  const pickOthers = (pool, right, n) => shuffle(pool.filter(x => x !== right)).slice(0, n);
+  // 1. What type of rock is it?
+  rocks.forEach(s => gens.push(() => ({type:'Rock types', q:`Your Rock Dex has ${s.name}. What type of rock is it?`,
+    opts:['Igneous', 'Sedimentary', 'Metamorphic'], ans:['igneous', 'sedimentary', 'metamorphic'].indexOf(s.grp), why:`${s.name}: ${s.info}`})));
+  // 2. Which rock did it come from? (metamorphic "evolutions")
+  rocks.filter(s => parentsOf(s.id).length).forEach(s => gens.push(() => {
+    const par = parentsOf(s.id)[0], wrong = pickOthers(['shale', 'limestone', 'sandstone', 'granite', 'basalt', 'conglomerate', 'obsidian', 'pumice'], par, 3);
+    const opts = shuffle([par, ...wrong]);
+    return {type:'Rock cycle', q:`Your Rock Dex has ${s.name}. Heat and pressure made it from which rock?`, opts:opts.map(rname), ans:opts.indexOf(par), why:META[par][1]};
+  }));
+  // 3. How did an igneous rock form?
+  rocks.filter(s => s.grp === 'igneous').forEach(s => gens.push(() => {
+    const slow = /intrusive/i.test(s.rtype);
+    const opts = ['Magma cooled slowly underground', 'Lava cooled quickly at the surface', 'Heat and pressure changed it without melting', 'Sediment was compacted and cemented'];
+    return {type:'Igneous rocks', q:`How did ${s.name} form?`, opts, ans:slow ? 0 : 1, why:`${s.name}: ${s.info}`};
+  }));
+  // 4. Mineral clue
+  mins.forEach(s => gens.push(() => {
+    const others = pickOthers(SPECIES.filter(m => m.kind === 'mineral' && m.id !== s.id).map(m => m.sp), s.sp, 3), opts = shuffle([s.sp, ...others]);
+    return {type:'Mineral ID', q:`Which clue would help you identify ${s.name}?`, opts, ans:opts.indexOf(s.sp), why:`${s.name}: streak ${s.streak.toLowerCase()}, hardness ${s.hd}. ${s.sp}.`};
+  }));
+  mins.forEach(s => gens.push(() => {
+    const opts = shuffle([...new Set([s.streak, ...pickOthers([...new Set(SPECIES.filter(m => m.kind === 'mineral').map(m => m.streak))], s.streak, 3)])]);
+    return {type:'Streak test', q:`You rub ${s.name} on a streak plate. What color is the powder?`, opts, ans:opts.indexOf(s.streak), why:`The streak is the color of the mineral’s powder. ${s.name}’s streak is ${s.streak.toLowerCase()}.`};
+  }));
+  // General questions (used when a student hasn't discovered enough yet)
+  const general = [
+    {type:'Rock cycle', q:'Which process turns layers of sediment into sedimentary rock?', opts:['Compaction and cementation', 'Melting and cooling', 'Heat and pressure', 'Erupting as lava'], ans:0, why:'Buried sediment is squeezed (compaction) and glued (cementation) into sedimentary rock.'},
+    {type:'Igneous rocks', q:'Why does granite have bigger crystals than basalt?', opts:['Granite’s magma cooled slowly underground', 'Granite cooled quickly at the surface', 'Granite was squeezed by heat and pressure', 'Granite is made of cemented sand'], ans:0, why:'Slow cooling underground gives crystals time to grow large.'},
+    {type:'Rock vs. mineral', q:'What is the difference between a rock and a mineral?', opts:['A rock is a mixture of minerals; a mineral is one pure substance', 'A mineral is a mixture of rocks', 'Rocks are always harder than minerals', 'There is no difference'], ans:0, why:'Minerals are the building blocks; rocks are mixtures of minerals (or glass, or rock pieces).'}
+  ];
+  const qs = shuffle(gens).slice(0, 3).map(f => f());
+  for (const g of shuffle(general)) if (qs.length < 3) qs.push(g);
+  return {qs, answers:[null, null, null], foundN:found.size};
+}
+function quizScore() { return quiz ? quiz.qs.filter((q, i) => quiz.answers[i] === q.ans).length : 0; }
+const quizDone = () => quiz && quiz.answers.every(a => a !== null);
+function quizHTML() {
+  if (!quiz) quiz = quizMake();
+  const qhtml = quiz.qs.map((q, i) => {
+    const a = quiz.answers[i];
+    const opts = q.opts.map((o, k) => `<button data-quiz="${i}:${k}" ${a !== null ? 'disabled' : ''} class="${a === k ? 'on' : ''}">${String.fromCharCode(65 + k)}. ${esc(o)}${a === k ? ' ← your answer' : ''}</button>`).join('');
+    const fb = a === null ? '' : `<div class="fb ${a === q.ans ? 'good' : 'bad'} pop" role="status"><b>${a === q.ans ? '✔ Correct!' : '✖ Not quite.'}</b> ${a === q.ans ? '' : `The answer is <b>${esc(q.opts[q.ans])}</b>. `}${esc(q.why)}</div>`;
+    return `<div class="card" style="text-align:left"><p style="margin:0 0 8px"><b>${i + 1}. ${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${opts}</div>${fb}</div>`;
+  }).join('');
+  return `<div class="goalcard"><h3>🧠 Field Guide Quiz${quizDone() ? `: ${quizScore()} / 3` : ''}</h3><p style="margin-top:0">Three questions from your own discoveries. Your answers and score go on your exit ticket.</p>
+    <div class="grid" style="grid-template-columns:1fr">${qhtml}</div>${quizDone() ? '<p><button class="pdfBtn">📄 Download my exit ticket (PDF)</button> <button data-quiz="new">🔄 Try a new quiz</button></p>' : ''}</div>`;
+}
+function quizClick(v) {
+  if (v === 'new') { quiz = quizMake(); renderReport(); const f = $('#reportBody [data-quiz]'); f && f.focus(); return; }
+  const [i, k] = v.split(':').map(Number); if (quiz.answers[i] !== null) return;
+  quiz.answers[i] = k; const ok = k === quiz.qs[i].ans; sfx(ok ? 'right' : 'wrong');
+  if (quizDone() && !quizXPGiven) { quizXPGiven = true; const gain = quizScore() * 10; if (gain) { addXP(gain); toast(`🧠 Quiz complete: ${quizScore()} / 3, +${gain} XP`, 4000); } }
+  const top = $('#report').scrollTop; renderReport(); $('#report').scrollTop = top;
+  const nx = $(`#reportBody [data-quiz^="${i + 1}:"]`) || $('#reportBody .goalcard .pdfBtn'); nx && nx.focus({preventScroll:true});
+}
+
+/* ---------- 15c. ONE-PAGE PDF EXIT TICKET --------------------------
+   Built right here in JavaScript (no libraries, no internet).
+   Uses the standard PDF fonts Helvetica and Helvetica-Bold.          */
+// PDF standard fonts use "WinAnsi" letters, so fancy characters are swapped for plain ones
+const WIN = {'’':0x92, '‘':0x91, '“':0x93, '”':0x94, '–':0x96, '—':0x97, '•':0x95, '…':0x85, '×':0xD7, '°':0xB0, 'é':0xE9};
+function pdfBytes(str) {
+  str = str.replace(/→/g, '->').replace(/★/g, '*').replace(/☆/g, 'o').replace(/✔/g, 'OK').replace(/✖/g, 'X').replace(/₂/g, '2').replace(/₃/g, '3').replace(/[^\x20-\x7E\u00A0-\u00FF’‘“”–—•…]/gu, '');
+  const out = []; for (const ch of str) { const c = WIN[ch] || ch.charCodeAt(0); out.push(c < 256 ? c : 63); } return out;
+}
+function pdfStr(str) { return pdfBytes(str).map(b => b === 40 || b === 41 || b === 92 ? '\\' + String.fromCharCode(b) : b < 128 ? String.fromCharCode(b) : '\\' + b.toString(8).padStart(3, '0')).join(''); }
+const mc = document.createElement('canvas').getContext('2d');
+function textW(t, size, bold) { mc.font = `${bold ? 'bold ' : ''}${size}px Helvetica, Arial, sans-serif`; return mc.measureText(t).width; }
+function wrapPDF(t, size, bold, maxW) { const out = []; let line = ''; for (const w of String(t).split(' ')) { const tt = line ? line + ' ' + w : w; if (textW(tt, size, bold) > maxW && line) { out.push(line); line = w; } else line = tt; } if (line) out.push(line); return out; }
+function makeExitTicketPDF() {
+  const W = 612, H = 792, M = 40; let y = H - M; const ops = [];
+  const color = (r, g2, b) => `${r} ${g2} ${b}`;
+  const text = (t, x, yy, size, bold, col) => ops.push(`BT /${bold ? 'F2' : 'F1'} ${size} Tf ${col || '0.11 0.15 0.25'} rg ${x.toFixed(1)} ${yy.toFixed(1)} Td (${pdfStr(t)}) Tj ET`);
+  const para = (t, x, size, bold, maxW, lead, col) => { for (const l of wrapPDF(t, size, bold, maxW)) { text(l, x, y, size, bold, col); y -= lead; } };
+  const rect = (x, yy, w, h, fill, stroke) => ops.push(`${fill ? color(...fill) + ' rg ' : ''}${stroke ? color(...stroke) + ' RG 1.5 w ' : ''}${x} ${yy} ${w} ${h} re ${fill && stroke ? 'B' : fill ? 'f' : 'S'}`);
+  // Header band
+  rect(0, H - 70, W, 70, [0.11, 0.15, 0.25]); rect(0, H - 74, W, 4, [1, 0.8, 0.2]);
+  text('Rock Hound Report: Exit Ticket', M, H - 38, 22, true, '1 0.8 0.2');
+  text(`${new Date().toLocaleDateString()}   |   Time this session: ${mins(Date.now() - sessionStart)} min   |   All sessions: ${mins(Date.now() - sessionStart + stats.priorMs)} min`, M, H - 58, 10, false, '0.95 0.97 0.96');
+  y = H - 100;
+  text('Name: ________________________________     Class/period: ____________', M, y, 12, false); y -= 26;
+  // Stats grid (2 columns)
+  const lv = LEVELS[levelOf(xp)], chStars = Object.values(chBest).reduce((a, b) => a + b, 0);
+  const rows = [['Level', `${lv[1]} (${xp} XP)`], ['Rock Dex', `${found.size} of ${DEX.length} discovered`],
+    ['Specimens identified', `${idTotal} (first-guess: ${pct(stats.firstTry, idTotal)}; avg tests: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '-'})`],
+    ['Rock cycle predictions', `${stats.predOk} of ${stats.preds} correct; ${rcSeen.size} path${rcSeen.size === 1 ? '' : 's'} found`],
+    ['Rock cycle challenges', `${Object.keys(chBest).length} of ${CHALLENGES.length} done; ${chStars} of ${CHALLENGES.length * 3} stars`],
+    ['Science checks', `${stats.expOk} of ${stats.exps} correct`], ['Missions', `${Math.min(mi, MISSIONS.length)} of ${MISSIONS.length} complete`],
+    ['Pet rock', pet ? `${pet.name} (${SP[pet.sid].name})` : 'none yet']];
+  rect(M, y - 4 * 30 - 10, W - 2 * M, 4 * 30 + 24, [0.95, 0.97, 0.96], [0.11, 0.15, 0.25]);
+  rows.forEach(([k, v], i) => { const cx = M + 12 + (i % 2) * ((W - 2 * M) / 2), cy = y - 8 - Math.floor(i / 2) * 30; text(k, cx, cy, 9, true, '0.35 0.4 0.47'); text(v.slice(0, 48), cx, cy - 13, 11, false); });
+  y -= 4 * 30 + 36;
+  // Dex picture strip (one JPEG image built from the sprites)
+  const strip = document.createElement('canvas'), n = DEX.length, cell = 36; strip.width = n * cell; strip.height = cell;
+  const sc = strip.getContext('2d'); sc.fillStyle = '#fff'; sc.fillRect(0, 0, strip.width, cell);
+  DEX.forEach((s, i) => { if (found.has(s.id)) sc.drawImage(spriteCv[s.id], i * cell, 0, cell, cell); else { sc.strokeStyle = '#9aa3ad'; sc.setLineDash([3, 3]); sc.strokeRect(i * cell + 3, 3, cell - 6, cell - 6); sc.fillStyle = '#9aa3ad'; sc.font = 'bold 16px Arial'; sc.textAlign = 'center'; sc.fillText('?', i * cell + cell / 2, 24); } });
+  const jpg = atob(strip.toDataURL('image/jpeg', .85).split(',')[1]);
+  text('Rock Dex discoveries', M, y, 11, true); y -= 8;
+  const imgW = W - 2 * M, imgH = imgW / n; ops.push(`q ${imgW} 0 0 ${imgH.toFixed(2)} ${M} ${(y - imgH).toFixed(2)} cm /Im1 Do Q`); y -= imgH + 22;
+  // Quiz
+  const sc3 = quizDone() ? quizScore() : null;
+  rect(M, y - 6, W - 2 * M, 24, [1, 0.8, 0.2]); text(`Field Guide Quiz   Score: ${sc3 === null ? 'not finished' : sc3 + ' / 3'}`, M + 10, y + 1, 13, true); y -= 26;
+  quiz.qs.forEach((q, i) => {
+    const a = quiz.answers[i], ok = a === q.ans;
+    para(`${i + 1}. ${q.q}`, M, 11, true, W - 2 * M, 14);
+    q.opts.forEach((o, k) => { const mark = k === a ? (ok ? '[student answer - correct]' : '[student answer]') : k === q.ans && a !== null && !ok ? '[correct answer]' : ''; text(`${String.fromCharCode(65 + k)}. ${o}  ${mark}`.slice(0, 110), M + 14, y, 10, k === a || (k === q.ans && a !== null)); y -= 13; });
+    text(a === null ? 'Not answered.' : ok ? 'Correct.' : 'Incorrect.', M + 14, y, 10, true, ok ? '0.1 0.42 0.7' : '0.75 0.35 0'); y -= 12;
+    para(q.why, M + 14, 9, false, W - 2 * M - 14, 11, '0.3 0.34 0.4'); y -= 6;
+  });
+  // Reflection lines for handwriting
+  y -= 2; text('One thing I learned about rocks today:', M, y, 11, true); y -= 20;
+  for (let i = 0; i < 4 && y > 60; i++) { ops.push(`0.6 0.64 0.7 RG 0.8 w ${M} ${y} m ${W - M} ${y} l S`); y -= 22; }
+  text(editedFlag ? 'Note: progress was loaded from a save file that was changed outside the game.' : 'Made by Rock Hound. No student data was collected or sent.', M, 28, 8, false, '0.4 0.44 0.5');
+  // Assemble the PDF file (objects + cross-reference table)
+  const content = ops.join('\n');
+  const parts = [], offsets = []; let len = 0;
+  const add = x => { const b = typeof x === 'string' ? Uint8Array.from(x, ch => ch.charCodeAt(0) & 255) : x; parts.push(b); len += b.length; };
+  const obj = (num, body) => { offsets[num] = len; add(`${num} 0 obj\n`); body(); add('\nendobj\n'); };
+  add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, () => add('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, () => add('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
+  obj(3, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> /XObject << /Im1 7 0 R >> >> /Contents 6 0 R >>`));
+  obj(4, () => add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'));
+  obj(5, () => add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'));
+  obj(6, () => { add(`<< /Length ${content.length} >>\nstream\n`); add(content); add('\nendstream'); });
+  obj(7, () => { add(`<< /Type /XObject /Subtype /Image /Width ${strip.width} /Height ${strip.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); add(jpg); add('\nendstream'); });
+  const xref = len; let x = 'xref\n0 8\n0000000000 65535 f \n'; for (let i = 1; i <= 7; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+  add(x + `trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, {type:'application/pdf'});
+}
+function downloadPDF() {
+  if (!quizDone()) { toast('🧠 Finish all 3 Field Guide Quiz questions first. They go on your exit ticket!', 4500); const q = $('#reportBody [data-quiz]:not([disabled])'); if (q) { q.scrollIntoView({block:'center'}); q.focus({preventScroll:true}); } return; }
+  const blob = makeExitTicketPDF(), a = document.createElement('a'), d = new Date(), pad = v => String(v).padStart(2, '0');
+  a.href = URL.createObjectURL(blob); a.download = `rock-hound-exit-ticket-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.pdf`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  sfx('right'); toast('📄 Exit ticket PDF downloaded! Hand it in or print it.', 4500);
+}
+
+/* ---------- 16. START ---------------------------------------------- */
+function drawTitleArt() {
+  const c = $('#titleArt').getContext('2d');
+  c.fillStyle = '#86c26a'; rr(c, 0, 130, 600, 60, 18); c.fill();
+  const show = ['quartz', 'pyrite', 'gneiss', 'obsidian', 'fluorite', 'conglomerate'];
+  const xs = [10, 95, 180, 410, 495, 0];
+  show.slice(0, 5).forEach((id, i) => c.drawImage(spriteCv[id], xs[i], 72, 86, 86));
+  drawPerson(c, 300, 158, 1, 'happy', 0, 0, 2);
+  c.drawImage(spriteCv.granite, 330, 108, 60, 60); drawFace(c, 360, 140, 1.2, 'happy', -1, false);
+}
+genWorld(); buildSprites(); buildExtraSprites(); resize(); setMotion(reduceMotion);
+player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1;
+cam.x = Math.max(0, player.x - viewW / 2); cam.y = player.y - viewH / 2;
+drawTitleArt(); current = 'title'; $('#startBtn').focus();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
