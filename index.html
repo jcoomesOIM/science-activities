@@ -164,9 +164,7 @@ th{background:var(--ink);color:var(--paper)}
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl" aria-label="Controls menu" title="Controls">🎮▾</button>
     <div class="mlist" id="mCtl" hidden><div class="mtitle">🎮 Controls</div>
-      <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
-      <button id="bLadder"><span>🪜 Place a ladder</span><kbd>U</kbd></button>
-      <button id="bRope"><span>🪢 Rope up to camp</span><kbd>R</kbd></button>
+      <button data-open="bag"><span>🎒 Tool bag (ladder, rope, jeep)</span><kbd>T</kbd></button>
       <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bSound"><span>🔇 Sound: off</span><kbd>M</kbd></button>
       <button id="bMotion"><span>🎞️ Motion: full</span></button>
@@ -201,7 +199,8 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>E</kbd> / <kbd>G</kbd></span><span>Talk to Dr. Rivera or use the Rock Cycle Machine (at camp) / Rock cycle guide</span>
       <span><kbd>X</kbd> <kbd>C</kbd> <kbd>P</kbd></span><span>Rock Dex, Collection box, Pet rock</span>
       <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
-      <span><kbd>U</kbd></span><span>Place a ladder in a dug shaft, then climb with ↑ ↓ (dig sideways with ← →)</span>
+      <span><kbd>U</kbd> / <kbd>Y</kbd></span><span>Place a ladder in a dug shaft (climb ↑ ↓, dig ← → ↑) / take a ladder down</span>
+      <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
     </div><br>
     <button id="startBtn">⛏️ Start a new dig</button> <button class="loadBtn" style="font-size:22px;padding:10px 20px">📂 Continue from a save file</button>
@@ -255,6 +254,7 @@ th{background:var(--ink);color:var(--paper)}
 </div>
 <p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
 </section>
+<section class="panel" id="bag" aria-label="Tool bag"><button class="close" data-close>✖ Close (Esc)</button><h2>🎒 Tool bag</h2><div id="bagBody"></div></section>
 <section class="panel" id="gemdex" aria-label="Gem Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>💎 Gem Dex: Crystal Ridge Mine</h2><div id="gemdexBody"></div></section>
 <section class="panel" id="colleague" aria-label="Talk to Dr. Rivera"><button class="close" data-close>✖ Close (Esc)</button><h2>🧑‍🔬 Dr. Rivera</h2><div id="colleagueBody"></div></section>
 <section class="panel" id="store" aria-label="Rock shop"><button class="close" data-close>✖ Close (Esc)</button><h2>🛍️ Rock shop</h2><div id="storeBody"></div></section>
@@ -915,7 +915,7 @@ function drawPerson(c, cx, by, face, mood, walk, swing, sc) {
   c.fillStyle = '#2a9d8f'; rr(c, -3, 0, 6, 14, 3); c.fill(); c.strokeStyle = ink; c.lineWidth = 1.2; c.stroke();
   c.fillStyle = skin; c.beginPath(); c.arc(0, 16, 3, 0, 7); c.fill(); c.stroke();
   c.strokeStyle = '#7a5233'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(0, 19); c.lineTo(0, 5); c.stroke();
-  c.fillStyle = '#9aa3ad'; c.strokeStyle = ink; c.lineWidth = 1; rr(c, -5, 2, 10, 4, 1.5); c.fill(); c.stroke();
+  if (tool.unbreakable) { c.fillStyle = '#ffcc33'; c.strokeStyle = ink; c.lineWidth = 1; c.beginPath(); c.moveTo(-1, 2); c.lineTo(-8, 0); c.quadraticCurveTo(-10, 5, -8, 10); c.lineTo(-1, 7); c.closePath(); c.fill(); c.stroke(); } else { c.fillStyle = '#9aa3ad'; c.strokeStyle = ink; c.lineWidth = 1; rr(c, -5, 2, 10, 4, 1.5); c.fill(); c.stroke(); }
   c.restore();
   c.restore();
 }
@@ -1062,6 +1062,8 @@ function attachLadder() { const p = player, c = Math.floor((p.x + p.w / 2) / T),
   p.onLadder = true; p.climb = null; p.vx = p.vy = 0; p.x = c * T + (T - p.w) / 2; p.y = r * T + T - p.h - .01; }
 function ladderUpdate(dt, dir, U, D) {
   const p = player;
+  // after grabbing a ladder on the move, keep holding on until the arrow key is let go
+  if (p.ladderHold) { if (dir) dir = 0; else p.ladderHold = false; }
   if (!dir && (ladTap.l || ladTap.r)) { dir = ladTap.r ? 1 : -1; ladTap.l = ladTap.r = 0; }
   if (p.climb) { p.climb.t += dt / p.climb.d; const k = Math.min(1, p.climb.t); p.y = p.climb.from + (p.climb.to - p.climb.from) * k; if (k >= 1) p.climb = null; return; }
   const c = Math.floor((p.x + p.w / 2) / T), r = Math.floor((p.y + p.h - 1) / T);
@@ -1074,7 +1076,9 @@ function ladderUpdate(dt, dir, U, D) {
   }
   if (ladTap.u) { U = true; ladTap.u = 0; } if (ladTap.d) { D = true; ladTap.d = 0; }
   const step = (to) => { p.climb = {from:p.y, to, t:0, d:reduceMotion ? .01 : .16}; };
-  if (U) { if (r - 1 >= 0 && hasLadder(r - 1, c) && tile[r - 1][c] === AIR) step(p.y - T); else if (r - 1 >= 0 && isSolid(r - 1, c) && digCool <= 0) hit(r - 1, c); }
+  if (U) { if (r - 1 >= 0 && hasLadder(r - 1, c) && tile[r - 1][c] === AIR) step(p.y - T);
+    else if (r - 1 >= 0 && isSolid(r - 1, c)) { if (digCool <= 0) { hit(r - 1, c); if (tile[r - 1][c] === AIR) ladders.add(LK(r - 1, c)); } } // DIG UP: the ladder grows into the new space
+    else if (r - 1 >= 0 && tile[r - 1][c] === AIR) { ladders.add(LK(r - 1, c)); step(p.y - T); } }
   else if (D) { if (hasLadder(r + 1, c)) step(p.y + T); else if (isSolid(r + 1, c)) { if (digCool <= 0) hit(r + 1, c); } else p.onLadder = false; }
   if (!hasLadder(r, c)) p.onLadder = false;   // the ladder under you is gone (for example, you built rock there)
 }
@@ -1100,12 +1104,16 @@ function update(dt) {
   if (p.onLadder) { ladderUpdate(dt, dir, U, D); if (p.onLadder) { p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy'; updatePet(dt); petSense(dt); zoneEnter(); return; } }
   { const lc = Math.floor((p.x + p.w / 2) / T), lr = Math.floor((p.y + p.h - 1) / T);
     if (U && hasLadder(lr, lc)) { attachLadder(); return; }
+    // walking or falling into a ladder space: grab it (unless you're standing on solid ground)
+    if (hasLadder(lr, lc) && !isSolid(lr + 1, lc) && Math.abs(p.x + p.w / 2 - (lc * T + T / 2)) < 12 && !(p.vy < 0)) { attachLadder(); player.ladderHold = true; sfx('test'); toast('🪜 You grabbed the ladder! Climb with ↑ ↓.', 2500); return; }
     if (D && p.onGround && hasLadder(lr + 1, lc)) { attachLadder(); p.climb = {from:p.y, to:p.y + T, t:0, d:reduceMotion ? .01 : .16}; return; } }
   const cx = p.x + p.w / 2, cyMid = p.y + p.h / 2;
   if (digCool <= 0) {
     if (dir) { const c = Math.floor((dir > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor(cyMid / T); if (isSolid(r, c) && c >= 0 && c < COLS) hit(r, c); }
     if (D && p.onGround && digCool <= 0) { const r = Math.floor((p.y + p.h + 3) / T), c = Math.floor(cx / T); if (r < ROWS && isSolid(r, c)) hit(r, c); }
   }
+  // Up in the air: keep digging the rock above your head
+  if (U && !p.onGround && digCool <= 0) { const r = Math.floor((p.y - 3) / T), c = Math.floor(cx / T); if (r >= 0 && isSolid(r, c)) hit(r, c); }
   // Up: dig the rock above you, or jump if there is open space
   if (U && p.onGround) {
     const r = Math.floor((p.y - 3) / T), cl = Math.floor((p.x + 1) / T), cr = Math.floor((p.x + p.w - 1) / T);
@@ -1734,7 +1742,7 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
 }
-const RENDER = {gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
   if (id === 'gemdex' && !gemIntroSeen) { toast('💎 The Gem Dex opens when you reach Crystal Ridge Mine.'); return; }
   if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
@@ -1766,12 +1774,14 @@ addEventListener('keydown', e => {
   if (current === 'title') return;
   if (!current && !document.activeElement.closest('.mlist')) { if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault(); keys[k] = true; }
   if (e.repeat) return;
-  const map = {j:'gemdex', v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
+  const map = {t:'bag', j:'gemdex', v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
   if (map[k]) { if (current === map[k]) closeTop(); else openPanel(map[k], false); }
   if (k === 'r') ropeUp();
   if (k === 'm') setSound(!soundOn);
   if (k === 'b' && !current) tryBuild(true);
   if (k === 'u' && !current) placeLadder();
+  if (k === 'y' && !current) takeDownLadder();
+  if (k === 'k' && !current) driveJeep();
   if (!current && player.onLadder) { if (k === 'arrowup' || k === 'w' || k === ' ') ladTap.u = 1; if (k === 'arrowdown' || k === 's') ladTap.d = 1; if (k === 'arrowleft' || k === 'a') ladTap.l = 1; if (k === 'arrowright' || k === 'd') ladTap.r = 1; }
   if (k === 'e' && !current) interact();
 });
@@ -1804,6 +1814,7 @@ document.addEventListener('click', e => {
   if (b && b.dataset.doc) { docClick(b.dataset.doc); return; }
   if (b && b.dataset.exam) { examClick(b.dataset.exam); return; }
   if (b && b.dataset.trophy) { trophySel = b.dataset.trophy === 'close' ? null : b.dataset.trophy; const top = $('#levels').scrollTop; renderLevels(); $('#levels').scrollTop = top; const f = $(trophySel ? '#levelsBody [data-trophy="close"]' : '#levelsBody .shelfbtn'); if (f) { f.focus({preventScroll:true}); if (trophySel) f.closest('.museum').scrollIntoView({block:'nearest'}); } return; }
+  if (b && b.dataset.bag) { bagClick(b.dataset.bag); return; }
   if (b && b.dataset.gem) { renderGemDex(b.dataset.gem); $('#gemdex').scrollTop = 0; return; }
   if (b && b.dataset.av) { avClick(b.dataset.av); return; }
   if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) placeMenu(b, $('#' + b.dataset.menu)); if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
@@ -1887,6 +1898,7 @@ function drawCamp() {
   g.fillStyle = '#7a5233'; g.fillRect(vx - 3, sy - 52, 6, 52); g.fillStyle = '#f2f7f5'; rr(g, vx - 64, sy - 92, 128, 44, 8); g.fill(); g.stroke();
   g.fillStyle = '#1c2541'; g.fillText(SITE === 'gem' ? 'Kimberlite pipe' : 'Old volcano', vx, sy - 79); g.fillText(SITE === 'gem' ? '↓ dig here ↓' : 'this way →', vx, sy - 61);
   drawMachine();
+  if (examPassed) { drawJeep(g, JEEP_X, SURF * T, 1); if (nearJeep() && !current) bubble(JEEP_X, SURF * T - 56, `Press E to drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'}`); }
   drawColleague(g, DOC_X, SURF * T, .62, tool.broken && !reduceMotion);
   if (tool.broken || (assign && assign.status === 'done')) { g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(DOC_X, SURF * T - 62, 10, 0, 7); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', DOC_X, SURF * T - 61); }
   if (nearColleague() && !current) bubble(DOC_X, SURF * T - 50, tool.broken ? 'Press E: Dr. Rivera can give you a new tool!' : assign && assign.status === 'done' ? 'Press E to report your assignment!' : 'Press E to talk to Dr. Rivera');
@@ -2052,7 +2064,7 @@ function updateHUD() {
   const d = depthKm((player.y + player.h) / T), z = playerZone(), temp = Math.round(15 + 25 * d);
   const site = SITE === 'gem' ? 'Crystal Ridge Mine' : 'Pebble Creek';
   $('#locBox').innerHTML = `📍 ${site}<br>⛏️ ${d.toFixed(1)} km · ${ZONES[z].name} · 🌡️ ~${temp} °C`;
-  $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : '🔨 ' + toolName()} · 📚 ${found.size}/${DEX.length}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
+  $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : (tool.unbreakable ? '🪓 ' : '🔨 ') + toolName()} · 📚 ${found.size}/${DEX.length}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
   $('#mission').textContent = mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!';
   $('#assignLine').textContent = assign && assign.status === 'active' ? `📋 Assignment: ${assign.text}` : assign && assign.status === 'done' ? '📋 Assignment done: report to Dr. Rivera at camp!' : '';
   $('#bGemDex').hidden = !gemIntroSeen; checkTrophies();
@@ -2166,7 +2178,7 @@ function applySave(file) {
   for (const v of VAULT) { const o = (P.vault || {})[v.id] || {}; vault[v.id] = {tries:num(o.tries, 0, MAX_TRIES, 0), status:['open', 'won', 'gone'].includes(o.status) ? o.status : 'open', evAt:o.evAt === null || o.evAt === undefined ? null : num(o.evAt, 0, 1e7, 0)}; }
   (SH.display || []).forEach(id => { if (VID[id] && vault[id].status === 'won') shopState.display.add(id); });
   vaultActive = null;
-  if (P.tool) { tool.tier = num(P.tool.tier, 0, TOOLS.length - 1, 0); tool.hits = num(P.tool.hits, 0, 999, TOOLS[tool.tier][1]); tool.broken = !!P.tool.broken || tool.hits <= 0; } docQ = null; docRight = 0;
+  if (P.tool) { tool.tier = num(P.tool.tier, 0, TOOLS.length - 1, 0); tool.unbreakable = !!P.tool.unbreakable && !!P.examPassed; tool.hits = tool.unbreakable ? 1e9 : num(P.tool.hits, 0, 999, TOOLS[tool.tier][1]); tool.broken = !tool.unbreakable && (!!P.tool.broken || tool.hits <= 0); if (!tool.unbreakable && tool.tier === TOOLS.length - 1) tool.tier = TOOLS.length - 2; } docQ = null; docRight = 0;
   assign = null; const AS = P.assign; if (AS && ATYPE[AS.type] && ['active', 'done'].includes(AS.status)) { assign = {type:AS.type, grp:GRP_NAME[AS.grp] ? AS.grp : undefined, status:AS.status, depth:num(AS.depth, 0, 99, 0), zone:ZONES[AS.zone] ? AS.zone : 'surface', sid:isId(AS.sid) ? AS.sid : undefined};
     assign.text = AS.type === 'rock' ? `Bring me ${GRP_NAME[assign.grp || 'igneous']} rock: identify one.` : ATYPE[AS.type].make().text; if (assign.type === 'rock' && !assign.grp) assign.grp = 'igneous'; if (assign.status === 'done' && !assign.sid) assign.status = 'active'; }
   pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
@@ -2675,11 +2687,12 @@ function vaultClick(val) {
 /* ---------- 15g. TOOLS AND THE CAMP COLLEAGUE ----------------------
    Your digging tool wears out after a hidden number of hits. Dr. Rivera
    at camp trades you a new tool for 3 correct rock cycle answers.        */
-const TOOLS = [['Rock hammer', 120], ['Steel rock hammer', 140], ['Geologist’s pick', 160], ['Diamond-tipped pick', 180]];
-const tool = {tier:0, hits:TOOLS[0][1] + Math.floor(Math.random() * 30), broken:false};
+const TOOLS = [['Rock hammer', 120], ['Steel rock hammer', 140], ['Geologist’s pick', 160], ['Diamond-tipped pick', 180], ['Unbreakable rock axe', 1e9]];
+const tool = {unbreakable:false, tier:0, hits:TOOLS[0][1] + Math.floor(Math.random() * 30), broken:false};
 let nagT = 0;
 function toolName() { return TOOLS[Math.min(tool.tier, TOOLS.length - 1)][0]; }
 function wearTool() {
+  if (tool.unbreakable) return; // the Final Field Exam axe never breaks
   if (--tool.hits > 0) return;
   tool.broken = true; sfx('wrong'); noise(.4, .5, 1500); burst(player.x + player.w / 2, player.y + 10, ['#9aa3ad', '#7a5233', '#fff'], 18); setMood('sad', 3);
   toast(`💥 Your ${toolName()} broke! Head back to camp (press R to rope up) and talk to Dr. Rivera to earn a new tool.`, 6500);
@@ -2760,7 +2773,7 @@ function docClick(v) {
   else if (act === 'ans' && docQ && docQ.answered === null) { docQ.answered = +k; if (+k === docQ.ans) { docRight++; sfx('right'); } else { docQ.lost = docRight > 0; docRight = Math.max(0, docRight - 1); sfx('wrong'); } } // a wrong answer costs one correct answer, so guessing doesn't pay
   else if (act === 'next') {
     if (docRight >= 3) {
-      tool.tier = Math.min(tool.tier + 1, TOOLS.length - 1); tool.hits = TOOLS[tool.tier][1] + Math.floor(Math.random() * 30); tool.broken = false; docRight = 0; docQ = null;
+      tool.tier = Math.min(tool.tier + 1, TOOLS.length - 2); tool.hits = TOOLS[tool.tier][1] + Math.floor(Math.random() * 30); tool.broken = false; docRight = 0; docQ = null;
       sfx('find'); toast(`🎁 Dr. Rivera gave you a new ${toolName()}!`, 4000); setMood('happy', 3);
       if (pet) petSay('A brand-new tool! Let’s go dig!', 'happy', 4);
       docGift = true; if (!assign || assign.status !== 'active') { if (!assign || assign.status !== 'done') newAssignment(); } // every new tool comes with a field assignment
@@ -2945,9 +2958,9 @@ function examSubmit() {
 }
 function passExam() {
   examPassed = true; gemsOpen = true; exam = null; addXP(300);
-  tool.tier = TOOLS.length - 1; tool.hits = TOOLS[tool.tier][1] + 40; tool.broken = false;
+  tool.tier = TOOLS.length - 1; tool.hits = 1e9; tool.broken = false; tool.unbreakable = true;
   sfx('find'); burst(player.x, player.y, ['#ffcc33', '#fff', '#8b5cc4', '#3a86c8'], 40);
-  toast('🎓 You passed the Final Field Exam! +300 XP, a Diamond-tipped pick, and a new assignment: Crystal Ridge Mine!', 7000);
+  toast('🎓 You passed the Final Field Exam! +300 XP, an UNBREAKABLE rock axe, and a field jeep in your 🎒 tool bag to drive to Crystal Ridge Mine anytime!', 8000);
   if (pet) petSay('We did it! Diamonds, here we come!', 'happy', 5);
   renderColleague();
 }
@@ -2956,9 +2969,9 @@ function finalHTML() {
   if (examPassed) return `<div class="goalcard"><h3>🎓 Master Rock Hound: field assignment</h3>
     <p>“You passed my Final Field Exam! Your new assignment is <b>Crystal Ridge Mine</b>: a kimberlite pipe with <b>diamonds</b>, marble with <b>rubies and sapphires</b>, and pegmatite veins with <b>emeralds and topaz</b>. Find all ${GEMS.length} gems for your 💎 Gem Dex!”</p>
     <p>💎 Gems found: <b>${gemFound.size} / ${GEMS.length}</b></p>
-    <p>${SITE === 'gem' ? '<button data-exam="travel:main">🚙 Return to Pebble Creek</button>' : '<button data-exam="travel:gem">🚙 Travel to Crystal Ridge Mine</button>'}</p></div>`;
+    <p>🚙 Your field jeep is in your 🎒 tool bag (press T, or K to drive). Travel between the two dig sites anytime, no questions asked!</p><p><button data-bag="jeep">🚙 Drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'} now</button></p></div>`;
   if (!done) return `<div class="goalcard"><h3>🎓 Final Field Exam (locked)</h3><p>“When your Rock Dex is complete (${found.size} / ${DEX.length}), come back for my Final Field Exam. Pass it and I’ll send you to a secret dig site full of rare gems.”</p></div>`;
-  if (!exam) return `<div class="goalcard"><h3>🎓 Final Field Exam</h3><p>“Your Rock Dex is complete. Impressive! My Final Field Exam has <b>5 parts</b>: analyze lab data, apply the rock cycle, build a claim with evidence and reasoning, read a rock outcrop, and explain in your own words. Take your time and use the guide and chart. Pass and you’ll earn <b>300 XP</b>, a <b>Diamond-tipped pick</b>, and an assignment to <b>Crystal Ridge Mine</b>.”</p><p><button data-exam="start">🎓 Start the Final Field Exam</button></p></div>`;
+  if (!exam) return `<div class="goalcard"><h3>🎓 Final Field Exam</h3><p>“Your Rock Dex is complete. Impressive! My Final Field Exam has <b>5 parts</b>: analyze lab data, apply the rock cycle, build a claim with evidence and reasoning, read a rock outcrop, and explain in your own words. Take your time and use the guide and chart. Pass and you’ll earn <b>300 XP</b>, an <b>unbreakable rock axe</b>, and a <b>field jeep</b> to drive to <b>Crystal Ridge Mine</b> anytime.”</p><p><button data-exam="start">🎓 Start the Final Field Exam</button></p></div>`;
   return examHTML();
 }
 function examClick(v) {
@@ -2978,8 +2991,56 @@ function drawPetPlay(px, py) {
 }
 function interact() {
   if (nearColleague()) { openPanel('colleague', false); return; }
+  if (nearJeep()) { driveJeep(); return; }
   if (nearMachine()) { openPanel('machine', false); return; }
   toast('Walk up to Dr. Rivera or the Rock Cycle Machine at camp, then press E. (Press R to rope up to camp.)');
+}
+
+/* ---------- 15k. TOOL BAG: digging tool, ladder, rope, and (after the Final Field Exam) the jeep ---------- */
+const JEEP_X = 16.6 * T;
+function nearJeep() { const cx = player.x + player.w / 2, feet = player.y + player.h; return examPassed && Math.abs(cx - JEEP_X) < T * 1.6 && feet <= SURF * T + 2 && feet > SURF * T - 2 * T; }
+function drawJeep(c, x, G, s) {   // ART: the field jeep parked at camp
+  c.save(); c.translate(x, G); c.scale(s, s); c.strokeStyle = '#1c2541'; c.lineWidth = 2; c.lineJoin = 'round';
+  c.fillStyle = '#3f7d4e'; rr(c, -40, -30, 80, 20, 5); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(-18, -30); c.lineTo(-12, -48); c.lineTo(14, -48); c.lineTo(20, -30); c.closePath(); c.fillStyle = '#356b42'; c.fill(); c.stroke();
+  c.fillStyle = 'rgba(160,215,245,.8)'; c.beginPath(); c.moveTo(-12, -32); c.lineTo(-8, -44); c.lineTo(2, -44); c.lineTo(2, -32); c.closePath(); c.fill(); c.stroke(); c.beginPath(); c.moveTo(6, -32); c.lineTo(6, -44); c.lineTo(12, -44); c.lineTo(16, -32); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#ffe066'; c.beginPath(); c.arc(38, -22, 3.5, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#f2f7f5'; c.font = 'bold 9px Verdana, sans-serif'; c.textAlign = 'center'; c.fillText('FIELD', -24, -17);
+  for (const wx of [-24, 24]) { c.fillStyle = '#222'; c.beginPath(); c.arc(wx, -8, 9, 0, 7); c.fill(); c.fillStyle = '#9aa3ad'; c.beginPath(); c.arc(wx, -8, 4, 0, 7); c.fill(); }
+  c.restore();
+}
+function driveJeep() {
+  if (!examPassed) { toast('🚙 The jeep is earned by passing Dr. Rivera’s Final Field Exam.'); return; }
+  if (current) closeTop();
+  travel(SITE === 'gem' ? 'main' : 'gem');
+}
+// Take down the nearest ladder (the whole connected ladder) next to you
+function takeDownLadder() {
+  if (current || rope) return;
+  const p = player; if (p.onLadder) { toast('🪜 Step off the ladder first, then take it down.'); return; }
+  const c0 = Math.floor((p.x + p.w / 2) / T), r0 = Math.floor((p.y + p.h - 1) / T);
+  for (const c of [c0, c0 - 1, c0 + 1]) for (const r of [r0, r0 + 1, r0 - 1]) {
+    if (!hasLadder(r, c)) continue;
+    let top = r, bot = r; while (hasLadder(top - 1, c)) top--; while (hasLadder(bot + 1, c)) bot++;
+    for (let k = top; k <= bot; k++) ladders.delete(LK(k, c));
+    sfx('build'); toast(`🧹 Ladder taken down (${bot - top + 1} block${bot === top ? '' : 's'}). You can place it again anytime.`, 3500); return;
+  }
+  toast('🧹 No ladder next to you. Stand beside (or at the bottom or top of) a ladder to take it down.');
+}
+function renderBag() {
+  const item = (icon, name, desc, btns) => `<div class="card" style="text-align:left"><h3 style="margin:0 0 4px">${icon} ${name}</h3><p style="margin:0 0 8px">${desc}</p>${btns}</div>`;
+  $('#bagBody').innerHTML = `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">
+    ${item(tool.unbreakable ? '🪓' : '🔨', toolName(), tool.unbreakable ? '<b>Unbreakable!</b> Your reward for completing the Rock Dex and passing the Final Field Exam.' : tool.broken ? '<b>Broken.</b> Talk to Dr. Rivera at camp to earn a new one.' : 'Wears out with use. When it breaks, Dr. Rivera trades you a new one for some rock cycle thinking.', '')}
+    ${item('🪜', 'Ladder', 'Place it in a dug shaft; it grows up to the rock above or the surface. Climb one block at a time with ↑ ↓. Dig sideways with ← →, or dig UP with ↑ when rock is above you (the ladder grows into the new space). Walk into a ladder from a tunnel and you’ll grab it instead of falling.', '<button data-bag="ladder">🪜 Place a ladder (U)</button> <button data-bag="unladder">🧹 Take down a ladder (Y)</button>')}
+    ${item('🪢', 'Rope', 'The camp crew pulls you all the way out to solid ground.', '<button data-bag="rope">🪢 Rope up to camp (R)</button>')}
+    ${item('🧱', 'Rebuild', 'Put back the rock that was dug out of a space.', '<button data-bag="build">🧱 Build rock back (B)</button>')}
+    ${examPassed ? item('🚙', 'Field jeep', `Drive between Pebble Creek and Crystal Ridge Mine anytime. You’re at <b>${SITE === 'gem' ? 'Crystal Ridge Mine' : 'Pebble Creek'}</b>.`, `<button data-bag="jeep">🚙 Drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'} (K)</button>`)
+      : item('🔒', 'Field jeep (locked)', 'Complete the Rock Dex and pass Dr. Rivera’s Final Field Exam to earn a jeep for traveling to a gem mine.', '')}
+  </div>`;
+}
+function bagClick(v) {
+  if (v === 'jeep') { driveJeep(); return; }
+  closeTop();
+  if (v === 'ladder') placeLadder(); else if (v === 'unladder') takeDownLadder(); else if (v === 'rope') ropeUp(); else if (v === 'build') tryBuild(true);
 }
 
 /* ---------- 15j. ACHIEVEMENT TROPHIES + TROPHY ROOM + GEM DEX ------------
