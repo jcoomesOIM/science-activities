@@ -47,11 +47,32 @@ button:disabled{cursor:default;color:var(--ink);opacity:1}
 .panel h3{margin:16px 0 6px;font-size:22px}
 .close{float:right;margin-left:12px}
 #title{top:0;left:0;right:0;bottom:0;border-radius:0;border:none;z-index:30;background:radial-gradient(circle at 50% 25%,#2d4a7a,#101828 70%);color:var(--paper);text-align:center}
-#title .inner{max-width:880px;margin:0 auto;padding:16px}
-#title h1{font-size:clamp(44px,7vw,80px);margin:6px 0 0;color:var(--hat);text-shadow:0 5px 0 #000;letter-spacing:1px}
-#title .sub{font-size:24px;margin:0 0 10px}
-#title p{font-size:20px}
-#titleArt{width:min(600px,92vw);height:auto}
+#title .inner{max-width:1000px;margin:0 auto;padding:1vh 16px;min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:1.1vh}
+#title h1{font-size:clamp(34px,7vh,72px);margin:0;color:var(--hat);text-shadow:0 4px 0 #000;letter-spacing:1px;line-height:1.05}
+#title .sub{font-size:clamp(15px,2.4vh,22px);margin:2px 0 1vh}
+#title p{font-size:clamp(14px,2.2vh,19px)}
+#title{overflow:hidden}
+#title .story{margin:0;text-align:center;line-height:1.4;max-width:900px;align-self:center}
+.trow{display:flex;gap:14px;justify-content:center;align-items:stretch;flex-wrap:wrap}
+.tbtns{display:flex;flex-direction:column;gap:.9vh;justify-content:center;min-width:230px}
+.tbtns button{font-size:clamp(14px,2.2vh,18px);padding:.7vh 14px}
+#title #startBtn{font-size:clamp(16px,2.7vh,22px);padding:.9vh 16px}
+#title .savenote{margin:0;align-self:center;width:100%;font-size:clamp(13px,1.9vh,16px);padding:1vh 14px;line-height:1.35}
+#title .savenote ol{margin:4px 0;padding-left:22px}
+#title .savenote p{margin:4px 0 0;font-size:inherit}
+#title .avatarpick{margin:0;padding:.6vh 12px;gap:10px;max-width:none;flex-wrap:nowrap;font-size:clamp(13px,1.9vh,16px)}
+#title .avatarpick p{margin:.3vh 0!important}
+#title .avatarpick [data-av^="body"]{font-size:clamp(13px,1.9vh,16px);padding:2px 10px}
+#title .avatarpick img{height:clamp(54px,11vh,96px)!important;width:auto!important}
+#title .swatch{width:clamp(20px,3.3vh,30px);height:clamp(20px,3.3vh,30px);margin:1px}
+#title{overflow:auto}
+#keysModal{position:fixed;inset:0;z-index:40;background:rgba(10,14,30,.75);display:flex;align-items:center;justify-content:center;padding:16px}
+#keysModal[hidden]{display:none}
+#keysModal .kbox{background:#16223d;border:4px solid var(--hat);border-radius:18px;padding:14px 20px;max-height:94vh;overflow:auto;text-align:left}
+#keysModal h2{margin:0 0 8px;color:var(--hat)}
+#keysModal .keys{margin:0}
+
+#titleArt{height:clamp(70px,17vh,190px);width:auto;max-width:100%;align-self:center}
 .keys{display:inline-grid;grid-template-columns:auto auto;gap:5px 16px;text-align:left;font-size:18px;background:rgba(0,0,0,.35);padding:12px 18px;border-radius:14px;margin:6px 0 14px}
 kbd{background:var(--paper);color:var(--ink);border-radius:6px;padding:1px 7px;font-weight:bold;border:2px solid #000;font-family:inherit}
 #startBtn{font-size:28px;padding:10px 26px;background:var(--hat)}
@@ -188,8 +209,26 @@ th{background:var(--ink);color:var(--paper)}
     <h1>Rock Hound</h1>
     <p class="sub">Dig, test, and identify rocks and minerals</p>
     <canvas id="titleArt" width="600" height="190" aria-hidden="true"></canvas>
-    <div id="titleAvatar"></div>
-    <p>You are the new junior field geologist at Pebble Creek Survey Camp. The town dug a well and hit layer after layer of mystery stones! Dig down through the rock layers, test every mystery specimen like a real geologist, and identify it with the reference chart. Each correct ID goes into your Collection Box and fills a page of the Rock Dex. Use the Rock Cycle Machine at camp to predict how rocks change. Pick a favorite to be your pet rock. It will follow you, answer your science questions, and wear the hats and glasses you buy with the XP you earn. Earn XP for every correct ID: the fewer tests and guesses you need, the more XP you get!</p>
+    <p class="story">You’re the new junior field geologist at Pebble Creek Survey Camp. Dig through the rock layers, test mystery specimens like a real geologist, and identify them to fill your Rock Dex. Predict how rocks change with the Rock Cycle Machine, earn XP, trophies and gear, and dress up your pet rock. The fewer tests and guesses you need, the more XP you earn!</p>
+    <div class="trow">
+      <div id="titleAvatar"></div>
+      <div class="tbtns">
+        <button id="startBtn">⛏️ Start a new dig</button>
+        <button class="loadBtn">📂 Continue from a save file</button>
+        <button id="keysBtn" aria-haspopup="dialog">⌨️ Keyboard controls</button>
+      </div>
+    </div>
+    <div class="savenote" role="note">
+          <b>💾 How to keep your progress</b>
+          <ol>
+            <li><b>When you’re done:</b> open the 💾 menu (top right) and choose <b>Download save file</b>. Keep it somewhere safe, like your Documents folder.</li>
+            <li><b>Next time:</b> click <b>📂 Continue from a save file</b> and choose that file.</li>
+          </ol>
+          <p><b>⚠️ Warning:</b> the game does NOT save automatically. Closing or reloading without a save file <b>erases all of your progress</b>. Nothing is stored in the browser or sent anywhere. Sound starts off (press M).</p>
+        </div>
+  </div>
+  <div id="keysModal" role="dialog" aria-modal="true" aria-labelledby="keysTitle" hidden>
+    <div class="kbox"><button class="close" id="keysClose">✖ Close (Esc)</button><h2 id="keysTitle">⌨️ Keyboard controls</h2>
     <div class="keys">
       <span><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></span><span>Walk, and dig sideways into rock</span>
       <span><kbd>↓</kbd> or <kbd>S</kbd></span><span>Dig down</span>
@@ -202,17 +241,8 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>U</kbd> / <kbd>Y</kbd></span><span>Place a ladder in a dug shaft (climb ↑ ↓, dig ← → ↑) / take a ladder down</span>
       <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
-    </div><br>
-    <button id="startBtn">⛏️ Start a new dig</button> <button class="loadBtn" style="font-size:22px;padding:10px 20px">📂 Continue from a save file</button>
-    <div class="savenote" role="note">
-      <h3 style="margin:0 0 6px">💾 How to keep your progress</h3>
-      <ol style="margin:0;padding-left:24px">
-        <li><b>When you’re done:</b> open the 💾 menu (top right) and choose <b>Download save file</b>. Keep the file somewhere safe, like your Documents folder.</li>
-        <li><b>Next time:</b> click <b>📂 Continue from a save file</b> above and choose that file. You’ll be right where you left off.</li>
-      </ol>
-      <p style="margin:8px 0 0"><b>⚠️ Warning:</b> this game does NOT save automatically. If you close or reload the page without downloading a save file, <b>all of your progress will be erased</b>.</p>
     </div>
-    <p style="font-size:16px">Sound starts off (press M). Nothing is stored in the browser or sent anywhere.</p>
+    </div>
   </div>
 </section>
 
@@ -867,7 +897,7 @@ function mouth(c, x, y, mood) {
 }
 // AVATAR: students choose a geologist. Natural skin tones and hair colors.
 const SKIN = ['#f6d9c4', '#eebd98', '#d9a06e', '#b67a4b', '#8d5835', '#5e3b23'];
-const HAIR = {black:['Black', '#1d1b1f'], darkbrown:['Dark brown', '#3b2417'], brown:['Brown', '#6b4226'], auburn:['Red', '#8e3b1f'], blonde:['Blonde', '#d9b35c'], gray:['Gray', '#a3a3a3']};
+const HAIR = {black:['Black', '#1d1b1f'], darkbrown:['Dark brown', '#3b2417'], brown:['Brown', '#6b4226'], auburn:['Auburn', '#8e3b1f'], ginger:['Red-orange', '#c8571e'], blonde:['Blonde', '#d9b35c'], gray:['Gray', '#a3a3a3']};
 const avatar = {body:'female', skin:2, hair:'darkbrown'};
 // The geologist: a little more realistic proportions, safety vest, hard hat, rock hammer
 function drawPerson(c, cx, by, face, mood, walk, swing, sc) {
@@ -1740,7 +1770,7 @@ function renderNotebook() {
   $('#notebookBody').innerHTML = h;
 }
 function renderKeys() {
-  $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
+  $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#keysModal .keys').innerHTML + '</div>';
 }
 const RENDER = {bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
@@ -1768,6 +1798,7 @@ function setMotion(v) { reduceMotion = v; document.body.classList.toggle('reduce
 
 /* ---------- 13. INPUT ---------------------------------------------- */
 addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('#keysModal').hidden) { $('#keysModal').hidden = true; $('#keysBtn').focus(); return; }
   if (e.key === 'Escape') { if (document.querySelector('.mbtn[aria-expanded="true"]')) { const m = document.querySelector('.mbtn[aria-expanded="true"]'); closeMenus(); m.focus(); return; } closeTop(); return; }
   if (e.target.matches && e.target.matches('input,select,textarea')) { if (e.key === 'Enter' && e.target.id === 'petName') saveName(); return; }
   const k = e.key.toLowerCase();
@@ -1832,6 +1863,8 @@ document.addEventListener('click', e => {
   if (b.id === 'idBtn') identify();
   else if (b.id === 'nameBtn') saveName();
   else if (b.id === 'startBtn') { audioInit(); $('#title').classList.remove('open'); current = null; $('#game').focus(); toast('🎯 ' + MISSIONS[0].t, 4500); }
+  else if (b.id === 'keysBtn') { $('#keysModal').hidden = false; $('#keysClose').focus(); }
+  else if (b.id === 'keysClose') { $('#keysModal').hidden = true; $('#keysBtn').focus(); }
   else if (b.id === 'bSound') setSound(!soundOn);
   else if (b.id === 'bSave' || b.id === 'saveBtn') downloadSave();
   else if (b.classList.contains('pdfBtn')) downloadPDF();
@@ -1851,6 +1884,7 @@ $('#game').addEventListener('contextmenu', e => {
   if (Math.hypot(dx, dy) < T * 1.9 && canPlace(r, c)) place(r, c);
 });
 // Mouse: click a block next to you to dig it
+$('#keysModal').addEventListener('click', e => { if (e.target.id === 'keysModal') { $('#keysModal').hidden = true; $('#keysBtn').focus(); } }); // click outside the box to close
 $('#game').addEventListener('mousedown', e => {
   if (current || rope || e.button !== 0) return;
   const wx = e.clientX / zoom + cam.x, wy = e.clientY / zoom + cam.y, c = Math.floor(wx / T), r = Math.floor(wy / T);
@@ -3230,7 +3264,7 @@ function drawTitleArt() {
 genWorld(); buildSprites(); buildExtraSprites(); measureTops(); buildBadges(); resize(); setMotion(reduceMotion);
 player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1;
 cam.x = Math.max(0, player.x - viewW / 2); cam.y = player.y - viewH / 2;
-drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); current = 'title'; $('#startBtn').focus();
+drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); current = 'title'; $('#title').scrollTop = 0; scrollTo(0, 0); $('#startBtn').focus({preventScroll:true});
 requestAnimationFrame(loop);
 </script>
 </body>
