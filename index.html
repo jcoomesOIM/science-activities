@@ -11,13 +11,20 @@
 html,body{margin:0;height:100%;background:#101828;overflow:hidden;font-family:Verdana,"Segoe UI",sans-serif;color:var(--paper)}
 h1,h2,h3,button{font-family:"Trebuchet MS","Segoe UI",sans-serif}
 #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;outline:none}
-#hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px;background:rgba(16,24,40,.92);border-bottom:4px solid var(--hat)}
-#stats{margin-right:auto;font-size:17px;line-height:1.35;min-width:260px}
+#hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;gap:8px;align-items:center;padding:4px 8px;background:rgba(16,24,40,.9);border-bottom:3px solid var(--hat)}
+#goals{flex:1;min-width:0;font-size:14px;line-height:1.3;font-weight:bold}
+#goals div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#assignLine{color:#9cc8ea}
+.mbtn .badge{font-size:12px;vertical-align:top}
+.mtitle{font-weight:bold;font-size:16px;padding:2px 4px 4px;border-bottom:2px solid var(--ink);color:var(--ink)}
+.statbox{position:fixed;bottom:10px;z-index:4;background:rgba(16,24,40,.9);color:var(--paper);border:3px solid var(--hat);border-radius:12px;padding:5px 10px;font-size:14px;line-height:1.35;max-width:44vw;pointer-events:none}
+#locBox{left:10px}#playerBox{right:10px;display:flex;gap:8px;align-items:center}
+#playerBox img{width:34px;height:34px}
 #mission{color:var(--hat);font-weight:bold}
-.menus{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-left:auto}
+.menus{display:flex;align-items:center;gap:6px;margin-left:auto}
 .mrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .menu{position:relative}
-.mbtn{font-size:18px;padding:7px 14px}
+.mbtn{font-size:20px;padding:3px 10px;line-height:1.2}
 .mbtn[aria-expanded="true"]{background:var(--hat)}
 .mlist{position:fixed;overflow-y:auto;z-index:20;background:var(--paper);border:4px solid var(--ink);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:300px;white-space:nowrap;box-shadow:0 6px 0 rgba(0,0,0,.45)}
 .mlist[hidden]{display:none}
@@ -107,18 +114,18 @@ th{background:var(--ink);color:var(--paper)}
 .swatch{width:36px;height:36px;border-radius:50%;padding:0;margin:2px;vertical-align:middle;box-shadow:0 2px 0 #000}
 .swatch.on{outline:4px solid var(--signal);outline-offset:2px}
 .avatarpick{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 14px;margin:8px auto;max-width:640px;text-align:left;font-size:18px}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:15;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;font-size:20px;font-weight:bold;max-width:90vw;text-align:center;display:none;box-shadow:0 5px 0 rgba(0,0,0,.5)}
-#caption{position:fixed;left:14px;bottom:90px;z-index:8;background:rgba(0,0,0,.8);color:#fff;padding:6px 12px;border-radius:10px;font-size:18px;display:none}
+#toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:15;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;font-size:20px;font-weight:bold;max-width:90vw;text-align:center;display:none;box-shadow:0 5px 0 rgba(0,0,0,.5)}
+#caption{position:fixed;left:14px;bottom:124px;z-index:8;background:rgba(0,0,0,.8);color:#fff;padding:6px 12px;border-radius:10px;font-size:18px;display:none}
 </style>
 </head>
 <body>
 <canvas id="game" tabindex="0" aria-label="Dig site. Arrow keys move and dig."></canvas>
 
 <div id="hud">
-  <div id="stats"><div id="where">Depth</div><div id="mission"></div></div>
+  <div id="goals"><div id="mission"></div><div id="assignLine"></div></div>
   <div class="menus"><div class="mrow">
-  <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab">🧪 Lab equipment <span id="bagN"></span> ▾</button>
-    <div class="mlist" id="mLab" hidden>
+  <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab" aria-label="Lab equipment menu" title="Lab equipment">🧪<span id="bagN" class="badge"></span>▾</button>
+    <div class="mlist" id="mLab" hidden><div class="mtitle">🧪 Lab equipment</div>
       <button data-open="lab"><span>🔬 Test specimens</span><kbd>L</kbd></button>
       <button data-open="chart"><span>📖 Reference chart</span></button>
       <button data-open="notebook"><span>📓 Lab notebook</span><kbd>N</kbd></button>
@@ -127,8 +134,8 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="guide"><span>🗺️ Rock cycle guide</span><kbd>G</kbd></button>
       <button data-open="how"><span>❓ How this model works</span><kbd>H</kbd></button>
     </div></div>
-  <div class="menu"><button class="mbtn" data-menu="mCol" aria-expanded="false" aria-controls="mCol">🎒 My collection ▾</button>
-    <div class="mlist" id="mCol" hidden>
+  <div class="menu"><button class="mbtn" data-menu="mCol" aria-expanded="false" aria-controls="mCol" aria-label="My collection menu" title="My collection">🎒▾</button>
+    <div class="mlist" id="mCol" hidden><div class="mtitle">🎒 My collection</div>
       <button data-open="dex"><span>📚 Rock Dex</span><kbd>X</kbd></button>
       <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
       <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
@@ -137,9 +144,8 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="prize"><span>🎁 Prize box</span></button>
       <button data-open="report"><span>📋 Rock Hound Report</span><kbd>Q</kbd></button>
     </div></div>
-  </div><div class="mrow">
-  <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl">🎮 Controls ▾</button>
-    <div class="mlist" id="mCtl" hidden>
+  <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl" aria-label="Controls menu" title="Controls">🎮▾</button>
+    <div class="mlist" id="mCtl" hidden><div class="mtitle">🎮 Controls</div>
       <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
       <button id="bRope"><span>🪢 Rope up to camp</span><kbd>R</kbd></button>
@@ -152,6 +158,8 @@ th{background:var(--ink);color:var(--paper)}
     </div></div>
   </div></div>
 </div>
+<div id="locBox" class="statbox" aria-label="Where you are"></div>
+<div id="playerBox" class="statbox" aria-label="Your stats"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="caption" aria-hidden="true"></div>
 
@@ -276,6 +284,7 @@ th{background:var(--ink);color:var(--paper)}
 <li>In class, the acid test uses dilute hydrochloric acid handled by the teacher with goggles, or vinegar, which fizzes more weakly.</li>
 <li>♻️ The Rock Cycle Machine shows each change in seconds, but in nature it takes thousands to millions of years. Changed rocks join your collection and Rock Dex so you can complete it, but real rocks can’t be traded this way!</li>
 <li>♻️ What melted rock becomes also depends on its chemistry. The machine uses two simple rules: dark, iron-rich basalt melts into dark rock (basalt or gabbro), and every other rock melts into light-colored magma (granite or obsidian). Light-colored lava often cools into rhyolite, a fine-grained rock not in our Rock Dex.</li>
+<li>💎 Crystal Ridge Mine is simplified: real kimberlite pipes bring diamonds up from more than 150 km deep, far deeper than the game shows. Rubies and sapphires (both corundum) grow in marble, and emeralds and topaz grow in pegmatites.</li>
 <li>🔨 Tools wear out after a hidden number of hits, like real tools. Trading for a new one at camp is a game rule that gives you a thinking break.</li>
 <li>🧱 Rebuilding puts back the rock that was originally in that spot so you can climb out or reach new places. In real life, dug-out rock can’t be put back the way it was!</li>
 <li>Real rocks take thousands to millions of years to form and change. The game skips the waiting!</li>
@@ -327,6 +336,19 @@ const SPECIES = [
 ];
 const SP = {};
 SPECIES.forEach((s, i) => { s.n = i + 1; SP[s.id] = s; if (s.kind === 'mineral') { s.lk = 'single'; s.rtype = 'Mineral'; s.grp = 'mineral'; } });
+/* ---------- 1b. CRYSTAL RIDGE GEMS (unlocked by the Final Field Exam) ----------
+   Real gem geology: diamonds ride up in kimberlite pipes from >150 km deep;
+   ruby and sapphire (corundum) grow in marble; emerald and topaz grow in pegmatites. */
+const GEMS = [
+ {id:'diamond',name:'Diamond',kind:'mineral',color:'Colorless to pale yellow, very sparkly',ck:'clear',lens:'One substance all the way through. Eight-sided (octahedron) crystals.',luster:'Adamantine (brilliant)',lu:'adamantine',streak:'None (harder than the plate)',sk:'white',H:10,hd:'10',brk:'Cleavage: 4 directions (octahedral).',bk:'cleave4',sg:3.52,sp:'Hardest mineral (Mohs 10); brilliant sparkle',info:'Pure carbon crystallized more than 150 km deep under huge pressure, then carried up fast by kimberlite magma.',cycle:'Forms in Earth’s mantle; reaches the surface in kimberlite pipes.'},
+ {id:'kimberlite',name:'Kimberlite',kind:'rock',grp:'igneous',rtype:'Igneous (volcanic pipe)',color:'Bluish-green to gray (“blue ground”)',ck:'bluegreen',lens:'Fine grains with broken chunks of other rocks and scattered crystals.',lk:'fragments',luster:'Dull',lu:'dull',H:5,brk:'Crumbly and uneven.',bk:'uneven',sg:2.9,sp:'Fills carrot-shaped pipes; may contain diamonds',info:'Magma that rose extremely fast from deep in the mantle, filling a carrot-shaped pipe and bringing diamonds up.',cycle:'Weathers easily into soft “yellow ground.”'},
+ {id:'ruby',name:'Ruby',kind:'mineral',color:'Red to pinkish-red',ck:'red',lens:'One substance all the way through. Six-sided, barrel-shaped crystals.',luster:'Glassy to brilliant',lu:'glassy',streak:'None (harder than the plate)',sk:'white',H:9,hd:'9',brk:'Fracture: uneven or shell-like; no cleavage.',bk:'fracture',sg:4.0,sp:'Mohs 9; red corundum',info:'Red corundum (aluminum oxide). A little chromium makes it red. It grows in marble changed by heat and pressure.',cycle:'So hard that it survives weathering and collects in river gravels.'},
+ {id:'sapphire',name:'Sapphire',kind:'mineral',color:'Blue',ck:'blue',lens:'One substance all the way through. Six-sided, barrel-shaped crystals.',luster:'Glassy to brilliant',lu:'glassy',streak:'None (harder than the plate)',sk:'white',H:9,hd:'9',brk:'Fracture: uneven or shell-like; no cleavage.',bk:'fracture',sg:4.0,sp:'Mohs 9; blue corundum',info:'Blue corundum: the SAME mineral as ruby! Tiny amounts of iron and titanium make it blue.',cycle:'Forms during metamorphism; survives weathering in gravels.'},
+ {id:'emerald',name:'Emerald',kind:'mineral',color:'Green',ck:'green',lens:'One substance all the way through. Six-sided column crystals with flat ends.',luster:'Glassy',lu:'glassy',streak:'None (harder than the plate)',sk:'white',H:7.75,hd:'7.5–8',brk:'Fracture: uneven or shell-like.',bk:'fracture',sg:2.7,sp:'Green beryl; six-sided columns',info:'Green beryl that grew in a pegmatite, where the last, watery magma cooled slowly into giant crystals. Chromium makes it green.',cycle:'Forms as magma crystallizes; weathering can free the crystals.'},
+ {id:'topaz',name:'Topaz',kind:'mineral',color:'Golden, colorless, or blue',ck:'golden',lens:'One substance all the way through. Long crystals with a wedge-shaped end.',luster:'Glassy',lu:'glassy',streak:'None (harder than the plate)',sk:'white',H:8,hd:'8',brk:'Cleavage: 1 perfect direction, across the crystal.',bk:'cleave1',sg:3.5,sp:'Mohs 8; one perfect cleavage',info:'Grows in pegmatites and gas pockets as granite magma cools. Number 8 on the Mohs scale.',cycle:'Forms as granite magma cools.'}
+];
+GEMS.forEach((s, i) => { s.n = 31 + i; s.gem = true; SP[s.id] = s; if (s.kind === 'mineral') { s.lk = 'single'; s.rtype = 'Mineral (gem)'; s.grp = 'mineral'; } });
+const ALLSPEC = SPECIES.concat(GEMS);
 
 // The tests students can run. h = Mohs hardness of each scratch tool.
 const TESTS = [
@@ -341,8 +363,11 @@ const TESTS = [
  {id:'break',icon:'🔨',name:'Break it'},
  {id:'magnet',icon:'🧲',name:'Magnet'},
  {id:'fizz',icon:'🧪',name:'Acid fizz test'},
- {id:'heft',icon:'💧',name:'Water and heft'}
+ {id:'heft',icon:'💧',name:'Water and heft'},
+ {id:'h_quartz',icon:'💎',name:'Quartz point (7)',h:7,tool:'quartz point',gem:true},
+ {id:'h_corundum',icon:'🔺',name:'Corundum point (9)',h:9,tool:'corundum point',gem:true}
 ];
+const BASIC_TESTS = TESTS.filter(t => !t.gem); // the extra hardness points are used only at Crystal Ridge
 const TB = {}; TESTS.forEach(t => TB[t.id] = t);
 
 /* SCIENCE RULE: what each test shows for a specimen.
@@ -355,7 +380,7 @@ function result(s, tid) {
     case 'luster': return {k:s.lu, txt:`Luster: ${s.luster}.`};
     case 'streak': return s.kind === 'mineral' ? {k:s.sk, txt:`Streak: ${s.streak}.`}
       : {k:'mixed', txt:'Patchy, mixed powder: different grains leave different colors. (Streak works best on single minerals.)'};
-    case 'h_nail': case 'h_penny': case 'h_file': {
+    case 'h_nail': case 'h_penny': case 'h_file': case 'h_quartz': case 'h_corundum': {
       // Mohs rule: the tool scratches the specimen only if the specimen is softer.
       const d = s.H - t.h; let k, txt;
       if (Math.abs(d) <= 0.25) { k = 'same'; txt = `About the same hardness as the ${t.tool}; the scratch is unclear. Try another tool.`; }
@@ -388,13 +413,13 @@ function result(s, tid) {
 // Which specimens still match every test this specimen has had?
 function candidates(sp) {
   const a = SP[sp.sid];
-  return SPECIES.filter(s => [...sp.done].every(t => result(s, t).k === result(a, t).k));
+  return (sp.site === 'gem' ? ALLSPEC : SPECIES).filter(s => [...sp.done].every(t => result(s, t).k === result(a, t).k));
 }
 // The untried test that best splits the remaining possibilities.
 function bestTest(sp, cands) {
   let best = null, bestScore = 1e9;
   for (const t of TESTS) {
-    if (sp.done.has(t.id)) continue;
+    if (sp.done.has(t.id) || (t.gem && sp.site !== 'gem')) continue;
     const groups = {};
     cands.forEach(s => { const k = result(s, t.id).k; groups[k] = (groups[k] || 0) + 1; });
     const n = Object.keys(groups).length; if (n < 2) continue;
@@ -408,15 +433,18 @@ function bestTest(sp, cands) {
 const T = 48, COLS = 46, ROWS = 64, SURF = 9;        // SURF = grass row
 const SED_END = SURF + 18, MET_END = SURF + 34, MAG_START = ROWS - 5;
 const KM_PER_ROW = 0.1;                                // each block ≈ 100 m (squished!)
-const AIR=0,GRASS=1,SOIL=2,SAND=3,SHALE=4,LIME=5,SLATE=6,MARB=7,GNEI=8,GRAN=9,MAGMA=10,BASA=11;
+const AIR=0,GRASS=1,SOIL=2,SAND=3,SHALE=4,LIME=5,SLATE=6,MARB=7,GNEI=8,GRAN=9,MAGMA=10,BASA=11,LAT=12,KIMB=13,PEG=14;
 const TI = {
   [GRASS]:{c:'#7a5233',hits:1},[SOIL]:{c:'#8a5a35',hits:1},
   [SAND]:{c:'#d39a5e',hits:2},[SHALE]:{c:'#6a6f79',hits:2},[LIME]:{c:'#cfc7a9',hits:2},
   [SLATE]:{c:'#4a5262',hits:3},[MARB]:{c:'#e3dfd7',hits:3},[GNEI]:{c:'#9c9189',hits:3},
-  [GRAN]:{c:'#c9a6a0',hits:4},[MAGMA]:{c:'#e8501a',hits:99},[BASA]:{c:'#3c3d44',hits:3}
+  [GRAN]:{c:'#c9a6a0',hits:4},[MAGMA]:{c:'#e8501a',hits:99},[BASA]:{c:'#3c3d44',hits:3},
+  [LAT]:{c:'#a5532f',hits:1},[KIMB]:{c:'#4e6e66',hits:3},[PEG]:{c:'#e2bfae',hits:3}
 };
 function zoneOfType(t) {
-  if (t === GRASS || t === SOIL) return 'soil';
+  if (t === GRASS || t === SOIL || t === LAT) return 'soil';
+  if (t === KIMB) return 'kimberlite';
+  if (t === PEG) return 'pegmatite';
   if (t === SAND || t === SHALE || t === LIME) return 'sedimentary';
   if (t === SLATE || t === MARB || t === GNEI) return 'metamorphic';
   if (t === GRAN) return 'igneous';
@@ -431,6 +459,8 @@ const ZONES = {
   metamorphic:{short:'metamorphic zone',name:'Metamorphic zone',chat:'Feel the squeeze? Heat and pressure change rocks down here without melting them.',long:'You are in the metamorphic zone. Heat and pressure change rocks without melting them: shale becomes slate, limestone becomes marble, sandstone becomes quartzite, and granite becomes gneiss. Garnet and talc grow here too.'},
   igneous:{short:'igneous zone',name:'Igneous zone',chat:'Magma cooled slowly down here, so the crystals grew big!',long:'You are in the igneous zone. Magma cooled SLOWLY underground, so crystals grew large. That makes intrusive igneous rock like granite, with minerals like feldspar, quartz, mica and magnetite.'},
   volcanic:{short:'old volcano',name:'Old volcano',chat:'Lava cooled fast here, so the crystals are tiny or missing!',long:'You are on an old volcano. Lava erupted and cooled QUICKLY at the surface, making extrusive igneous rocks with tiny crystals or none at all: basalt, obsidian and pumice.'},
+  kimberlite:{short:'kimberlite pipe',name:'Kimberlite pipe',chat:'This blue-green rock rushed up from more than 150 km deep. Diamonds hide in the deep part!',long:'You are in a kimberlite pipe: a carrot-shaped volcanic pipe. Its magma rose extremely fast from more than 150 km down in the mantle, carrying diamonds with it. Look deeper in the pipe for diamonds.'},
+  pegmatite:{short:'pegmatite vein',name:'Pegmatite vein',chat:'Pegmatites grow giant crystals, including gems like emerald and topaz!',long:'You are in a pegmatite vein. The last, watery magma cooled slowly in cracks and grew giant crystals, including gems like emerald (green beryl) and topaz.'},
   magma:{short:'magma chamber',name:'Magma chamber',chat:'Magma! When it cools it becomes igneous rock.',long:'Below you is magma, melted rock at about 700–1,200 °C. When it cools and hardens, it becomes igneous rock.'}
 };
 // Which specimens can be found in each zone (based on where they really form)
@@ -480,6 +510,55 @@ function genWorld() {
 }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
+/* ---------- 2b. CRYSTAL RIDGE MINE: the second dig site ----------------
+   Simplified cross-section: folded metamorphic rock (gneiss and marble) cut by
+   pegmatite veins, over a granite base, with a carrot-shaped kimberlite pipe. */
+let SITE = 'main', gemsOpen = false; const gemFound = new Set(), worlds = {main:null, gem:null}, savedWorlds = {};
+const KC = 27; // kimberlite pipe center column
+const GEM_ZONE_SPECIES = {kimberlite:['diamond', 'kimberlite', 'garnet'], metamorphic:['ruby', 'sapphire', 'garnet', 'marble'], pegmatite:['emerald', 'topaz', 'quartz', 'feldspar', 'muscovite'], igneous:['granite', 'topaz']};
+const zoneList = z => (SITE === 'gem' ? GEM_ZONE_SPECIES : ZONE_SPECIES)[z];
+function genGemWorld() {
+  tile = []; spec = []; dmg = [];
+  for (let r = 0; r < ROWS; r++) { tile.push([]); spec.push([]); dmg.push([]);
+    for (let c = 0; c < COLS; c++) { const fold = Math.round(Math.sin(c * .28) * 2.5); let t = AIR;
+      if (r === SURF) t = GRASS; else if (r > SURF && r <= SURF + 2) t = LAT;
+      else if (r > SURF + 2 && r <= SURF + 30) t = [GNEI, GNEI, MARB][(((Math.floor((r + fold) / 3)) % 3) + 3) % 3];
+      else if (r > SURF + 30) t = GRAN;
+      tile[r].push(t); spec[r].push(null); dmg[r].push(0); } }
+  // pegmatite veins: slanted sheets of giant-crystal rock
+  for (let v = 0; v < 6; v++) { let r = SURF + 6 + Math.floor(Math.random() * 40), c = Math.floor(Math.random() * 18) + (v % 2 ? 0 : 30); const dr = Math.random() < .5 ? 1 : -1;
+    for (let k = 0; k < 16; k++) { for (const cc of [c, c + 1]) if (tile[r] && cc >= 0 && cc < COLS && tile[r][cc] !== AIR) tile[r][cc] = PEG; c += 1; if (k % 2) r += dr; } }
+  // kimberlite pipe: wide at the top, narrowing downward like a carrot
+  for (let r = SURF; r < ROWS; r++) { const half = Math.max(1, Math.round(4 - (r - SURF) / (ROWS - SURF) * 3)); for (let c = KC - half; c <= KC + half; c++) tile[r][c] = KIMB; }
+  back = tile.map(row => row.slice());
+  const want = {kimberlite:14, metamorphic:18, pegmatite:14, igneous:8};
+  for (const z in want) { let cells = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (zoneOfType(tile[r][c]) === z) cells.push([r, c]);
+    if (z === 'kimberlite') cells = cells.filter(([r]) => r > SURF + 3); shuffle(cells);
+    const list = shuffle(GEM_ZONE_SPECIES[z].slice());
+    for (let i = 0; i < want[z] && i < cells.length; i++) { let id = list[i % list.length];
+      if (id === 'diamond' && cells[i][0] < SURF + 18) id = 'kimberlite'; // diamonds come from the DEEP part of the pipe
+      spec[cells[i][0]][cells[i][1]] = id; } }
+  // make sure at least one deep diamond exists
+  for (let r = ROWS - 4; r > SURF + 18; r--) if (tile[r][KC] === KIMB) { spec[r][KC] = 'diamond'; break; }
+}
+function applyWorldData(W) {
+  if (!W || typeof W.tiles !== 'string' || W.tiles.length !== ROWS * COLS) return false;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = parseInt(W.tiles[r * COLS + c], 36); tile[r][c] = TI[t] || t === AIR ? t : back[r][c]; spec[r][c] = null; dmg[r][c] = 0; }
+  (W.spec || []).forEach(a => { if (Array.isArray(a) && tile[a[0]] && tile[a[0]][a[1]] !== undefined && isId(a[2])) spec[a[0]][a[1]] = a[2]; });
+  return true;
+}
+const worldData = () => ({tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y});
+function travel(to) {
+  if (to === SITE || (to === 'gem' && !gemsOpen)) return;
+  worlds[SITE] = {tile, back, spec, dmg, px:player.x, py:player.y}; SITE = to;
+  if (worlds[to]) ({tile, back, spec, dmg} = worlds[to]);
+  else { if (to === 'gem') genGemWorld(); else genWorld(); if (savedWorlds[to]) applyWorldData(savedWorlds[to]); }
+  const l = safeLanding(); player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1; if (tile[SURF][SPAWN_C] === AIR) { player.x = l.x; player.y = l.y; }
+  player.vx = player.vy = 0; rope = null; sensed.clear(); if (pet) { pet.x = player.x - 30; pet.y = player.y; }
+  sfx('rope'); toast(to === 'gem' ? '🚙 Welcome to Crystal Ridge Mine! Look for the blue-green kimberlite pipe, the marble layers and the pink pegmatite veins.' : '🚙 Back at Pebble Creek camp.', 6000);
+  if (to === 'gem' && !visited.has('gemsite')) { visited.add('gemsite'); if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); }
+}
+
 /* ---------- 3. GAME STATE ------------------------------------------ */
 const SPAWN_C = 7;
 const player = {x:0, y:0, w:30, h:40, vx:0, vy:0, face:1, onGround:false, mood:'happy', moodT:0};
@@ -516,7 +595,9 @@ const MISSIONS = [
   {t:'Go deep and identify a specimen from the igneous zone.', ok:() => (idBy.igneous || 0) >= 1},
   {t:'Walk east to the old volcano and identify a lava rock.', ok:() => (idBy.volcanic || 0) >= 1},
   {t:'Complete a Rock Cycle Challenge at the machine.', ok:() => chWins >= 1},
-  {t:'Complete the Rock Dex: discover all 30!', ok:() => found.size >= DEX.length}
+  {t:'Complete the Rock Dex: discover all 30!', ok:() => found.size >= DEX.length},
+  {t:'Pass Dr. Rivera’s Final Field Exam at camp.', ok:() => examPassed},
+  {t:'At Crystal Ridge Mine, find all 6 gems for your Gem Dex.', ok:() => gemFound.size >= GEMS.length}
 ];
 
 /* ---------- 4. SOUND (Web Audio, all generated) -------------------- */
@@ -694,6 +775,26 @@ const ART = {
       for (const [col, w] of bands) { c.strokeStyle = col; c.lineWidth = w; c.beginPath(); for (let x = 0; x <= 100; x += 4) { const yy = y + Math.sin(x / 14) * 6; if (x) c.lineTo(x, yy); else c.moveTo(x, yy); } c.stroke(); y += w + 5; } }); },
   quartzite(c, R) { rockShape(c, R, '#e7cfc3', () => { dots(c, R, 320, ['#f6ebe4', '#d5b6a8', '#efdcd2'], .6, 1.4); for (let i = 0; i < 7; i++) shine(c, 15 + R() * 70, 30 + R() * 50, 1.6); }); }
 };
+// ART: Crystal Ridge gems
+function barrel(c, col, light, dark) { const P = polyP([[30, 40], [40, 30], [60, 30], [70, 40], [70, 76], [60, 86], [40, 86], [30, 76]]); c.fillStyle = col; c.fill(P);
+  c.fillStyle = light; c.fill(polyP([[30, 40], [40, 30], [60, 30], [70, 40], [60, 48], [40, 48]])); c.fillStyle = dark; c.fill(polyP([[60, 48], [70, 40], [70, 76], [60, 86]]));
+  c.strokeStyle = 'rgba(20,10,20,.7)'; c.lineWidth = 2; c.stroke(P); c.beginPath(); c.moveTo(40, 48); c.lineTo(60, 48); c.lineTo(60, 86); c.moveTo(40, 48); c.lineTo(40, 86); c.stroke();
+  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1; for (let y = 56; y < 84; y += 7) { c.beginPath(); c.moveTo(41, y); c.lineTo(59, y); c.stroke(); } shine(c, 46, 40, 5); }
+Object.assign(ART, {
+  diamond(c, R) { const A = [50, 10], L = [16, 50], Rt = [84, 50], B = [50, 90], F = [44, 54];
+    c.fillStyle = '#f4fbff'; c.fill(polyP([A, L, F])); c.fillStyle = '#d6ecf8'; c.fill(polyP([A, F, Rt])); c.fillStyle = '#e6f3fb'; c.fill(polyP([L, F, B])); c.fillStyle = '#bcdcf0'; c.fill(polyP([F, Rt, B]));
+    c.strokeStyle = '#7fa6c4'; c.lineWidth = 2; c.stroke(polyP([A, L, B, Rt])); c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(F[0], F[1]); c.lineTo(B[0], B[1]); c.moveTo(L[0], L[1]); c.lineTo(F[0], F[1]); c.lineTo(Rt[0], Rt[1]); c.stroke();
+    shine(c, 36, 34, 7); shine(c, 62, 62, 5); shine(c, 48, 76, 3.5); },
+  kimberlite(c, R) { rockShape(c, R, '#4e6e66', () => { chips(c, R, 30, ['#7d8a86', '#3a4d48', '#a3967a', '#2b3633'], 3, 7); dots(c, R, 40, ['#7fae6b', '#5e8f57'], 1, 2.2); shine(c, 62, 58, 2.5); }); },
+  ruby(c, R) { rockShape(c, R, '#ece8df', () => dots(c, R, 80, ['#d8d3c8', '#fbfaf6'], .6, 1.4), {path:blobP(R, 50, 84, 40, 10, 9, .1)}); barrel(c, '#b3132a', '#e04a5f', '#7a0c1c'); },
+  sapphire(c, R) { rockShape(c, R, '#ece8df', () => dots(c, R, 80, ['#d8d3c8', '#fbfaf6'], .6, 1.4), {path:blobP(R, 50, 84, 40, 10, 9, .1)}); barrel(c, '#1f4fbf', '#5a86e0', '#12307a'); },
+  emerald(c, R) { rockShape(c, R, '#e6cfc0', () => chips(c, R, 50, ['#f2e6dc', '#c9a99a', '#3a3537'], 2, 4), {path:blobP(R, 50, 84, 40, 11, 9, .12)});
+    c.save(); c.translate(50, 86); c.rotate(.12); const w = 26, h = 62; c.fillStyle = '#1f9d55'; c.fillRect(-w / 2, -h, w, h); c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(-w / 2, -h, w / 3, h); c.fillStyle = 'rgba(0,40,20,.3)'; c.fillRect(w / 6, -h, w / 3, h);
+    c.fillStyle = '#4cc485'; c.beginPath(); c.ellipse(0, -h, w / 2, 4, 0, 0, 7); c.fill(); c.strokeStyle = 'rgba(10,40,20,.8)'; c.lineWidth = 2; c.strokeRect(-w / 2, -h, w, h); c.restore(); shine(c, 44, 40, 5); },
+  topaz(c, R) { rockShape(c, R, '#d9c3ba', () => chips(c, R, 50, ['#f5f2ec', '#e39a8a', '#1e1e22'], 2, 4), {path:blobP(R, 50, 84, 40, 11, 9, .12)});
+    c.save(); c.translate(50, 86); c.rotate(-.1); const P = polyP([[-13, 0], [-13, -50], [-4, -64], [13, -54], [13, 0]]); c.fillStyle = '#e8a33c'; c.fill(P); c.fillStyle = 'rgba(255,240,200,.45)'; c.fill(polyP([[-13, 0], [-13, -50], [-4, -64], [-4, 0]]));
+    c.strokeStyle = 'rgba(80,40,0,.8)'; c.lineWidth = 2; c.stroke(P); c.beginPath(); c.moveTo(-4, -64); c.lineTo(-4, 0); c.moveTo(-13, -50); c.lineTo(13, -54); c.stroke(); c.restore(); shine(c, 44, 36, 5); }
+});
 function drawSpecimen(c, s, S) {
   const R = rng(hashStr(s.id)); c.save(); c.scale(S / 100, S / 100);
   c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(50, 91, 36, 6, 0, 0, 7); c.fill();
@@ -701,7 +802,7 @@ function drawSpecimen(c, s, S) {
 }
 const spriteCv = {}, spriteURL = {};
 function buildSprites() {
-  for (const s of SPECIES) {
+  for (const s of ALLSPEC) {
     const cv = document.createElement('canvas'); cv.width = cv.height = 160;
     drawSpecimen(cv.getContext('2d'), s, 160); spriteCv[s.id] = cv; spriteURL[s.id] = cv.toDataURL();
   }
@@ -823,7 +924,7 @@ function hit(r, c) {
 }
 function foundSpecimen(r, c) {
   const sid = spec[r][c]; spec[r][c] = null;
-  const sp = {uid:++uidN, sid, zone:zoneOfType(back[r][c]), depth:depthKm(r), done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[]};
+  const sp = {uid:++uidN, sid, zone:zoneOfType(back[r][c]), depth:depthKm(r), done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[], site:SITE};
   bag.push(sp); labIdx = bag.length - 1; gainEvidence();
   sfx('find'); burst(c * T + T / 2, r * T + T / 2, ['#fff', '#ffcc33', '#3a86c8'], 24);
   floatText(c * T + T / 2, r * T, 'Mystery specimen!'); setMood('wow', 1.6);
@@ -936,7 +1037,7 @@ function update(dt) {
   if (touchMagma) ouch();
   p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy';
   // Near the magma chamber: the pet comments on the heat
-  if (pet && magmaTalkT <= 0 && (p.y + p.h) / T > MAG_START - 3) { magmaTalkT = 15; petSay('It’s getting hot! Magma is close.', 'wow', 3.5); }
+  if (pet && SITE === 'main' && magmaTalkT <= 0 && (p.y + p.h) / T > MAG_START - 3) { magmaTalkT = 15; petSay('It’s getting hot! Magma is close.', 'wow', 3.5); }
   updatePet(dt); petSense(dt);
   zoneEnter();
   for (const q of particles) { q.vy += 700 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; }
@@ -1017,10 +1118,11 @@ function petAnswer(q) {
     case 'fizz': return 'Calcite is calcium carbonate (CaCO₃). A drop of dilute acid reacts with it and makes bubbles of carbon dioxide gas: CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂. So calcite, limestone and marble fizz. In a real classroom, the teacher handles the acid and everyone wears goggles!';
     case 'here': { const z = playerZone(); return ZONES[z].long + (z === 'surface' || z === 'soil' ? ' Dig down to reach the rock layers, or walk east to the old volcano.' : ''); }
     case 'layer': {
-      const z = playerZone(), list = ZONE_SPECIES[z];
+      const z = playerZone(), list = zoneList(z);
       if (!list) return z === 'magma' ? 'That’s magma down there, no solid specimens! It cools into igneous rock. Head back up a little into the igneous zone.'
         : `We’re in the ${ZONES[z].short}, and no specimens hide here. The sedimentary layers start about ${zoneDepth('sedimentary')} deep. Or walk east to the old volcano!`;
-      const have = list.filter(id => found.has(id)).map(id => SP[id].name), miss = list.filter(id => !found.has(id)).map(id => SP[id].name);
+      const got = id => SP[id].gem ? gemFound.has(id) : found.has(id);
+      const have = list.filter(got).map(id => SP[id].name), miss = list.filter(id => !got(id)).map(id => SP[id].name);
       return `We’re in the ${ZONES[z].short} (about ${zoneDepth(z)}). These form here, so they can be found here:\n` +
         (miss.length ? `• Not in your Dex yet: ${miss.join(', ')}.\n` : '• You’ve found every kind from this layer!\n') +
         (have.length ? `• Already in your Dex: ${have.join(', ')}.\n` : '') + whyHere(z);
@@ -1032,6 +1134,7 @@ function petAnswer(q) {
         const miss = ZONE_SPECIES[z].filter(id => !found.has(id)).map(id => SP[id].name);
         if (miss.length) a += `\n• ${ZONES[z].name} (${zoneDepth(z)}): ${miss.join(', ')}`;
       }
+      if (gemsOpen) { const gm = GEMS.filter(s => !gemFound.has(s.id)); if (gm.length) a += `\n• Crystal Ridge Mine gems still to find: ${gm.map(s => s.name).join(', ')}`; }
       const made = EXTRAS.filter(s => !found.has(s.id)).length;
       return a + '\nSome minerals, like quartz and pyrite, show up in more than one layer.' + (made ? `\n• ${made} entr${made > 1 ? 'ies' : 'y'} can’t be dug up at all. Make them by changing rocks in the Rock Cycle Machine!` : '');
     }
@@ -1041,7 +1144,8 @@ function petAnswer(q) {
 }
 // Depth range of each layer, using 1 block = 100 m
 function zoneDepth(z) {
-  const rng = {sedimentary:[SURF + 3, SED_END], metamorphic:[SED_END + 1, MET_END], igneous:[MET_END + 1, MAG_START - 1]}[z];
+  if (SITE === 'gem' && (z === 'kimberlite' || z === 'pegmatite')) return z === 'kimberlite' ? 'from the surface down; diamonds deeper than 1.8 km' : 'in veins at many depths';
+  const rng = (SITE === 'gem' ? {metamorphic:[SURF + 3, SURF + 30], igneous:[SURF + 31, ROWS - 1]} : {sedimentary:[SURF + 3, SED_END], metamorphic:[SED_END + 1, MET_END], igneous:[MET_END + 1, MAG_START - 1]})[z];
   if (!rng) return z === 'volcanic' ? 'at the surface, on the east side' : 'near the surface';
   return `${(depthKm(rng[0])).toFixed(1)}–${(depthKm(rng[1] + 1)).toFixed(1)} km deep`;
 }
@@ -1049,7 +1153,9 @@ function whyHere(z) {
   return {sedimentary:'Why here? Sediment piles up in layers near the surface, then gets buried, compacted and cemented.',
     metamorphic:'Why here? Deeper down, heat and pressure change rocks without melting them.',
     igneous:'Why here? Magma cooled slowly this deep, so crystals grew big.',
-    volcanic:'Why here? Lava cooled fast at the surface, so crystals stayed tiny or never formed.'}[z] || '';
+    volcanic:'Why here? Lava cooled fast at the surface, so crystals stayed tiny or never formed.',
+    kimberlite:'Why here? Kimberlite magma rushed up from the mantle so fast that diamonds survived the trip.',
+    pegmatite:'Why here? Slow-cooling, watery magma in cracks grew giant crystals and rare gems.'}[z] || '';
 }
 function askPet(q) {
   if (!pet) return;
@@ -1074,7 +1180,7 @@ function wrongFeedback(sp, G, a) {
     const rg = result(G, tid), ra = result(a, tid);
     if (rg.k !== ra.k) return `✖ Not ${G.name}. Your <b>${TB[tid].icon} ${TB[tid].name}</b> evidence doesn’t fit.<br>• You observed: ${ra.txt}<br>• ${G.name} would show: ${rg.txt}`;
   }
-  const t = TESTS.find(t => !sp.done.has(t.id) && result(G, t.id).k !== result(a, t.id).k);
+  const t = TESTS.find(t => !sp.done.has(t.id) && (!t.gem || sp.site === 'gem') && result(G, t.id).k !== result(a, t.id).k);
   return `✖ Not ${G.name}. Good reasoning, though: ${G.name} matches every test you’ve done so far! Run another test to tell them apart${t ? `, such as the <b>${t.icon} ${t.name}</b>` : ''}.`;
 }
 function identify() {
@@ -1086,7 +1192,7 @@ function identify() {
   if (g === sp.sid) {
     const gain = xpFor(sp), lvBefore = levelOf(xp);
     xp += gain.xp; idTotal++; idBy[sp.zone] = (idBy[sp.zone] || 0) + 1;
-    const isNew = !found.has(a.id); found.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
+    const fset = a.gem ? gemFound : found, isNew = !fset.has(a.id); fset.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
     notebook.push({uid:sp.uid, sid:a.id, zone:sp.zone, depth:sp.depth, tests:[...sp.done], wrong:sp.wrong.slice(), xp:gain.xp, lines:gain.lines});
     stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++; gainEvidence();
     labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew};
@@ -1450,7 +1556,7 @@ function drawRC(t, A) {
 /* ---------- 12. WINDOWS (panels) ----------------------------------- */
 function guessOptions(sel) {
   const grp = (label, f) => `<optgroup label="${label}">${SPECIES.filter(f).sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${s.name}</option>`).join('')}</optgroup>`;
-  return `<option value="">Choose…</option>` + grp('Minerals', s => s.kind === 'mineral') + grp('Igneous rocks', s => s.grp === 'igneous') + grp('Sedimentary rocks', s => s.grp === 'sedimentary') + grp('Metamorphic rocks', s => s.grp === 'metamorphic');
+  return `<option value="">Choose…</option>` + grp('Minerals', s => s.kind === 'mineral') + grp('Igneous rocks', s => s.grp === 'igneous') + grp('Sedimentary rocks', s => s.grp === 'sedimentary') + grp('Metamorphic rocks', s => s.grp === 'metamorphic') + (gemsOpen ? `<optgroup label="Crystal Ridge gems">${GEMS.map(s => `<option value="${s.id}" ${s.id === sel ? 'selected' : ''}>${s.name}</option>`).join('')}</optgroup>` : '');
 }
 function renderLab() {
   const el = $('#labBody');
@@ -1469,7 +1575,7 @@ function renderLab() {
   const sp = bag[labIdx], s = SP[sp.sid];
   const tabs = bag.length > 1 ? `<div class="tabs" aria-label="Specimens in your bag">${bag.map((b, i) => `<button data-tab="${i}" class="${i === labIdx ? 'done' : ''}" aria-pressed="${i === labIdx}">Specimen #${b.uid}</button>`).join('')}</div>` : '';
   const nbLink = notebook.length ? ' <button data-open="notebook">📓 Past results</button>' : '';
-  const tests = TESTS.map(t => `<button data-test="${t.id}" class="${sp.done.has(t.id) ? 'done' : ''}">${t.icon} ${t.name}${sp.done.has(t.id) ? ' ✔' : ''}</button>`).join('');
+  const tests = TESTS.filter(t => !t.gem || sp.site === 'gem').map(t => `<button data-test="${t.id}" class="${sp.done.has(t.id) ? 'done' : ''}">${t.icon} ${t.name}${sp.done.has(t.id) ? ' ✔' : ''}</button>`).join('');
   const notes = sp.notes.length ? sp.notes.map(n => `<li><b>${n.t}:</b> ${n.r}</li>`).join('') : '<li>No tests yet. Pick a test to start your field notes!</li>';
   el.innerHTML = `${tabs}<div class="lab">
     <div class="specbox"><img class="specimg" src="${spriteURL[s.id]}" alt="Picture of the unknown specimen"><p><b>Mystery specimen #${sp.uid}</b>${nbLink}<br>Found ${sp.depth > 0 ? sp.depth.toFixed(1) + ' km deep' : 'at the surface'} in the <b>${ZONES[sp.zone].short}</b>.</p></div>
@@ -1486,10 +1592,10 @@ function renderChart() {
   <h3>Minerals</h3><div class="scroll"><table><tr><th>Mineral</th><th>Color</th><th>Luster</th><th>Streak</th><th>Hardness</th><th>Breakage</th><th>Other clues</th></tr>
   ${min.map(s => `<tr><td><b>${s.name}</b></td><td>${s.color}</td><td>${s.luster}</td><td>${s.streak}</td><td>${s.hd}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')}</table></div>
   <h3>Rocks</h3><div class="scroll"><table><tr><th>Rock</th><th>Type</th><th>Texture (hand lens)</th><th>Color</th><th>Breakage</th><th>Other clues</th></tr>
-  ${['igneous', 'sedimentary', 'metamorphic'].map(g => rocks.filter(s => s.grp === g).map(s => `<tr><td><b>${s.name}</b></td><td>${s.rtype}</td><td>${s.lens}</td><td>${s.color}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')).join('')}</table></div>`;
+  ${['igneous', 'sedimentary', 'metamorphic'].map(g => rocks.filter(s => s.grp === g).map(s => `<tr><td><b>${s.name}</b></td><td>${s.rtype}</td><td>${s.lens}</td><td>${s.color}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')).join('')}</table></div>${gemsOpen ? `<h3>💎 Crystal Ridge gems</h3><p>Extra hardness points at the mine: quartz point 7, corundum point 9.</p><div class="scroll"><table><tr><th>Gem</th><th>Color</th><th>Luster</th><th>Streak</th><th>Hardness</th><th>Breakage</th><th>Other clues</th></tr>${GEMS.map(s => `<tr><td><b>${s.name}</b></td><td>${s.color}</td><td>${s.luster}</td><td>${s.streak || 'mixed (rock)'}</td><td>${s.hd || 'about 5'}</td><td>${s.brk}</td><td>${s.sp}</td></tr>`).join('')}</table></div>` : ''}`;
 }
 function whereFound(id) {
-  if (SP[id].made) return null; for (const z in ZONE_SPECIES) if (ZONE_SPECIES[z].includes(id)) return ZONES[z].short; return 'rock layers'; }
+  if (SP[id].made) return null; if (SP[id].gem) { for (const z in GEM_ZONE_SPECIES) if (GEM_ZONE_SPECIES[z].includes(id)) return ZONES[z].short + ' at Crystal Ridge Mine'; } for (const z in ZONE_SPECIES) if (ZONE_SPECIES[z].includes(id)) return ZONES[z].short; return 'rock layers'; }
 function propsHTML(s) {
   return s.kind === 'mineral'
     ? `<p><b>Color:</b> ${s.color}<br><b>Luster:</b> ${s.luster}<br><b>Streak:</b> ${s.streak}<br><b>Hardness:</b> ${s.hd}<br><b>Breakage:</b> ${s.brk}<br><b>Clues:</b> ${s.sp}</p>`
@@ -1505,16 +1611,16 @@ function renderDex(sel) {
   let detail = '';
   if (sel) {
     const s = SP[sel];
-    detail = found.has(sel)
+    detail = (s.gem ? gemFound : found).has(sel)
       ? `<div class="detail"><img src="${spriteURL[s.id]}" alt="${s.name}"><div><h3>#${String(s.n).padStart(2, '0')} ${s.name} <span class="tag">${s.rtype}</span></h3><p><b>How it forms:</b> ${s.info}<br><b>Rock cycle:</b> ${s.cycle}</p>${propsHTML(s)}${evoHTML(s)}<p>In your collection: ${counts[s.id] || 0}.</p></div></div>`
       : `<div class="detail"><div class="blank">?</div><div><h3>#${String(s.n).padStart(2, '0')} Not discovered yet</h3><p>${s.made ? 'Hint: this rock can’t be dug up here. Change one of your rocks in the ♻️ Rock Cycle Machine at camp to make it!' : `Hint: search the <b>${whereFound(sel)}</b>.${s.kind === 'rock' ? ' Or try making it by changing another rock in the ♻️ Rock Cycle Machine!' : ' Minerals can only be found by digging.'}`}</p></div></div>`;
   }
   $('#dexBody').innerHTML = `<p class="big">Discovered: <b>${found.size} / ${DEX.length}</b>. Select an entry to read it. Entries #25–30 can only be made with the ♻️ Rock Cycle Machine.</p>${detail}<div class="grid">${DEX.map(s => found.has(s.id)
     ? `<button class="card" data-dex="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${String(s.n).padStart(2, '0')} ${s.name}<br><span class="tag">${s.kind === 'mineral' ? 'Mineral' : s.grp[0].toUpperCase() + s.grp.slice(1)}${s.made ? ' ♻️' : ''}</span></button>`
-    : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>`;
+    : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>${gemsOpen ? `<h3>💎 Gem Dex: Crystal Ridge Mine (${gemFound.size} / ${GEMS.length})</h3><div class="grid">${GEMS.map(s => gemFound.has(s.id) ? `<button class="card" data-dex="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${s.n} ${s.name}<br><span class="tag">💎 Gem</span></button>` : `<button class="card locked" data-dex="${s.id}" aria-label="Gem entry ${s.n}, not discovered"><div class="blank">💎</div>#${s.n} ???</button>`).join('')}</div>` : ''}`;
 }
 function renderBox() {
-  const have = DEX.filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
+  const have = DEX.concat(GEMS).filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
   $('#boxBody').innerHTML = have.length
     ? `<p class="big">You have ${total} specimen${total > 1 ? 's' : ''} (${have.length} kinds) and ${xp} XP. Choose one to be your pet rock!</p><div class="grid">${have.map(s => `<div class="card"><img src="${spriteURL[s.id]}" alt="${s.name}"><b>${s.name}</b> ×${counts[s.id]}<br><span class="tag">${s.rtype}</span><br><br>${pet && pet.sid === s.id ? '<b>🐾 Your pet!</b>' : `<button data-pet="${s.id}">🐾 Make my pet</button>`}</div>`).join('')}</div>`
     : '<p class="big">Your box is empty. Identify a mystery specimen in the 🧪 Lab and it will appear here.</p>';
@@ -1612,6 +1718,7 @@ document.addEventListener('click', e => {
   if (b && b.dataset.shop) { shopClick(b.dataset.shop); return; }
   if (b && b.dataset.vault) { vaultClick(b.dataset.vault); return; }
   if (b && b.dataset.doc) { docClick(b.dataset.doc); return; }
+  if (b && b.dataset.exam) { examClick(b.dataset.exam); return; }
   if (b && b.dataset.av) { avClick(b.dataset.av); return; }
   if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) placeMenu(b, $('#' + b.dataset.menu)); if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
   closeMenus();
@@ -1664,10 +1771,10 @@ function resize() {
 addEventListener('resize', resize);
 function drawSky() {
   const top = cam.y, bot = SURF * T + T; if (top > bot) return;
-  const gr = g.createLinearGradient(0, -4 * T, 0, SURF * T); gr.addColorStop(0, '#3a86c8'); gr.addColorStop(1, '#c9e6f6');
+  const gr = g.createLinearGradient(0, -4 * T, 0, SURF * T); gr.addColorStop(0, SITE === 'gem' ? '#5b4f9e' : '#3a86c8'); gr.addColorStop(1, SITE === 'gem' ? '#f6c7a1' : '#c9e6f6');
   g.fillStyle = gr; g.fillRect(cam.x, top, viewW, bot - top);
   g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(cam.x + viewW * .82, SURF * T - 6.5 * T, 34, 0, 7); g.fill();
-  for (const [par, amp, base, col] of [[.3, 40, 150, '#a9d48c'], [.55, 26, 70, '#86c26a']]) {
+  for (const [par, amp, base, col] of (SITE === 'gem' ? [[.3, 90, 190, '#8c7fa8'], [.55, 50, 90, '#6f8a6a']] : [[.3, 40, 150, '#a9d48c'], [.55, 26, 70, '#86c26a']])) {
     g.fillStyle = col; g.beginPath(); g.moveTo(cam.x, bot);
     for (let x = cam.x; x <= cam.x + viewW + 20; x += 20) { const xx = x - cam.x * par; g.lineTo(x, SURF * T - base + Math.sin(xx / 110) * amp + Math.sin(xx / 47) * amp * .3); }
     g.lineTo(cam.x + viewW + 20, bot); g.closePath(); g.fill();
@@ -1688,10 +1795,10 @@ function drawCamp() {
   g.fillStyle = '#7a5233'; g.fillRect(sx - 3, sy - 52, 6, 52);
   g.fillStyle = '#f2f7f5'; rr(g, sx - 70, sy - 92, 140, 44, 8); g.fill(); g.strokeStyle = '#1c2541'; g.stroke();
   g.fillStyle = '#1c2541'; g.font = 'bold 14px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('Pebble Creek', sx, sy - 79); g.fillText('Survey Camp ⛏', sx, sy - 61);
-  const vx = (VC - 9) * T;
+  g.fillText(SITE === 'gem' ? 'Crystal Ridge' : 'Pebble Creek', sx, sy - 79); g.fillText(SITE === 'gem' ? 'Mine Camp 💎' : 'Survey Camp ⛏', sx, sy - 61);
+  const vx = SITE === 'gem' ? KC * T : (VC - 9) * T;
   g.fillStyle = '#7a5233'; g.fillRect(vx - 3, sy - 52, 6, 52); g.fillStyle = '#f2f7f5'; rr(g, vx - 64, sy - 92, 128, 44, 8); g.fill(); g.stroke();
-  g.fillStyle = '#1c2541'; g.fillText('Old volcano', vx, sy - 79); g.fillText('this way →', vx, sy - 61);
+  g.fillStyle = '#1c2541'; g.fillText(SITE === 'gem' ? 'Kimberlite pipe' : 'Old volcano', vx, sy - 79); g.fillText(SITE === 'gem' ? '↓ dig here ↓' : 'this way →', vx, sy - 61);
   drawMachine();
   drawColleague(g, DOC_X, SURF * T, .62, tool.broken && !reduceMotion);
   if (tool.broken || (assign && assign.status === 'done')) { g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(DOC_X, SURF * T - 62, 10, 0, 7); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', DOC_X, SURF * T - 61); }
@@ -1722,7 +1829,7 @@ function tryMachine() {
 function drawTile(x, y, t, r, c) {
   g.fillStyle = TI[t].c; rr(g, x + 1, y + 1, T - 2, T - 2, 8); g.fill();
   const q = k => hr(r, c, k);
-  const TEX = {[SOIL]:[['#6e4428', '#a06b42'], 5, 2.6], [SAND]:[['#ecc08c', '#b07a45'], 12, 1.4], [LIME]:[['#b5ac8e', '#e0dac8'], 8, 1.6], [GRAN]:[['#e59a8a', '#1f1f22', '#f4f0ea'], 14, 2.6], [BASA]:[['#2a2b30', '#55565e'], 8, 1.6]}[t];
+  const TEX = {[SOIL]:[['#6e4428', '#a06b42'], 5, 2.6], [SAND]:[['#ecc08c', '#b07a45'], 12, 1.4], [LIME]:[['#b5ac8e', '#e0dac8'], 8, 1.6], [GRAN]:[['#e59a8a', '#1f1f22', '#f4f0ea'], 14, 2.6], [BASA]:[['#2a2b30', '#55565e'], 8, 1.6], [LAT]:[['#7d3a1e', '#c4703f'], 6, 2.4], [KIMB]:[['#7d8a86', '#2b3633', '#7fae6b', '#a3967a'], 12, 2.8], [PEG]:[['#f6efe8', '#e39a8a', '#1e1e22', '#c9c4bd'], 6, 5.5]}[t];
   if (TEX) for (let i = 0; i < TEX[1]; i++) { g.fillStyle = TEX[0][i % TEX[0].length]; g.beginPath(); g.arc(x + 6 + q(i) * (T - 12), y + 6 + q(i + 50) * (T - 12), TEX[2] * (.6 + q(i + 99) * .6), 0, 7); g.fill(); }
   g.lineWidth = 2;
   if (t === GRASS) { g.fillStyle = '#6cc04a'; rr(g, x + 1, y + 1, T - 2, 16, 8); g.fill(); g.fillRect(x + 1, y + 9, T - 2, 8); g.fillStyle = '#57a63b'; for (let i = 0; i < 4; i++) { const bx = x + 5 + i * 11 + q(i) * 4; g.beginPath(); g.moveTo(bx, y + 17); g.lineTo(bx + 3, y + 22); g.lineTo(bx + 6, y + 17); g.fill(); } }
@@ -1767,7 +1874,7 @@ function petSense(dt) {
 }
 /* ART: layer details. Dashed lines mark where each rock layer begins. */
 function drawLayerLines(x0, x1) {
-  const lines = [[SURF + 3, 'Sedimentary layers begin', 'sedimentary'], [SED_END + 1, 'Metamorphic zone begins', 'metamorphic'], [MET_END + 1, 'Igneous zone begins', 'igneous']];
+  const lines = SITE === 'gem' ? [[SURF + 3, 'Metamorphic rock (gneiss and marble) begins', 'metamorphic'], [SURF + 31, 'Granite base begins', 'igneous']] : [[SURF + 3, 'Sedimentary layers begin', 'sedimentary'], [SED_END + 1, 'Metamorphic zone begins', 'metamorphic'], [MET_END + 1, 'Igneous zone begins', 'igneous']];
   g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'bottom';
   for (const [row, label, z] of lines) {
     const y = row * T; if (y < cam.y - T || y > cam.y + viewH + T) continue;
@@ -1778,6 +1885,7 @@ function drawLayerLines(x0, x1) {
 }
 // ART: warm orange glow rising from the magma (heat lights up the rock above it)
 function drawMagmaGlow() {
+  if (SITE !== 'main') return;
   const top = (MAG_START - 5) * T, bot = ROWS * T; if (cam.y + viewH < top) return;
   const gr = g.createLinearGradient(0, top, 0, MAG_START * T);
   gr.addColorStop(0, 'rgba(255,110,30,0)'); gr.addColorStop(1, 'rgba(255,110,30,.38)');
@@ -1813,9 +1921,9 @@ function drawBackDetail(x, y, b, r) {
 function wrapText(t, maxW) { const out = []; let line = ''; for (const w of t.split(' ')) { const test = line ? line + ' ' + w : w; if (g.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test; } if (line) out.push(line); return out; }
 function bubble(x, y, text) {
   g.font = 'bold 15px Verdana, sans-serif'; const lines = wrapText(text, 200);
-  const w = Math.max(...lines.map(l => g.measureText(l).width)) + 20, h = lines.length * 20 + 12, bx = Math.max(cam.x + 4, Math.min(x - w / 2, cam.x + viewW - w - 4)), by = y - h - 14;
+  const w = Math.max(...lines.map(l => g.measureText(l).width)) + 20, h = lines.length * 20 + 12, bx = Math.max(cam.x + 4, Math.min(x - w / 2, cam.x + viewW - w - 4)), byRaw = y - h - 14, by = Math.max(byRaw, cam.y + hudPx / zoom + 6);
   g.fillStyle = '#f2f7f5'; rr(g, bx, by, w, h, 10); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke();
-  g.beginPath(); g.moveTo(x - 7, by + h - 1); g.lineTo(x, by + h + 10); g.lineTo(x + 7, by + h - 1); g.fill(); g.stroke();
+  if (by === byRaw) { g.beginPath(); g.moveTo(x - 7, by + h - 1); g.lineTo(x, by + h + 10); g.lineTo(x + 7, by + h - 1); g.fill(); g.stroke(); }
   g.fillStyle = '#1c2541'; g.textAlign = 'left'; g.textBaseline = 'top'; lines.forEach((l, i) => g.fillText(l, bx + 10, by + 7 + i * 20));
 }
 function draw() {
@@ -1851,11 +1959,15 @@ function draw() {
   for (const f of floats) { g.globalAlpha = Math.min(1, f.life); g.lineWidth = 4; g.strokeStyle = '#1c2541'; g.strokeText(f.txt, f.x, f.y); g.fillStyle = '#ffcc33'; g.fillText(f.txt, f.x, f.y); g.globalAlpha = 1; }
   if (pet && pet.say) bubble(pet.x, pet.y - 30, `${pet.name}: ${pet.say}`);
 }
-let hudT = 0;
+let hudT = 0, hudPx = 50;
 function updateHUD() {
   const d = depthKm((player.y + player.h) / T), z = playerZone(), temp = Math.round(15 + 25 * d);
-  $('#where').textContent = `${tool.broken ? '💥 Tool broken!' : '🔨 ' + toolName()} · ⛏️ Depth ${d.toFixed(1)} km · ${ZONES[z].name} · 🌡️ about ${temp} °C · ⭐ ${xp} XP (${LEVELS[levelOf(xp)][1]}) · 📚 ${found.size}/${DEX.length}`;
-  $('#mission').textContent = (mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!') + (assign && assign.status === 'active' ? `   📋 ${assign.text}` : assign && assign.status === 'done' ? '   📋 Assignment done: report to Dr. Rivera!' : '');
+  const site = SITE === 'gem' ? 'Crystal Ridge Mine' : 'Pebble Creek';
+  $('#locBox').innerHTML = `📍 ${site}<br>⛏️ ${d.toFixed(1)} km · ${ZONES[z].name} · 🌡️ ~${temp} °C`;
+  $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : '🔨 ' + toolName()} · 📚 ${found.size}/${DEX.length}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
+  $('#mission').textContent = mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!';
+  $('#assignLine').textContent = assign && assign.status === 'active' ? `📋 Assignment: ${assign.text}` : assign && assign.status === 'done' ? '📋 Assignment done: report to Dr. Rivera at camp!' : '';
+  hudPx = $('#hud').offsetHeight; const hh = hudPx + 'px'; if (document.documentElement.style.getPropertyValue('--hudH') !== hh) document.documentElement.style.setProperty('--hudH', hh); // keep windows below the top bar
   $('#bagN').textContent = bag.length ? `(${bag.length})` : '';
 }
 let last = performance.now();
@@ -1896,6 +2008,7 @@ function renderReport() {
     ${card('🏆 Rock cycle challenges', `${chDone} / ${CHALLENGES.length}`, `Stars: ${chStars} / ${CHALLENGES.length * 3}`)}
     ${card('🧠 Science checks', `${stats.expOk} / ${stats.exps} correct`, 'Explaining why each rock changed')}
     ${card('🔬 Science vault', `${VAULT.filter(v => vault[v.id].status === 'won').length} / ${VAULT.length} prizes`, 'Won with science questions')}
+    ${gemsOpen ? card('💎 Gem Dex', `${gemFound.size} / ${GEMS.length}`, 'Crystal Ridge Mine') : card('🎓 Final Field Exam', examPassed ? 'Passed' : 'Not yet', 'Complete the Rock Dex, then see Dr. Rivera')}
     ${card('📋 Field assignments', `${stats.assigns || 0} completed`, assign && assign.status === 'active' ? 'Current: ' + assign.text : 'Get one from Dr. Rivera at camp')}
     ${card('🎯 Missions', `${Math.min(mi, MISSIONS.length)} / ${MISSIONS.length}`, mi < MISSIONS.length ? 'Next: ' + MISSIONS[mi].t : 'All complete!')}
     ${card('🐾 Pet rock', pet ? esc(pet.name) : 'None yet', pet ? 'a ' + SP[pet.sid].name.toLowerCase() : 'Choose one in the Collection Box')}
@@ -1913,10 +2026,11 @@ function snapshot() {
     shop:{spent:shopState.spent, owned:[...shopState.owned], hat:shopState.hat, glasses:shopState.glasses, display:[...shopState.display]},
     bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong})),
     notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
-    world:{tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y}
+    site:SITE, gemsOpen, examPassed, gemFound:[...gemFound],
+    world:worldData(), world2:(() => { const other = SITE === 'gem' ? 'main' : 'gem', w = worlds[other]; if (!w) return savedWorlds[other] || null; const keep = {tile, spec}; tile = w.tile; spec = w.spec; const d = worldData(); tile = keep.tile; spec = keep.spec; return d; })()
   };
 }
-function saveSig() { return String(xp) + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
+function saveSig() { return String(xp) + '|' + SITE + gemFound.size + (examPassed ? 'E' : '') + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
 function downloadSave() {
   const payload = snapshot(), body = JSON.stringify(payload);
   const file = {game:'rock-hound', version:1, savedAt:new Date().toISOString(), check:hashStr(body + '|rock-hound'), payload};
@@ -1966,10 +2080,13 @@ function applySave(file) {
   assign = null; const AS = P.assign; if (AS && ATYPE[AS.type] && ['active', 'done'].includes(AS.status)) { assign = {type:AS.type, grp:GRP_NAME[AS.grp] ? AS.grp : undefined, status:AS.status, depth:num(AS.depth, 0, 99, 0), zone:ZONES[AS.zone] ? AS.zone : 'surface', sid:isId(AS.sid) ? AS.sid : undefined};
     assign.text = AS.type === 'rock' ? `Bring me ${GRP_NAME[assign.grp || 'igneous']} rock: identify one.` : ATYPE[AS.type].make().text; if (assign.type === 'rock' && !assign.grp) assign.grp = 'igneous'; if (assign.status === 'done' && !assign.sid) assign.status = 'active'; }
   pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
+  examPassed = !!P.examPassed; gemsOpen = !!P.gemsOpen || examPassed; exam = null;
+  gemFound.clear(); (P.gemFound || []).forEach(id => { if (isId(id) && SP[id].gem) gemFound.add(id); });
+  SITE = P.site === 'gem' && gemsOpen ? 'gem' : 'main'; worlds.main = worlds.gem = null; for (const k in savedWorlds) delete savedWorlds[k];
+  if (SITE === 'gem') genGemWorld(); else genWorld();
+  if (P.world2) savedWorlds[SITE === 'gem' ? 'main' : 'gem'] = P.world2;
   const W = P.world;
-  if (W && typeof W.tiles === 'string' && W.tiles.length === ROWS * COLS) {
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = parseInt(W.tiles[r * COLS + c], 36); tile[r][c] = TI[t] || t === AIR ? t : back[r][c]; spec[r][c] = null; dmg[r][c] = 0; }
-    (W.spec || []).forEach(a => { if (Array.isArray(a) && tile[a[0]] && tile[a[0]][a[1]] !== undefined && isId(a[2])) spec[a[0]][a[1]] = a[2]; });
+  if (applyWorldData(W)) {
     player.x = num(W.px, 0, COLS * T - player.w, player.x); player.y = num(W.py, -3 * T, ROWS * T, player.y);
     const r = Math.floor((player.y + player.h / 2) / T), c = Math.floor((player.x + player.w / 2) / T);
     if (!tile[r] || tile[r][c] !== AIR) { const l = safeLanding(); player.x = l.x; player.y = l.y; } // never load inside rock
@@ -2036,11 +2153,11 @@ function questionBank() {
     let cands = SPECIES.slice(); const clues = [];
     const narrow = t => cands.filter(m => result(m, t.id).k === result(s, t.id).k);
     // First clue: a useful test that still leaves several possibilities (so one clue alone isn't enough)
-    const first = shuffle(TESTS.filter(t => t.id !== 'look')).find(t => { const n = narrow(t).length; return n > 1 && n < cands.length; });
+    const first = shuffle(BASIC_TESTS.filter(t => t.id !== 'look')).find(t => { const n = narrow(t).length; return n > 1 && n < cands.length; });
     if (first) { clues.push(first.id); cands = narrow(first); }
     // Then the most useful tests until only one specimen fits (usually 2–3 clues in total)
     while (cands.length > 1 && clues.length < 5) { let best = null, bn = 1e9;
-      for (const t of shuffle(TESTS.slice())) { if (clues.includes(t.id)) continue; const n = narrow(t).length; if (n < cands.length && n < bn) { bn = n; best = t; } }
+      for (const t of shuffle(BASIC_TESTS.slice())) { if (clues.includes(t.id)) continue; const n = narrow(t).length; if (n < cands.length && n < bn) { bn = n; best = t; } }
       if (!best) break; clues.push(best.id); cands = narrow(best); }
     // Wrong choices: specimens that match the first clue, so students must use ALL the evidence
     const near = SPECIES.filter(m => m.id !== s.id && result(m, clues[0]).k === result(s, clues[0]).k), far = SPECIES.filter(m => m.id !== s.id);
@@ -2361,7 +2478,7 @@ function evalBank() {
     for (let tries = 0; tries < 40; tries++) {
       const a = SPECIES[Math.floor(Math.random() * SPECIES.length)], b = SPECIES[Math.floor(Math.random() * SPECIES.length)];
       if (a === b || result(a, 'lens').k !== result(b, 'lens').k) continue;
-      const diff = TESTS.filter(t => t.id !== 'look' && result(a, t.id).k !== result(b, t.id).k), same = TESTS.filter(t => result(a, t.id).k === result(b, t.id).k);
+      const diff = BASIC_TESTS.filter(t => t.id !== 'look' && result(a, t.id).k !== result(b, t.id).k), same = BASIC_TESTS.filter(t => result(a, t.id).k === result(b, t.id).k);
       if (!diff.length || same.length < 3) continue;
       const right = diff[Math.floor(Math.random() * diff.length)], opts = shuffle([right, ...shuffle(same).slice(0, 3)]);
       return {q:`Your notes can’t decide between ${a.name} and ${b.name}. Which ONE test would tell them apart?`, opts:opts.map(t => `${t.icon} ${t.name}`), ans:opts.indexOf(right),
@@ -2537,8 +2654,9 @@ function renderColleague() {
   let h = `<div class="detail"><img src="${cv.toDataURL()}" alt="Dr. Rivera, the camp geologist" style="width:96px;height:128px"><div>`;
   if (!tool.broken) {
     h += docGift ? `<h3>🎁 Here’s your new ${toolName()}!</h3><p>“Great rock cycle thinking! Before you head out, here’s a field assignment to dig for.”</p></div></div>`
+      : assign && assign.status === 'done' ? `<h3>Dr. Rivera, camp geologist</h3><p>“Welcome back! Let’s look at your field assignment report.”</p></div></div>`
       : `<h3>Dr. Rivera, camp geologist</h3><p>“Hi there, rock hound! Your <b>${toolName()}</b> is still working. Tools wear out with use, so when yours breaks, come see me. I’ll trade you a new one for some rock cycle thinking.”</p></div></div>`;
-    $('#colleagueBody').innerHTML = h + assignHTML() + '<p><button data-close>⛏️ Back to digging</button></p>'; return; }
+    $('#colleagueBody').innerHTML = h + (exam ? '' : assignHTML()) + finalHTML() + '<p><button data-close>⛏️ Back to digging</button></p>'; return; }
   if (!docQ) nextDocQ();
   h += `<h3>Dr. Rivera: Rock cycle check</h3><p>“Your ${toolName()} broke? Answer <b>3 rock cycle questions</b> correctly and I’ll give you a new tool. Take your time and look things up in the 🗺️ Rock cycle guide. A wrong answer takes away one correct answer, so check before you choose!”</p>
     <p class="big">Correct so far: <b>${docRight} / 3</b> ${'✔'.repeat(docRight)}</p><p><button data-open="guide">🗺️ Open the Rock cycle guide</button></p></div></div>`;
@@ -2605,19 +2723,19 @@ function makeEvidenceQ() {
   const t = ATYPE[assign.type], s = SP[assign.sid]; if (!t.ev) return null;
   const sp = {depth:assign.depth, zone:assign.zone};
   const right = t.ev(s, assign, sp), facts = [];
-  if (!t.avoid.includes('color')) facts.push(`Its color is ${s.color.toLowerCase()}.`);
+  if (!t.avoid.includes('color') && s.color) facts.push(`Its color is ${s.color.toLowerCase()}.`);
   if (s.kind === 'mineral' && assign.type !== 'hard' && assign.type !== 'soft') facts.push(`Its streak is ${s.streak.toLowerCase()}.`);
-  if (!t.avoid.includes('luster')) facts.push(`Its luster is ${s.luster.toLowerCase()}.`);
+  if (!t.avoid.includes('luster') && s.luster) facts.push(`Its luster is ${s.luster.toLowerCase()}.`);
   if (!t.avoid.includes('where') && assign.type !== 'rock') facts.push(`It was found ${sp.depth > 0 ? sp.depth.toFixed(1) + ' km deep' : 'at the surface'} in the ${ZONES[sp.zone].short}.`);
   if (!t.avoid.includes('break') && assign.type !== 'rock') facts.push(`Breakage: ${s.brk}`);
-  if (assign.type !== 'rock') facts.push(s.kind === 'rock' ? 'It is a rock made of more than one mineral.' : 'It is one substance all the way through.');
+  facts.push(s.kind === 'rock' ? 'It is a rock, made of more than one mineral (or bits of rock).' : 'It is one substance all the way through.');
   const opts = shuffle([right, ...shuffle(facts.filter(f => f !== right)).slice(0, 3)]);
   return {q:`Which piece of evidence shows that your ${s.name} fits the assignment “${assign.text}”?`, opts, ans:opts.indexOf(right), tries:0, answered:null};
 }
 function assignHTML() {
   if (!assign) return `<div class="goalcard"><h3>📋 Field assignment</h3><p>“Want a science goal to dig for? Finish it and report back for a bonus.”</p><button data-doc="assign">📋 Give me a field assignment</button></div>`;
   if (assign.status === 'paid' && !assign.q && !assign.bonus) assign.bonus = 50;
-  if (assign.status === 'active') return `<div class="goalcard"><h3>📋 Your field assignment</h3><p class="big"><b>${assign.text}</b></p><p>“Use your 📖 reference chart and the rock layers to decide where to look. Come back when it’s done!”</p></div>`;
+  if (assign.status === 'active') return `<div class="goalcard"><h3>📋 Your field assignment</h3><p class="big"><b>${assign.text}</b></p><p>“${assign.type === 'machine' ? 'Use the Rock Cycle Machine at camp. The 🗺️ Rock cycle guide can help you choose the right process.' : 'Use your 📖 reference chart and what you know about the rock layers to decide where to look.'} Come back when it’s done!”</p></div>`;
   const s = SP[assign.sid];
   if (!assign.q && !assign.qDone) { assign.q = makeEvidenceQ(); if (!assign.q) { assign.qDone = true; assign.bonus = 50; addXP(50); stats.assigns = (stats.assigns || 0) + 1; assign.status = 'paid'; } }
   let h = `<div class="goalcard"><h3>📋 Assignment report: ${s.name}</h3><p>“${assign.text.split(':')[0]}. Nice work! ${assign.q ? 'Show me your evidence.' : 'Here’s your bonus.'}”</p>`;
@@ -2628,6 +2746,145 @@ function assignHTML() {
     return h + '</div>';
   }
   return h + `<div class="fb good pop" role="status"><b>✔ ${q ? 'That’s the evidence!' : 'Assignment complete!'}</b> Bonus: <b>+${assign.bonus} XP</b>.</div><p><button data-doc="assign">📋 Give me another field assignment</button></p></div>`;
+}
+
+/* ---------- 15i. FINAL FIELD EXAM (after the Rock Dex is complete) ---------
+   Five parts. Each needs evidence or explanation, not just recall:
+   1 analyze lab data, 2 apply the rock cycle, 3 claim-evidence-reasoning,
+   4 interpret a rock outcrop, 5 explain in your own words.
+   A wrong answer gives a hint and a NEW version of that part (no repeats). */
+let exam = null, examPassed = false;
+const EXAM_PARTS = ['🔬 Analyze lab data', '♻️ Apply the rock cycle', '⚖️ Claim, evidence, reasoning', '🏔️ Read the rock layers', '✍️ Explain in your own words'];
+function examCase() {
+  const tests = TESTS.filter(t => !t.gem && t.id !== 'look'), same = (m, s, t) => result(m, t.id).k === result(s, t.id).k;
+  for (let k = 0; k < 300; k++) {
+    const s = SPECIES[Math.floor(Math.random() * SPECIES.length)], pairs = [];
+    for (let i = 0; i < tests.length; i++) for (let j = i + 1; j < tests.length; j++) if (SPECIES.filter(m => same(m, s, tests[i]) && same(m, s, tests[j])).length === 1) pairs.push([tests[i], tests[j]]);
+    if (!pairs.length) continue;
+    const [a, b] = pairs[Math.floor(Math.random() * pairs.length)];
+    const weak = shuffle(tests.filter(t => t !== a && t !== b && SPECIES.filter(m => same(m, s, t)).length >= 6)).slice(0, 2); if (weak.length < 2) continue;
+    const four = [a, b, ...weak]; let ok = true;
+    for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) { const pr = [four[i], four[j]]; if ((pr.includes(a) && pr.includes(b))) continue; if (SPECIES.filter(m => same(m, s, pr[0]) && same(m, s, pr[1])).length === 1) ok = false; }
+    if (!ok) continue;
+    const near = shuffle(SPECIES.filter(m => m !== s && four.some(t => same(m, s, t)))).slice(0, 5), opts = shuffle([s, ...near]);
+    return {type:'case', s:s.id, four:shuffle(four.map(t => t.id)), right:[a.id, b.id], opts:opts.map(m => m.id)};
+  }
+}
+function examChain() {
+  const rocks = DEX.filter(s => s.kind === 'rock');
+  for (let k = 0; k < 100; k++) { const from = rocks[Math.floor(Math.random() * rocks.length)].id;
+    const a1 = ACTIONS[Math.floor(Math.random() * ACTIONS.length)], o1 = rcOutcome(from, a1[0], a1[1]); if (o1.blocked || o1.res === from) continue;
+    const a2 = ACTIONS[Math.floor(Math.random() * ACTIONS.length)], o2 = rcOutcome(o1.res, a2[0], a2[1]); if (o2.blocked || o2.res === o1.res || o2.res === from) continue;
+    return {type:'chain', from, mid:o1.res, to:o2.res}; }
+}
+const CER = [
+  {rock:'obsidian', claim:'Obsidian formed from lava that cooled very quickly.', ev:['It has no crystals and breaks with curved, glassy surfaces.', 'It is black.', 'It was found near a volcano.', 'It feels heavy.'], re:['Crystals need time to grow; cooling this fast left no time, so natural glass formed.', 'All black rocks form from lava.', 'Rocks near volcanoes are always young.', 'Heavy rocks cool quickly.']},
+  {rock:'marble', claim:'This marble formed from limestone changed by heat and pressure.', ev:['It fizzes in acid like limestone, but has interlocking, sugary crystals.', 'It is white.', 'It is smooth to touch.', 'It was found next to shale.'], re:['Both contain calcite; heat and pressure regrew the calcite into locked crystals without melting it.', 'White rocks are always metamorphic.', 'Limestone melts and cools into marble.', 'Anything that fizzes is marble.']},
+  {rock:'granite', claim:'This granite cooled slowly deep underground.', ev:['It has large, interlocking crystals you can see.', 'It is pink and gray.', 'It is very hard.', 'It does not fizz in acid.'], re:['Slow cooling gives crystals time to grow large, and that happens deep underground.', 'Pink rocks always cool slowly.', 'Hard rocks form deep underground.', 'Rocks that don’t fizz cooled slowly.']},
+  {rock:'conglomerate', claim:'This conglomerate formed from pebbles carried by fast-moving water.', ev:['It has rounded pebbles cemented in finer sand.', 'It has many colors.', 'It is fairly heavy.', 'It breaks unevenly.'], re:['Tumbling in fast water rounds pebbles, and only fast water can carry pebbles that big.', 'Colorful rocks form in rivers.', 'Heavy rocks sink in water.', 'All sedimentary rocks have pebbles.']},
+  {rock:'slate', claim:'This slate formed from shale.', ev:['It has very fine grains in flat sheets like shale, but is harder and has a slight sheen.', 'It is dark gray.', 'It was found deeper than the shale.', 'It does not float.'], re:['Heat and pressure lined up the clay minerals into sheets without melting, keeping the fine grain.', 'Dark rocks always come from shale.', 'Deeper rocks are always made from shallower ones.', 'Rocks that sink were once mud.']},
+  {rock:'pumice', claim:'This pumice formed from gas-rich lava.', ev:['It is full of tiny holes and floats on water.', 'It is light gray.', 'It feels rough.', 'It crumbles easily.'], re:['Gas bubbles were trapped as the lava cooled fast, leaving holes that make it less dense than water.', 'Light-colored rocks always float.', 'Rough rocks form in volcanoes.', 'Crumbly rocks are made of gas.']}
+];
+const STORY = [
+  {q:'In a cliff, flat layers from bottom to top are sandstone, shale, then limestone. A band of basalt cuts straight across all three. Which explanation fits the evidence best?', right:'Sandstone, then shale, then limestone were deposited; later, magma cut through all three and cooled into basalt.', wrong:['The basalt formed first, and the layers were deposited around it.', 'The limestone is oldest because it is on top.', 'All four rocks formed at the same time.'], why:'Lower layers are older (superposition), and anything that cuts across layers must be younger than them (cross-cutting).'},
+  {q:'A layer is marble right next to a body of granite, but the same layer farther away is limestone. Which explanation fits the evidence best?', right:'Heat from the granite’s magma changed the nearby limestone into marble.', wrong:['The marble melted and became limestone farther away.', 'Weathering turned the limestone into marble.', 'The granite formed from the marble.'], why:'Hot magma bakes the rock next to it (contact metamorphism), so only the nearby limestone became marble.'},
+  {q:'Fine shale lies under a layer of conglomerate full of large rounded pebbles. What does this tell you about the water that deposited them?', right:'The water changed from calm (dropping mud) to fast-moving (carrying pebbles).', wrong:['The water changed from fast to calm.', 'The water stayed exactly the same.', 'There was never any water; both formed from lava.'], why:'Calm water drops tiny mud (shale); fast water carries and rounds pebbles (conglomerate). The lower layer came first.'},
+  {q:'Limestone full of sea-shell fossils is found on top of a mountain. Which explanation fits the evidence best?', right:'The limestone formed on the sea floor, and later the rock was pushed up to form the mountain.', wrong:['Sea creatures used to live on mountaintops.', 'Birds carried the shells up the mountain.', 'Limestone always forms on mountains.'], why:'The fossils show the rock formed in the sea; forces inside Earth later lifted it up.'},
+  {q:'Gneiss with garnet crystals is found at Earth’s surface. Which explanation fits the evidence best?', right:'It formed deep underground with high heat and pressure, then erosion removed the rock above it.', wrong:['It formed at the surface from cooling lava.', 'It formed from sand on a beach.', 'Garnets make rocks rise to the surface.'], why:'Gneiss and garnet need high heat and pressure deep underground; uplift and erosion later exposed them.'}
+];
+const CONCEPTS = {weather:[/weather|erod|erosion|break(s|ing)? (it |the rock )?(down|apart)|broken|crumbl/i, 'How does the rock get broken into pieces?'],
+  deposit:[/deposit|settl|sediment|carried|carry|transport|layer|mud|clay|sand|calm/i, 'Where do the pieces travel, and where do they settle?'],
+  compact:[/compact|cement|squeez|press|buried|bury|glue/i, 'What turns loose sediment into solid rock?'],
+  meta:[/heat|pressure|metamorph/i, 'What changes a rock without melting it?'],
+  melt:[/melt|magma|lava|molten/i, 'What has to happen to the rock first?'],
+  cool:[/cool|crystal|harden|solidif/i, 'What happens to the melted rock next?'],
+  slow:[/slow|underground|deep|intrusive/i, 'Where and how fast must it cool to make big crystals?']};
+const WRITE = [
+  {q:'Explain how a grain of quartz in granite could end up in quartzite. Use rock cycle processes in order.', need:['weather', 'deposit', 'compact', 'meta']},
+  {q:'Explain how a piece of shale could become granite. Use rock cycle processes in order.', need:['melt', 'cool', 'slow']},
+  {q:'Explain how basalt could become shale. Use rock cycle processes in order.', need:['weather', 'deposit', 'compact']}
+];
+function examNewVariant() {
+  const p = exam.part, used = exam.used;
+  const pick = (arr, key) => { let pool = arr.filter(x => !used.has(key(x))); if (!pool.length) pool = arr; const x = pool[Math.floor(Math.random() * pool.length)]; used.add(key(x)); return x; };
+  if (p === 0) exam.v = examCase();
+  else if (p === 1) exam.v = examChain();
+  else if (p === 2) { const c = pick(CER, x => 'cer' + x.rock); exam.v = {type:'cer', c:{...c, c0:c.ev[0], r0:c.re[0]}, ev:shuffle(c.ev.slice()), re:shuffle(c.re.slice())}; }
+  else if (p === 3) { const st = pick(STORY, x => x.q); exam.v = {type:'story', st, opts:shuffle([st.right, ...st.wrong])}; }
+  else { const w = pick(WRITE, x => x.q); exam.v = {type:'write', w, text:exam.v && exam.v.type === 'write' ? exam.v.text : ''}; }
+  exam.fb = null;
+}
+function startExam() { exam = {part:0, used:new Set(), v:null, fb:null, firstTry:0, wrongThis:false}; examNewVariant(); }
+const actOpts = sel => ACTIONS.map((a, i) => `<option value="${i}" ${sel === i ? 'selected' : ''}>${ACT_LABEL(a)}</option>`).join('');
+function examHTML() {
+  const v = exam.v, n = exam.part;
+  let h = `<div class="goalcard"><h3>🎓 Final Field Exam: part ${n + 1} of 5</h3><div class="steps">${EXAM_PARTS.map((t, i) => `<span class="${i === n ? 'now' : ''}">${i < n ? '✔ ' : ''}${t}</span>`).join('')}</div>`;
+  if (v.type === 'case') { const s = SP[v.s];
+    h += `<p class="big"><b>A field team sends you these lab results for one mystery specimen.</b></p><table><tr><th>Test</th><th>Result</th></tr>${v.four.map(t => `<tr><td>${TB[t].icon} ${TB[t].name}</td><td>${result(s, t).txt.replace(/\s*\((A rock|Careful|Rocks are|Streak works)[^)]*\)/g, '')}</td></tr>`).join('')}</table>
+      <p><label for="exId"><b>A. What is the specimen?</b></label> <select id="exId"><option value="">Choose…</option>${v.opts.map(id => `<option value="${id}">${rname(id)}</option>`).join('')}</select></p>
+      <p><b>B. Which TWO results are the strongest evidence?</b> (Together they rule out every other specimen on the chart.)<br>${v.four.map(t => `<label style="display:block;margin:4px 0"><input type="checkbox" class="exEv" value="${t}" style="width:22px;height:22px;vertical-align:middle"> ${TB[t].icon} ${TB[t].name}</label>`).join('')}</p>`; }
+  else if (v.type === 'chain') h += `<p class="big"><b>Fill in the two processes that change ${rname(v.from)} → ${rname(v.mid)} → ${rname(v.to)}.</b></p>
+      <p><label for="exA1"><b>${rname(v.from)} → ${rname(v.mid)}:</b></label> <select id="exA1"><option value="">Choose…</option>${actOpts()}</select></p>
+      <p><label for="exA2"><b>${rname(v.mid)} → ${rname(v.to)}:</b></label> <select id="exA2"><option value="">Choose…</option>${actOpts()}</select></p>`;
+  else if (v.type === 'cer') h += `<p class="big"><b>Claim:</b> “${v.c.claim}”</p>
+      <p><label for="exEv"><b>A. Choose the best EVIDENCE for this claim:</b></label><br><select id="exEv" style="width:100%"><option value="">Choose…</option>${v.ev.map(e => `<option>${esc(e)}</option>`).join('')}</select></p>
+      <p><label for="exRe"><b>B. Choose the best REASONING (the science that connects the evidence to the claim):</b></label><br><select id="exRe" style="width:100%"><option value="">Choose…</option>${v.re.map(e => `<option>${esc(e)}</option>`).join('')}</select></p>`;
+  else if (v.type === 'story') h += `<p class="big"><b>${v.st.q}</b></p><div class="choice" style="grid-template-columns:1fr">${v.opts.map((o, k) => `<label style="display:block;padding:8px;border:3px solid var(--ink);border-radius:12px;background:#fff"><input type="radio" name="exSt" value="${k}" style="width:20px;height:20px;vertical-align:middle"> ${esc(o)}</label>`).join('')}</div>`;
+  else h += `<p class="big"><b>${v.w.q}</b></p><p>Write at least 2 sentences. Name each process and say what it does to the rock.</p>
+      <textarea id="exWrite" rows="5" maxlength="800" style="width:100%;font:inherit;font-size:19px;padding:8px;border:3px solid var(--ink);border-radius:10px;box-sizing:border-box">${esc(v.text || '')}</textarea>`;
+  h += `<p><button data-exam="submit">✔ Submit part ${n + 1}</button> <button data-open="guide">🗺️ Rock cycle guide</button> <button data-open="chart">📖 Reference chart</button></p>`;
+  if (exam.fb) h += `<div class="fb ${exam.fb[0]} pop" role="status">${exam.fb[1]}</div>`;
+  return h + '</div>';
+}
+function examSubmit() {
+  const v = exam.v; let ok = false, hint = '';
+  if (v.type === 'case') { const id = $('#exId').value, evs = [...document.querySelectorAll('.exEv:checked')].map(x => x.value);
+    const idOk = id === v.s, evOk = evs.length === 2 && v.right.every(t => evs.includes(t)); ok = idOk && evOk;
+    hint = !id || evs.length !== 2 ? 'Choose a specimen AND exactly two results.' : !idOk ? 'Check the reference chart: which specimen matches ALL four results?' : 'Your identification is right, but which two results, together, rule out every other specimen? The other two results are shared by many specimens.'; }
+  else if (v.type === 'chain') { const a1 = ACTIONS[+$('#exA1').value], a2 = ACTIONS[+$('#exA2').value];
+    const ok1 = a1 && !rcOutcome(v.from, a1[0], a1[1]).blocked && rcOutcome(v.from, a1[0], a1[1]).res === v.mid, ok2 = a2 && !rcOutcome(v.mid, a2[0], a2[1]).blocked && rcOutcome(v.mid, a2[0], a2[1]).res === v.to; ok = ok1 && ok2;
+    hint = !a1 || !a2 ? 'Choose both processes.' : !ok1 ? `Step 1 doesn’t make ${rname(v.mid)}. What kind of rock is ${rname(v.mid)}, and which process makes that kind?` : `Step 2 doesn’t make ${rname(v.to)}. Check the 🗺️ guide for the process that makes ${SP[v.to].grp} rock.`; }
+  else if (v.type === 'cer') { const e = $('#exEv').value, r = $('#exRe').value; ok = e === v.c.c0 && r === v.c.r0; // first item in each list is correct (shown shuffled)
+    hint = 'Good evidence is an observation that ONLY fits the claim (not just color). Good reasoning explains the science of WHY that evidence supports the claim.'; }
+  else if (v.type === 'story') { const sel = document.querySelector('input[name="exSt"]:checked'); ok = !!sel && v.opts[+sel.value] === v.st.right;
+    hint = !sel ? 'Choose one explanation.' : 'Think about which layers must be older, and which processes could make what you see. The 🗺️ guide can help.'; }
+  else { const text = $('#exWrite').value.trim(); v.text = text; const miss = v.w.need.filter(c => !CONCEPTS[c][0].test(text));
+    ok = text.length >= 60 && !miss.length;
+    hint = text.length < 60 ? 'Write a little more: at least two sentences.' : `Good start! Add more detail. Think about: ${miss.map(c => CONCEPTS[c][1]).join(' ')}`;
+    if (!ok) { exam.fb = ['bad', '✖ ' + hint + ' (Revise your answer and submit again.)']; sfx('wrong'); renderColleague(); return; } }
+  if (ok) {
+    if (!exam.wrongThis) exam.firstTry++; exam.wrongThis = false; sfx('right');
+    const why = v.type === 'story' ? ' ' + v.st.why : v.type === 'cer' ? ' Evidence + reasoning together make a strong scientific argument.' : '';
+    exam.part++;
+    if (exam.part >= 5) { passExam(); return; }
+    exam.v = null; examNewVariant(); exam.fb = ['good', `✔ Part ${exam.part} complete!${why} On to part ${exam.part + 1}.`];
+  } else { exam.wrongThis = true; sfx('wrong'); examNewVariant(); exam.fb = ['bad', `✖ Not quite. ${hint} Here is a NEW version of this part to try.`]; }
+  renderColleague(); const f = $('#colleagueBody .goalcard select, #colleagueBody .goalcard input, #colleagueBody .goalcard textarea'); f && f.focus({preventScroll:true});
+}
+function passExam() {
+  examPassed = true; gemsOpen = true; exam = null; addXP(300);
+  tool.tier = TOOLS.length - 1; tool.hits = TOOLS[tool.tier][1] + 40; tool.broken = false;
+  sfx('find'); burst(player.x, player.y, ['#ffcc33', '#fff', '#8b5cc4', '#3a86c8'], 40);
+  toast('🎓 You passed the Final Field Exam! +300 XP, a Diamond-tipped pick, and a new assignment: Crystal Ridge Mine!', 7000);
+  if (pet) petSay('We did it! Diamonds, here we come!', 'happy', 5);
+  renderColleague();
+}
+function finalHTML() {
+  const done = DEX.every(s => found.has(s.id));
+  if (examPassed) return `<div class="goalcard"><h3>🎓 Master Rock Hound: field assignment</h3>
+    <p>“You passed my Final Field Exam! Your new assignment is <b>Crystal Ridge Mine</b>: a kimberlite pipe with <b>diamonds</b>, marble with <b>rubies and sapphires</b>, and pegmatite veins with <b>emeralds and topaz</b>. Find all ${GEMS.length} gems for your 💎 Gem Dex!”</p>
+    <p>💎 Gems found: <b>${gemFound.size} / ${GEMS.length}</b></p>
+    <p>${SITE === 'gem' ? '<button data-exam="travel:main">🚙 Return to Pebble Creek</button>' : '<button data-exam="travel:gem">🚙 Travel to Crystal Ridge Mine</button>'}</p></div>`;
+  if (!done) return `<div class="goalcard"><h3>🎓 Final Field Exam (locked)</h3><p>“When your Rock Dex is complete (${found.size} / ${DEX.length}), come back for my Final Field Exam. Pass it and I’ll send you to a secret dig site full of rare gems.”</p></div>`;
+  if (!exam) return `<div class="goalcard"><h3>🎓 Final Field Exam</h3><p>“Your Rock Dex is complete. Impressive! My Final Field Exam has <b>5 parts</b>: analyze lab data, apply the rock cycle, build a claim with evidence and reasoning, read a rock outcrop, and explain in your own words. Take your time and use the guide and chart. Pass and you’ll earn <b>300 XP</b>, a <b>Diamond-tipped pick</b>, and an assignment to <b>Crystal Ridge Mine</b>.”</p><p><button data-exam="start">🎓 Start the Final Field Exam</button></p></div>`;
+  return examHTML();
+}
+function examClick(v) {
+  const [act, arg] = v.split(':');
+  if (act === 'start') startExam();
+  else if (act === 'submit' && exam) { examSubmit(); return; }
+  else if (act === 'travel') { closeTop(); travel(arg); return; }
+  renderColleague(); const f = $('#colleagueBody .goalcard select, #colleagueBody .goalcard input, #colleagueBody .goalcard textarea'); f && f.focus({preventScroll:true});
 }
 
 // ART: pet toys in action (skateboard ride, yo-yo, magnifying glass)
