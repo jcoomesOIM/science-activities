@@ -66,6 +66,9 @@ button:disabled{cursor:default;color:var(--ink);opacity:1}
 #title .avatarpick img{height:clamp(54px,11vh,96px)!important;width:auto!important}
 #title .swatch{width:clamp(20px,3.3vh,30px);height:clamp(20px,3.3vh,30px);margin:1px}
 #title{overflow:auto}
+#adminModal{position:fixed;inset:0;z-index:41;background:rgba(10,14,30,.75);display:flex;align-items:center;justify-content:center;padding:16px}
+#adminModal[hidden]{display:none}
+#adminModal .kbox{background:#16223d;border:4px solid var(--hat);border-radius:18px;padding:14px 20px}
 #keysModal{position:fixed;inset:0;z-index:40;background:rgba(10,14,30,.75);display:flex;align-items:center;justify-content:center;padding:16px}
 #keysModal[hidden]{display:none}
 #keysModal .kbox{background:#16223d;border:4px solid var(--hat);border-radius:18px;padding:14px 20px;max-height:94vh;overflow:auto;text-align:left}
@@ -162,6 +165,8 @@ th{background:var(--ink);color:var(--paper)}
     <div class="mlist" id="mLab" hidden><div class="mtitle">🔬 Lab</div>
       <button data-open="lab"><span>🧪 Test specimens <span id="bagN" class="badge"></span></span><kbd>L</kbd></button>
       <button data-open="notebook"><span>📓 Lab notebook</span><kbd>N</kbd></button>
+      <button data-open="fossillab"><span>🦴 Fossil lab (Level 2)</span><kbd>F</kbd></button>
+      <button data-open="timeguide"><span>🕰️ Geologic time guide</span><kbd>I</kbd></button>
       <button data-open="chart"><span>📖 Reference chart</span></button>
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mRC" aria-expanded="false" aria-controls="mRC" aria-label="Rock cycle and camp menu" title="Rock cycle and camp">♻️▾</button>
@@ -169,10 +174,13 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="guide"><span>🗺️ Rock cycle guide</span><kbd>G</kbd></button>
       <button id="bMachine"><span>♻️ Rock cycle machine (at camp)</span><kbd>E</kbd></button>
       <button id="bDoc"><span>🧑‍🔬 Talk to Dr. Rivera (at camp)</span><kbd>E</kbd></button>
+      <button data-open="refinery"><span>⚗️ Gem & ore refinery (Level 3)</span></button>
+      <button data-open="refguide"><span>📘 Refining guide</span></button>
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mCol" aria-expanded="false" aria-controls="mCol" aria-label="My collection menu" title="My collection">🎒▾</button>
     <div class="mlist" id="mCol" hidden><div class="mtitle">🎒 My collection</div>
       <button data-open="dex"><span>📚 Rock Dex</span><kbd>X</kbd></button>
+      <button data-open="fossildex" id="bFossilDex" hidden><span>🦴 Fossil Dex</span><kbd>Z</kbd></button>
       <button data-open="gemdex" id="bGemDex" hidden><span>💎 Gem Dex</span><kbd>J</kbd></button>
       <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
       <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
@@ -227,6 +235,13 @@ th{background:var(--ink);color:var(--paper)}
           <p><b>⚠️ Warning:</b> the game does NOT save automatically. Closing or reloading without a save file <b>erases all of your progress</b>. Nothing is stored in the browser or sent anywhere. Sound starts off (press M).</p>
         </div>
   </div>
+  <div id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminTitle" hidden>
+    <div class="kbox" style="max-width:360px"><h2 id="adminTitle" style="font-size:22px">🔐 Teacher access</h2>
+      <p style="font-size:16px;margin:4px 0 10px">Enter the administrator code to open test mode.</p>
+      <label for="adminCode" class="sr">Administrator code</label><input id="adminCode" type="password" autocomplete="off" maxlength="20" style="width:100%">
+      <p id="adminMsg" role="status" style="font-size:15px;min-height:20px;margin:6px 0"></p>
+      <button id="adminGo">✔ Unlock</button> <button id="adminCancel">Cancel</button></div>
+  </div>
   <div id="keysModal" role="dialog" aria-modal="true" aria-labelledby="keysTitle" hidden>
     <div class="kbox"><button class="close" id="keysClose">✖ Close (Esc)</button><h2 id="keysTitle">⌨️ Keyboard controls</h2>
     <div class="keys">
@@ -240,6 +255,7 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
       <span><kbd>U</kbd> / <kbd>Y</kbd></span><span>Place a ladder in a dug shaft (climb ↑ ↓, dig ← → ↑) / take a ladder down</span>
       <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
+      <span><kbd>F</kbd> / <kbd>Z</kbd> / <kbd>I</kbd></span><span>Fossil lab / Fossil Dex / Geologic time guide (Level 2)</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
     </div>
     </div>
@@ -284,8 +300,14 @@ th{background:var(--ink);color:var(--paper)}
 </div>
 <p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
 </section>
+<section class="panel" id="refinery" aria-label="Gem and Ore Refinery"><button class="close" data-close>✖ Close (Esc)</button><h2>⚗️ Gem & Ore Refinery (Level 3)</h2><div id="refineryBody"></div></section>
+<section class="panel" id="fossillab" aria-label="Fossil lab"><button class="close" data-close>✖ Close (Esc)</button><h2>🦴 Fossil lab (Level 2)</h2><div id="fossillabBody"></div></section>
+<section class="panel" id="fossildex" aria-label="Fossil Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>🦴 Fossil Dex: Level 2, Fossil Bluffs</h2><div id="fossildexBody"></div></section>
+<section class="panel" id="timeguide" aria-label="Geologic time guide"><button class="close" data-close>✖ Close (Esc)</button><h2>🕰️ Geologic time guide</h2><div id="timeguideBody"></div></section>
+<section class="panel" id="jeep" aria-label="Drive the jeep"><button class="close" data-close>✖ Close (Esc)</button><h2>🚙 Field jeep: choose a level</h2><div id="jeepBody"></div></section>
+<section class="panel" id="refguide" aria-label="Refining guide"><button class="close" data-close>✖ Close (Esc)</button><h2>📘 Refining guide</h2><div id="refguideBody"></div></section>
 <section class="panel" id="bag" aria-label="Tool bag"><button class="close" data-close>✖ Close (Esc)</button><h2>🎒 Tool bag</h2><div id="bagBody"></div></section>
-<section class="panel" id="gemdex" aria-label="Gem Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>💎 Gem Dex: Crystal Ridge Mine</h2><div id="gemdexBody"></div></section>
+<section class="panel" id="gemdex" aria-label="Gem Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>💎 Gem Dex: Level 3, Crystal Ridge Mine</h2><div id="gemdexBody"></div></section>
 <section class="panel" id="colleague" aria-label="Talk to Dr. Rivera"><button class="close" data-close>✖ Close (Esc)</button><h2>🧑‍🔬 Dr. Rivera</h2><div id="colleagueBody"></div></section>
 <section class="panel" id="store" aria-label="Rock shop"><button class="close" data-close>✖ Close (Esc)</button><h2>🛍️ Rock shop</h2><div id="storeBody"></div></section>
 <section class="panel" id="prize" aria-label="Prize box"><button class="close" data-close>✖ Close (Esc)</button><h2>🎁 Prize box</h2><div id="prizeBody"></div></section>
@@ -347,6 +369,9 @@ th{background:var(--ink);color:var(--paper)}
 <li>♻️ The Rock Cycle Machine shows each change in seconds, but in nature it takes thousands to millions of years. Changed rocks join your collection and Rock Dex so you can complete it, but real rocks can’t be traded this way!</li>
 <li>♻️ What melted rock becomes also depends on its chemistry. The machine uses two simple rules: dark, iron-rich basalt melts into dark rock (basalt or gabbro), and every other rock melts into light-colored magma (granite or obsidian). Light-colored lava often cools into rhyolite, a fine-grained rock not in our Rock Dex.</li>
 <li>💎 Crystal Ridge Mine is simplified: real kimberlite pipes bring diamonds up from more than 150 km deep, far deeper than the game shows. Rubies and sapphires (both corundum) grow in marble, and emeralds and topaz grow in pegmatites.</li>
+<li>🦴 Level 2 (Fossil Bluffs) is simplified: real layers are much thicker, and each block stands for about 100 m. The cliff’s history follows real geology (deposition, tilting, faulting, a dike, erosion, more deposition, and a river canyon), and the fossils and their time ranges are real.</li>
+<li>📏 Density assay: SG = weight in air ÷ (weight in air − weight in water). The game models each ore sample as metal mixed with quartz (SG 2.65), so SG of the mix = 1 ÷ (fraction of metal ÷ metal SG + fraction of quartz ÷ 2.65). Real assays also use chemical tests.</li>
+<li>⚗️ The Level 3 refinery is simplified. Real ore usually holds only a few grams of gold per TON of rock, so the game’s purity numbers are much higher than real ore. Processing really does depend on mineral properties: dense metals are concentrated by gravity, some metal minerals by froth flotation, copper carbonate by acid leaching, and gems are cut only by abrasives harder than they are.</li>
 <li>🔨 Tools wear out after a hidden number of hits, like real tools. Trading for a new one at camp is a game rule that gives you a thinking break.</li>
 <li>🧱 Rebuilding puts back the rock that was originally in that spot so you can climb out or reach new places. In real life, dug-out rock can’t be put back the way it was!</li>
 <li>Real rocks take thousands to millions of years to form and change. The game skips the waiting!</li>
@@ -411,6 +436,76 @@ const GEMS = [
 ];
 GEMS.forEach((s, i) => { s.n = 31 + i; s.gem = true; SP[s.id] = s; if (s.kind === 'mineral') { s.lk = 'single'; s.rtype = 'Mineral (gem)'; s.grp = 'mineral'; } });
 const ALLSPEC = SPECIES.concat(GEMS);
+// Level 3 precious metals and copper ore (found as ROUGH material; refine them at camp)
+GEMS.push(
+ {id:'gold',name:'Native gold',kind:'mineral',color:'Bright gold-yellow',ck:'gold',lens:'One substance all the way through. Soft flakes and grains that bend instead of crumbling.',luster:'Metallic',lu:'metallic',streak:'Gold-yellow',sk:'goldstreak',H:2.75,hd:'2.5–3',brk:'Bends and flattens instead of breaking (malleable).',bk:'malleable',sg:19.3,sp:'VERY heavy (SG about 19); gold streak; bends instead of breaking',info:'Pure gold that formed in hot-water quartz veins. It is so heavy that weathered gold collects in stream gravels as placer nuggets.',cycle:'Weathering frees gold from veins; rivers concentrate it in gravels.'},
+ {id:'silver',name:'Native silver',kind:'mineral',color:'Silver-white, often tarnished black',ck:'silver',lens:'One substance all the way through. Wiry, branching threads and flakes.',luster:'Metallic',lu:'metallic',streak:'Silver-white',sk:'silverwhite',H:2.75,hd:'2.5–3',brk:'Bends and flattens instead of breaking (malleable).',bk:'malleable',sg:10.5,sp:'Heavy (SG about 10); tarnishes black; bends instead of breaking',info:'Pure silver that grew as wires in veins from hot, mineral-rich water.',cycle:'Forms in veins; tarnishes when exposed to air.'},
+ {id:'platinum',name:'Native platinum',kind:'mineral',color:'Steel-gray to silver-white',ck:'gray',lens:'One substance all the way through. Small, rounded, very heavy grains.',luster:'Metallic',lu:'metallic',streak:'Steel-gray',sk:'steel',H:4.25,hd:'4–4.5',brk:'Bends instead of breaking (malleable).',bk:'malleable',sg:21,sp:'Heaviest specimen (SG about 21); never tarnishes',info:'One of the rarest metals. It forms in dark, iron-rich rocks from the mantle; weathering frees its heavy grains into stream gravels.',cycle:'Weathered out of mantle rocks and concentrated in placer gravels.'},
+ {id:'malachite',name:'Malachite',kind:'mineral',color:'Bright green with lighter and darker bands',ck:'green',lens:'One substance all the way through. Rounded masses with curving green bands.',luster:'Silky to dull',lu:'silky',streak:'Light green',sk:'lightgreen',H:3.75,hd:'3.5–4',brk:'Fracture: uneven and splintery.',bk:'fracture',fizz:true,sg:4.0,sp:'Green bands; fizzes in acid; a copper ore',info:'Copper carbonate that forms when copper minerals near the surface react with water and air. It is an ore of copper.',cycle:'Forms when copper deposits weather near the surface.'}
+);
+GEMS.forEach((s, i) => { s.n = 31 + i; s.gem = true; SP[s.id] = s; if (s.kind === 'mineral' && !s.lk) { s.lk = 'single'; s.rtype = s.id === 'malachite' ? 'Mineral (copper ore)' : ['gold', 'silver', 'platinum'].includes(s.id) ? 'Mineral (native metal)' : 'Mineral (gem)'; s.grp = 'mineral'; } });
+ALLSPEC.push(...GEMS.slice(6));
+/* ---------- 1c. LEVEL 2: FOSSIL BLUFFS (fossils, geologic time, plate motion) ----------
+   NGSS MS-ESS1-4 (rock strata + geologic time scale), MS-ESS2-3 (fossil and rock evidence of plate motion),
+   MS-ESS2-2 (surface processes at different time and space scales).                                   */
+const PERIODS = [
+ ['prec', 'Precambrian', 4600, 539, 'Precambrian', 'Earth forms 4.6 billion years ago; simple life only'],
+ ['camb', 'Cambrian', 539, 485, 'Paleozoic', 'Cambrian explosion: animals with hard shells appear'],
+ ['ordo', 'Ordovician', 485, 444, 'Paleozoic', 'Life spreads through warm seas; first land plants'],
+ ['silu', 'Silurian', 444, 419, 'Paleozoic', 'Fish with jaws; plants spread on land'],
+ ['devo', 'Devonian', 419, 359, 'Paleozoic', 'The “Age of Fishes”'],
+ ['carb', 'Carboniferous', 359, 299, 'Paleozoic', 'Swamp forests that became coal; giant insects'],
+ ['perm', 'Permian', 299, 252, 'Paleozoic', 'Supercontinent Pangaea; ends with the biggest mass extinction'],
+ ['tria', 'Triassic', 252, 201, 'Mesozoic', 'First dinosaurs and mammals'],
+ ['jura', 'Jurassic', 201, 145, 'Mesozoic', 'Giant dinosaurs; Pangaea starts to split apart'],
+ ['cret', 'Cretaceous', 145, 66, 'Mesozoic', 'Flowering plants; ends with an asteroid impact and mass extinction'],
+ ['pale', 'Paleogene', 66, 23, 'Cenozoic', 'Mammals spread after the dinosaurs disappear'],
+ ['neog', 'Neogene', 23, 2.6, 'Cenozoic', 'Grasslands spread; early human ancestors'],
+ ['quat', 'Quaternary', 2.6, 0, 'Cenozoic', 'Ice ages; modern humans']
+].map(([id, name, start, end, era, event]) => ({id, name, start, end, era, event}));
+const PER = {}; PERIODS.forEach(p => PER[p.id] = p);
+const myaTxt = v => v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + ' billion' : v >= 1 ? Math.round(v) + ' million' : v >= .01 ? Math.round(v * 1000) + ' thousand' : Math.round(v * 1e6) + '';
+const rangeTxt = p => p.end ? `${myaTxt(p.start)}–${myaTxt(p.end)} years ago` : `${myaTxt(p.start)} years ago to today`;
+const FOSSILS = [
+ {id:'trilobite', name:'Trilobite (Olenellus)', shape:'Oval body split lengthwise into 3 lobes, with a head shield and many body segments', sym:'Bilateral: left and right sides match', mat:'Hard outer shell (exoskeleton) replaced by minerals', size:'About 5 cm long', life:'Crawled on the sea floor; had compound eyes', range:[521, 509], index:true, info:'An early arthropod, related to insects and crabs. This kind lived only in the early Cambrian, so it is an index fossil.'},
+ {id:'brachiopod', name:'Brachiopod (Platystrophia)', shape:'Two fan-shaped shells (top and bottom) with ribs and a fold down the middle', sym:'Bilateral: each shell matches left to right', mat:'Shell replaced by minerals', size:'About 3 cm wide', life:'Lived attached to the sea floor, filtering food from the water', range:[470, 445], index:true, info:'A shelled sea animal. This kind lived only in the Ordovician, so it is an index fossil.'},
+ {id:'crinoid', name:'Crinoid stem', shape:'A stack of small round discs, like a column of buttons', sym:'Radial: arranged around a center in 5 parts', mat:'Mineral-filled discs (calcite)', size:'Each disc about 1 cm across', life:'A “sea lily”: an animal anchored to the sea floor on a long stem', range:[485, 0], index:false, info:'Crinoids have lived from the Ordovician until today. Because they lived for so long, a crinoid alone can’t tell you which period a layer is from.'},
+ {id:'placoderm', name:'Armored fish plate (Dunkleosteus)', shape:'A thick bony plate with a sharp, jaw-like edge', sym:'Bilateral', mat:'Bone', size:'About 30 cm (from a fish up to 6 m long!)', life:'A giant armored fish that hunted in ancient seas', range:[382, 358], index:true, info:'From the late Devonian, the “Age of Fishes.” An index fossil.'},
+ {id:'seedfern', name:'Seed fern leaf (Neuropteris)', shape:'A frond with many small, rounded leaflets in rows', sym:'Bilateral: leaflets line both sides of a center stem', mat:'Thin black carbon film on the rock', size:'About 10 cm', life:'A land plant from swamp forests (the swamps that became coal)', range:[359, 299], index:true, info:'A Carboniferous swamp plant. An index fossil for coal-age rocks.'},
+ {id:'mesosaurus', name:'Mesosaurus skeleton', shape:'A small skeleton with a long, thin snout full of needle teeth and a long tail', sym:'Bilateral', mat:'Bone', size:'About 1 m long', life:'A small reptile that swam in shallow lakes and seas', range:[299, 280], index:true, info:'Found in early Permian rocks of BOTH South America and southern Africa. It could not swim across an ocean, so this is evidence that the continents were once joined.'},
+ {id:'glossopteris', name:'Glossopteris leaf', shape:'A tongue-shaped leaf with a center vein and a net of side veins', sym:'Bilateral', mat:'Thin black carbon film on the rock', size:'About 12 cm', life:'A land plant from cool climates', range:[299, 201], index:false, info:'Found in South America, Africa, India, Australia and Antarctica: evidence that these continents were once joined. It lived through the Permian and Triassic, so alone it can’t pin down one period.'},
+ {id:'dino', name:'Dinosaur bone (Allosaurus vertebra)', shape:'A large, spool-shaped backbone piece with a spike on top', sym:'Bilateral', mat:'Bone (spongy inside)', size:'About 20 cm', life:'Part of a large meat-eating dinosaur that walked on land', range:[155, 145], index:true, info:'Allosaurus lived in the late Jurassic. An index fossil.'},
+ {id:'ammonite', name:'Ammonite', shape:'A flat, spiral (coiled) shell with wavy lines between its chambers', sym:'Spiral coil', mat:'Shell replaced by minerals', size:'About 8 cm across', life:'A squid-like animal that swam in the sea inside its coiled shell', range:[400, 66], index:false, info:'Ammonites as a group lived from the Devonian to the end of the Cretaceous, when they went extinct. Alone, a general ammonite spans many periods.'},
+ {id:'shark', name:'Shark tooth (Cretoxyrhina)', shape:'A smooth, triangular tooth with a sharp point and a root', sym:'Bilateral', mat:'Shiny tooth enamel', size:'About 5 cm', life:'From a large shark that hunted in a warm inland sea', range:[107, 73], index:true, info:'This shark lived only in the Cretaceous. An index fossil.'},
+ {id:'horse', name:'Early horse tooth (Eohippus)', shape:'A small, square-ish molar with low, rounded bumps', sym:'Bilateral', mat:'Tooth enamel', size:'About 1 cm', life:'From a dog-sized early horse that ate leaves in forests', range:[56, 47], index:true, info:'From the Paleogene, after the dinosaurs were gone. An index fossil.'},
+ {id:'mammoth', name:'Mammoth tooth', shape:'A huge molar made of many flat, ridged plates', sym:'Bilateral', mat:'Tooth enamel', size:'About 25 cm', life:'From a woolly mammoth that grazed during the Ice Age', range:[.4, .004], index:true, info:'Woolly mammoths lived during the Quaternary ice ages. An index fossil.'}
+];
+FOSSILS.forEach((f, i) => { f.n = 41 + i; f.kind = 'fossil'; f.rtype = 'Fossil'; f.grp = 'fossil'; SP[f.id] = f; });
+ALLSPEC.push(...FOSSILS);
+// which periods a fossil's lifespan overlaps
+const fossilPeriods = f => PERIODS.filter(p => f.range[0] > p.end && f.range[1] < p.start).map(p => p.id);
+const FTESTS = [['shape', '📐', 'Body shape'], ['sym', '🪞', 'Symmetry'], ['mat', '🧱', 'What it’s made of'], ['size', '📏', 'Size'], ['life', '🌊', 'Clues to how it lived']];
+// The cliff’s layers, youngest (A, top) to oldest (K, bottom)
+const LAYERS = [
+ {L:'A', per:'quat', rock:'gravel and soil', col:'#8f7f63', desc:'Loose gravel and sand left by rivers and Ice Age glaciers.'},
+ {L:'B', per:'pale', rock:'olive mudstone', col:'#8d8f5c', desc:'Mud that settled on river floodplains and hardened.'},
+ {L:'C', per:'kpg', rock:'thin gray clay', col:'#7d7268', desc:'A thin clay layer found all over the world, rich in the rare metal iridium.'},
+ {L:'D', per:'cret', rock:'white chalk', col:'#ece8dc', desc:'Chalk made of trillions of tiny shells that sank to the floor of a warm sea.'},
+ {L:'E', per:'jura', rock:'tan sandstone', col:'#d6ad74', desc:'Sand from rivers and dunes, cemented into rock.'},
+ {L:'F', per:'perm', rock:'red mudstone (“red beds”)', col:'#b5523a', desc:'Red mud and sand stained by iron rust: a sign of a hot, dry climate.'},
+ {L:'G', per:'carb', rock:'black shale and coal', col:'#3b3836', desc:'Black shale with coal: squeezed remains of swamp plants.'},
+ {L:'H', per:'devo', rock:'dark gray shale', col:'#5a616c', desc:'Mud from a quiet sea floor.'},
+ {L:'I', per:'ordo', rock:'gray limestone', col:'#bdb8a0', desc:'Limestone from shells in a warm, shallow sea.'},
+ {L:'J', per:'camb', rock:'brown sandstone and shale', col:'#a88c62', desc:'Sand and mud from an ancient shoreline.'},
+ {L:'K', per:'prec', rock:'granite and gneiss basement', col:'#8c6f78', desc:'Very old crystalline rock with no animal fossils.'}
+];
+const LAY = {}; LAYERS.forEach((l, i) => { l.tile = 28 - i; l.z = 'f' + l.L; LAY[l.z] = l; });   // tile ids 28 (A) … 18 (K)
+const DIKE = 29;
+const FOSSIL_ZONE = {fA:['mammoth'], fB:['horse'], fC:[], fD:['shark', 'ammonite'], fE:['dino', 'ammonite'], fF:['mesosaurus', 'glossopteris', 'crinoid'], fG:['seedfern', 'crinoid'], fH:['placoderm', 'crinoid'], fI:['brachiopod', 'crinoid'], fJ:['trilobite'], fK:[]};
+const DATED_LAYERS = ['fA', 'fB', 'fD', 'fE', 'fF', 'fG', 'fH', 'fI', 'fJ'];
+const perName = id => id === 'kpg' ? 'K–Pg boundary (66 million years ago)' : PER[id].name;
+
+
 
 // The tests students can run. h = Mohs hardness of each scratch tool.
 const TESTS = [
@@ -495,17 +590,24 @@ function bestTest(sp, cands) {
 const T = 48, COLS = 46, ROWS = 64, SURF = 9;        // SURF = grass row
 const SED_END = SURF + 18, MET_END = SURF + 34, MAG_START = ROWS - 5;
 const KM_PER_ROW = 0.1;                                // each block ≈ 100 m (squished!)
-const AIR=0,GRASS=1,SOIL=2,SAND=3,SHALE=4,LIME=5,SLATE=6,MARB=7,GNEI=8,GRAN=9,MAGMA=10,BASA=11,LAT=12,KIMB=13,PEG=14;
+const AIR=0,GRASS=1,SOIL=2,SAND=3,SHALE=4,LIME=5,SLATE=6,MARB=7,GNEI=8,GRAN=9,MAGMA=10,BASA=11,LAT=12,KIMB=13,PEG=14,GRAVEL=15,QVEIN=16,GOSSAN=17;
 const TI = {
   [GRASS]:{c:'#7a5233',hits:1},[SOIL]:{c:'#8a5a35',hits:1},
   [SAND]:{c:'#d39a5e',hits:2},[SHALE]:{c:'#6a6f79',hits:2},[LIME]:{c:'#cfc7a9',hits:2},
   [SLATE]:{c:'#4a5262',hits:3},[MARB]:{c:'#e3dfd7',hits:3},[GNEI]:{c:'#9c9189',hits:3},
   [GRAN]:{c:'#c9a6a0',hits:4},[MAGMA]:{c:'#e8501a',hits:99},[BASA]:{c:'#3c3d44',hits:3},
-  [LAT]:{c:'#a5532f',hits:1},[KIMB]:{c:'#4e6e66',hits:3},[PEG]:{c:'#e2bfae',hits:3}
+  [LAT]:{c:'#a5532f',hits:1},[KIMB]:{c:'#4e6e66',hits:3},[PEG]:{c:'#e2bfae',hits:3},
+  [GRAVEL]:{c:'#9a8b74',hits:1},[QVEIN]:{c:'#e9edf2',hits:3},[GOSSAN]:{c:'#9c4a22',hits:2}
 };
+LAYERS.forEach(l => TI[l.tile] = {c:l.col, hits:l.L === 'K' ? 4 : 2}); TI[DIKE] = {c:'#33343a', hits:4}; // Level 2 layers
 function zoneOfType(t) {
   if (t === GRASS || t === SOIL || t === LAT) return 'soil';
   if (t === KIMB) return 'kimberlite';
+  if (t >= 18 && t <= 28) return 'f' + 'KJIHGFEDCBA'[t - 18];
+  if (t === DIKE) return 'fdike';
+  if (t === GRAVEL) return 'placer';
+  if (t === QVEIN) return 'vein';
+  if (t === GOSSAN) return 'gossan';
   if (t === PEG) return 'pegmatite';
   if (t === SAND || t === SHALE || t === LIME) return 'sedimentary';
   if (t === SLATE || t === MARB || t === GNEI) return 'metamorphic';
@@ -522,9 +624,14 @@ const ZONES = {
   igneous:{short:'igneous zone',name:'Igneous zone',chat:'Magma cooled slowly down here, so the crystals grew big!',long:'You are in the igneous zone. Magma cooled SLOWLY underground, so crystals grew large. That makes intrusive igneous rock like granite, with minerals like feldspar, quartz, mica and magnetite.'},
   volcanic:{short:'old volcano',name:'Old volcano',chat:'Lava cooled fast here, so the crystals are tiny or missing!',long:'You are on an old volcano. Lava erupted and cooled QUICKLY at the surface, making extrusive igneous rocks with tiny crystals or none at all: basalt, obsidian and pumice.'},
   kimberlite:{short:'kimberlite pipe',name:'Kimberlite pipe',chat:'This blue-green rock rushed up from more than 150 km deep. Diamonds hide in the deep part!',long:'You are in a kimberlite pipe: a carrot-shaped volcanic pipe. Its magma rose extremely fast from more than 150 km down in the mantle, carrying diamonds with it. Look deeper in the pipe for diamonds.'},
+  placer:{short:'stream gravels',name:'Placer gravels',chat:'Old stream gravels! Heavy gold and platinum settle here.',long:'You are in placer gravels: an old buried stream channel. Water rounded these pebbles, and very heavy minerals like gold and platinum settled to the bottom. Gems like sapphire and ruby survive here too because they are so hard.'},
+  vein:{short:'quartz vein',name:'Quartz vein',chat:'A white quartz vein! Gold and silver grew here from hot water.',long:'You are in a quartz vein. Hot, mineral-rich water flowed through a crack and left white quartz, sometimes with gold, silver and pyrite. The center of a vein is often richer than its edges.'},
+  gossan:{short:'gossan cap',name:'Gossan (rusty cap)',chat:'This rusty rock means metal minerals weathered here. Look for green malachite!',long:'You are in a gossan: a rusty, weathered cap above metal-rich rock. Water and air changed the minerals near the surface, making iron rust and green copper minerals like malachite.'},
   pegmatite:{short:'pegmatite vein',name:'Pegmatite vein',chat:'Pegmatites grow giant crystals, including gems like emerald and topaz!',long:'You are in a pegmatite vein. The last, watery magma cooled slowly in cracks and grew giant crystals, including gems like emerald (green beryl) and topaz.'},
   magma:{short:'magma chamber',name:'Magma chamber',chat:'Magma! When it cools it becomes igneous rock.',long:'Below you is magma, melted rock at about 700–1,200 °C. When it cools and hardens, it becomes igneous rock.'}
 };
+LAYERS.forEach(l => ZONES[l.z] = {short:`Layer ${l.L} (${l.rock})`, name:`Layer ${l.L}: ${l.rock}`, chat:`Layer ${l.L} is ${l.rock}. Find an index fossil to learn how old it is!`, long:`You are in Layer ${l.L}: ${l.rock}. ${l.desc} Which geologic period is it from? Identify its fossils and check the 🕰️ time guide.`});
+ZONES.fdike = {short:'basalt dike', name:'Basalt dike', chat:'This dark rock cuts across the layers. What does that tell you about its age?', long:'You are in a basalt dike: magma squeezed up through a crack and cooled. It cuts through Layers F–K, so it is younger than them.'};
 // Which specimens can be found in each zone (based on where they really form)
 const ZONE_SPECIES = {
   sedimentary:['sandstone','shale','limestone','conglomerate','gypsum','calcite','hematite','galena','fluorite','quartz','pyrite'],
@@ -575,34 +682,97 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 /* ---------- 2b. CRYSTAL RIDGE MINE: the second dig site ----------------
    Simplified cross-section: folded metamorphic rock (gneiss and marble) cut by
    pegmatite veins, over a granite base, with a carrot-shaped kimberlite pipe. */
-let SITE = 'main', gemsOpen = false; const gemFound = new Set(), worlds = {main:null, gem:null}, savedWorlds = {};
+let SITE = 'main', gemsOpen = false; const gemFound = new Set(), worlds = {main:null, fossil:null, gem:null}, savedWorlds = {};
+function genFor(s) { if (s === 'gem') genGemWorld(); else if (s === 'fossil') genFossilWorld(); else genWorld(); }
 const KC = 27; // kimberlite pipe center column
-const GEM_ZONE_SPECIES = {kimberlite:['diamond', 'kimberlite', 'garnet'], metamorphic:['ruby', 'sapphire', 'garnet', 'marble'], pegmatite:['emerald', 'topaz', 'quartz', 'feldspar', 'muscovite'], igneous:['granite', 'topaz']};
-const zoneList = z => (SITE === 'gem' ? GEM_ZONE_SPECIES : ZONE_SPECIES)[z];
+const GEM_ZONE_SPECIES = {placer:['gold', 'platinum', 'sapphire', 'ruby', 'garnet'], vein:['gold', 'silver', 'quartz', 'pyrite'], gossan:['malachite', 'hematite', 'pyrite'], kimberlite:['diamond', 'kimberlite', 'garnet'], metamorphic:['ruby', 'sapphire', 'garnet', 'marble'], pegmatite:['emerald', 'topaz', 'quartz', 'feldspar', 'muscovite'], igneous:['granite', 'topaz']};
+const zoneList = z => (SITE === 'gem' ? GEM_ZONE_SPECIES : SITE === 'fossil' ? FOSSIL_ZONE : ZONE_SPECIES)[z];
+const trailCol = () => SITE === 'gem' ? KC : SITE === 'fossil' ? 30 : VC - 9;
+/* LEVEL 2 GROUND: natural-looking variation. Smooth "noise" makes wavy layer boundaries,
+   pockets of marble, a buried stream channel full of gravel (placer), white quartz veins,
+   a rusty gossan cap, pegmatite dikes rising from a granite bulge, and a ragged kimberlite pipe. */
+function makeNoise() { const N = 32, gtab = []; for (let i = 0; i < N * N; i++) gtab.push(Math.random());
+  const at = (x, y) => gtab[((y % N + N) % N) * N + ((x % N + N) % N)], sm = t => t * t * (3 - 2 * t);
+  return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), fx = sm(x - xi), fy = sm(y - yi); const a = at(xi, yi) + (at(xi + 1, yi) - at(xi, yi)) * fx, b = at(xi, yi + 1) + (at(xi + 1, yi + 1) - at(xi, yi + 1)) * fx; return a + (b - a) * fy; }; }
+let richNoise = makeNoise();
 function genGemWorld() {
-  tile = []; spec = []; dmg = []; ladders = new Set();
+  tile = []; spec = []; dmg = []; ladders = new Set(); richNoise = makeNoise();
+  const n1 = makeNoise(), n2 = makeNoise(), n3 = makeNoise();
+  const soil = c => 1 + Math.round(n1(c * .25, 3) * 2);                                       // laterite soil 1–3 blocks thick
+  const gTop = c => SURF + 24 + Math.round(n1(c * .15, 9) * 6) - Math.round(9 * Math.exp(-(((c - 38) / 5) ** 2))); // granite top with a bulge
   for (let r = 0; r < ROWS; r++) { tile.push([]); spec.push([]); dmg.push([]);
-    for (let c = 0; c < COLS; c++) { const fold = Math.round(Math.sin(c * .28) * 2.5); let t = AIR;
-      if (r === SURF) t = GRASS; else if (r > SURF && r <= SURF + 2) t = LAT;
-      else if (r > SURF + 2 && r <= SURF + 30) t = [GNEI, GNEI, MARB][(((Math.floor((r + fold) / 3)) % 3) + 3) % 3];
-      else if (r > SURF + 30) t = GRAN;
+    for (let c = 0; c < COLS; c++) { let t = AIR;
+      if (r === SURF) t = GRASS;
+      else if (r > SURF && r <= SURF + soil(c)) t = LAT;
+      else if (r > SURF && r < gTop(c)) { const wave = Math.sin(c * .22 + n2(c * .1, 0) * 3) * 2.5; t = n2(c * .18, (r + wave) * .3) > .63 ? MARB : GNEI; } // gneiss with marble pockets
+      else if (r >= gTop(c)) t = GRAN;
       tile[r].push(t); spec[r].push(null); dmg[r].push(0); } }
-  // pegmatite veins: slanted sheets of giant-crystal rock
-  for (let v = 0; v < 6; v++) { let r = SURF + 6 + Math.floor(Math.random() * 40), c = Math.floor(Math.random() * 18) + (v % 2 ? 0 : 30); const dr = Math.random() < .5 ? 1 : -1;
-    for (let k = 0; k < 16; k++) { for (const cc of [c, c + 1]) if (tile[r] && cc >= 0 && cc < COLS && tile[r][cc] !== AIR) tile[r][cc] = PEG; c += 1; if (k % 2) r += dr; } }
-  // kimberlite pipe: wide at the top, narrowing downward like a carrot
-  for (let r = SURF; r < ROWS; r++) { const half = Math.max(1, Math.round(4 - (r - SURF) / (ROWS - SURF) * 3)); for (let c = KC - half; c <= KC + half; c++) tile[r][c] = KIMB; }
+  // buried stream channel: a lens of rounded gravel just under the soil (placer deposit)
+  for (let c = 2; c <= 22; c++) { const th = Math.round(3.2 * Math.sin(Math.PI * (c - 2) / 20) + n3(c * .4, 1)); const top = SURF + soil(c) + 1;
+    for (let r = top; r < top + th; r++) if (tile[r][c] !== AIR) tile[r][c] = GRAVEL; }
+  // pegmatite dikes rising from the granite, wobbling as they go
+  for (let v = 0; v < 4; v++) { let c = 30 + Math.floor(Math.random() * 14) - (v % 2) * 22, r = gTop(Math.max(0, Math.min(COLS - 1, c)));
+    for (let k = 0; k < 26 && r > SURF + 4; k++) { for (const cc of [c, c + 1]) if (cc >= 0 && cc < COLS && tile[r][cc] !== AIR && tile[r][cc] !== GRAVEL) tile[r][cc] = PEG; r--; c += Math.round((n3(k * .3, v * 5) - .5) * 3); } }
+  // quartz veins: thin, wavy, white sheets cutting the rock (they carry gold and silver)
+  const veinCols = [];
+  for (let v = 0; v < 5; v++) { let c = 5 + Math.floor(Math.random() * 36), r = SURF + 30 + Math.floor(Math.random() * 15); veinCols.push(c);
+    for (let k = 0; k < 30 && r > SURF + 3; k++) { if (c >= 0 && c < COLS && tile[r][c] !== AIR && tile[r][c] !== GRAVEL) tile[r][c] = QVEIN; r--; if (Math.random() < .45) c += Math.random() < .5 ? -1 : 1; c = Math.max(0, Math.min(COLS - 1, c)); } }
+  // gossan: a rusty, weathered cap near the surface above a vein (copper and iron minerals)
+  const gc = veinCols.find(c => c > 26) || 34;
+  for (let r = SURF + 1; r <= SURF + 6; r++) for (let c = gc - 6; c <= gc + 6; c++) if (c >= 0 && c < COLS && tile[r][c] !== AIR && n2(c * .45, r * .5) + (1 - Math.abs(c - gc) / 7) * .5 > .75) tile[r][c] = GOSSAN;
+  // kimberlite pipe: carrot-shaped with ragged edges
+  for (let r = SURF; r < ROWS; r++) { const half = Math.max(1, Math.round(4 - (r - SURF) / (ROWS - SURF) * 3 + (n1(r * .3, 20) - .5) * 1.6)); for (let c = KC - half; c <= KC + half; c++) tile[r][c] = KIMB; }
   back = tile.map(row => row.slice());
-  const want = {kimberlite:14, metamorphic:18, pegmatite:14, igneous:8};
+  const want = {placer:10, vein:12, gossan:8, kimberlite:12, metamorphic:16, pegmatite:12, igneous:6};
   for (const z in want) { let cells = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (zoneOfType(tile[r][c]) === z) cells.push([r, c]);
     if (z === 'kimberlite') cells = cells.filter(([r]) => r > SURF + 3); shuffle(cells);
     const list = shuffle(GEM_ZONE_SPECIES[z].slice());
     for (let i = 0; i < want[z] && i < cells.length; i++) { let id = list[i % list.length];
-      if (id === 'diamond' && cells[i][0] < SURF + 18) id = 'kimberlite'; // diamonds come from the DEEP part of the pipe
+      if (id === 'diamond' && cells[i][0] < SURF + 18) id = 'kimberlite';
       spec[cells[i][0]][cells[i][1]] = id; } }
-  // make sure at least one deep diamond exists
   for (let r = ROWS - 4; r > SURF + 18; r--) if (tile[r][KC] === KIMB) { spec[r][KC] = 'diamond'; break; }
 }
+/* PURITY / QUALITY depends on WHERE a sample was found:
+   - a natural "richness" pattern in the ground (some spots are richer than others)
+   - placer gravels concentrate heavy gold and platinum; the CENTER of a quartz vein is richer than its edge
+   - diamonds deeper in the pipe are better; malachite is richest near the surface in the gossan */
+const GRADES = [['Low', 20, 38], ['Medium', 40, 62], ['High', 65, 90]];
+function gradeAt(r, c, id, zone) {
+  let score = richNoise(c * .35, r * .35) * .65 + Math.random() * .15;
+  if (zone === 'placer' && (id === 'gold' || id === 'platinum')) score += .2;
+  if (zone === 'vein') { const center = back[r][c - 1] === QVEIN && back[r][c + 1] === QVEIN || back[r - 1] && back[r - 1][c] === QVEIN && back[r + 1] && back[r + 1][c] === QVEIN; score += center ? .25 : .05; }
+  if (id === 'diamond' || id === 'kimberlite') score += (r - SURF) / ROWS * .45;
+  if (zone === 'gossan') score += (SURF + 7 - r) * .03;
+  const gi = score < .45 ? 0 : score < .72 ? 1 : 2, [name, lo, hi] = GRADES[gi];
+  return {g:name, gi, pct:Math.round(lo + Math.random() * (hi - lo))};
+}
+
+/* LEVEL 2 GROUND, built by the same processes that make real cliffs (like the Grand Canyon):
+   1. Layers K→F deposited flat, oldest at the bottom (superposition).
+   2. Mountain-building TILTED them, a FAULT broke and shifted them, and a basalt DIKE cut through them.
+   3. EROSION wore the tilted layers down to a flat surface (an unconformity: time is missing here).
+   4. Layers E→A were deposited flat on top. 5. Last, a river carved a CANYON on the east side.  */
+const FOSSIL_U = SURF + 18, FAULT_C = 26, DIKE_C = 21;
+function genFossilWorld() {
+  tile = []; spec = []; dmg = []; ladders = new Set();
+  const upper = r => r <= SURF + 2 ? 28 : r <= SURF + 6 ? 27 : r === SURF + 7 ? 26 : r <= SURF + 12 ? 25 : 24;   // A, B, C, D, E (flat)
+  for (let r = 0; r < ROWS; r++) { tile.push([]); spec.push([]); dmg.push([]);
+    for (let c = 0; c < COLS; c++) { let t = AIR;
+      if (r === SURF) t = GRASS;
+      else if (r > SURF && r < FOSSIL_U) t = upper(r);
+      else if (r >= FOSSIL_U) { const s = (r - FOSSIL_U) + Math.floor(c * .22) + (c >= FAULT_C ? 3 : 0);   // tilted, and shifted across the fault
+        t = s < 5 ? 23 : s < 10 ? 22 : s < 15 ? 21 : s < 20 ? 20 : s < 26 ? 19 : 18; }   // F, G, H, I, J, K
+      if (c === DIKE_C && r >= FOSSIL_U) t = DIKE;          // the dike stops at the erosion surface
+      tile[r].push(t); spec[r].push(null); dmg[r].push(0); } }
+  for (let c = 33; c < COLS; c++) { const d = Math.max(0, Math.round(8 - Math.abs(c - 39) * 1.4));   // river canyon
+    for (let r = SURF; r < SURF + d; r++) tile[r][c] = AIR; if (d > 0) tile[SURF + d][c] = 28; }
+  back = tile.map(row => row.slice());
+  for (const z in FOSSIL_ZONE) { const list = FOSSIL_ZONE[z]; if (!list.length) continue;
+    let cells = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (zoneOfType(tile[r][c]) === z && !(r === SURF + 1)) cells.push([r, c]); shuffle(cells);
+    const want = z === 'fA' || z === 'fB' ? 5 : 7, L = shuffle(list.slice());
+    for (let i = 0; i < want && i < cells.length; i++) spec[cells[i][0]][cells[i][1]] = L[i % L.length]; }
+}
+
 function applyWorldData(W) {
   if (!W || typeof W.tiles !== 'string' || W.tiles.length !== ROWS * COLS) return false;
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = parseInt(W.tiles[r * COLS + c], 36); tile[r][c] = TI[t] || t === AIR ? t : back[r][c]; spec[r][c] = null; dmg[r][c] = 0; }
@@ -612,18 +782,20 @@ function applyWorldData(W) {
 }
 const worldData = () => ({lad:[...ladders], tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y});
 function travel(to) {
-  if (to === SITE || (to === 'gem' && !gemsOpen)) return;
+  if (to === SITE || !levelOpen(to)) return;
   worlds[SITE] = {tile, back, spec, dmg, ladders, px:player.x, py:player.y}; SITE = to; player.onLadder = false; player.climb = null;
   if (worlds[to]) ({tile, back, spec, dmg, ladders} = worlds[to]);
-  else { if (to === 'gem') genGemWorld(); else genWorld(); if (savedWorlds[to]) applyWorldData(savedWorlds[to]); }
+  else { genFor(to); if (savedWorlds[to]) applyWorldData(savedWorlds[to]); }
+  restoreCampGround();
   const l = safeLanding(); player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1; if (tile[SURF][SPAWN_C] === AIR) { player.x = l.x; player.y = l.y; }
   player.vx = player.vy = 0; rope = null; sensed.clear(); if (pet) { pet.x = player.x - 30; pet.y = player.y; }
-  sfx('rope'); toast(to === 'gem' ? '🚙 Welcome to Crystal Ridge Mine! Look for the blue-green kimberlite pipe, the marble layers and the pink pegmatite veins.' : '🚙 Back at Pebble Creek camp.', 6000);
-  if (to === 'gem' && !gemIntroSeen) { gemIntroSeen = true; if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('gemdex', false); toast('💎 Your Gem Dex is open! Find all 6 Crystal Ridge gems. Open it anytime from the 🎒 menu (or press J).', 6000); } }, 600); }
+  sfx('rope'); toast({gem:'🚙 Welcome to Level 3, Crystal Ridge Mine! Look for the blue-green kimberlite pipe, the marble pockets and the pink pegmatite veins.', fossil:'🚙 Welcome to Level 2, Fossil Bluffs! Dig into the cliff’s layers, find fossils, and use them to date each layer.'}[to] || '🚙 Back at Level 1, Pebble Creek.', 6000);
+  if (to === 'fossil' && !fossilIntroSeen) { fossilIntroSeen = true; if (pet) petSay('Fossils! Each layer is a page in Earth’s history book.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('timeguide', false); toast('🕰️ This is your Geologic time guide. Open it anytime (press I). Your 🦴 Fossil Dex is in the 🎒 menu (press Z).', 7000); } }, 600); }
+  if (to === 'gem' && !gemIntroSeen) { gemIntroSeen = true; if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('gemdex', false); toast('💎 Your Gem Dex is open! Find all 10 Crystal Ridge gems and precious minerals. Open it anytime from the 🎒 menu (or press J).', 6000); } }, 600); }
 }
 
 /* ---------- 3. GAME STATE ------------------------------------------ */
-const SPAWN_C = 7;
+const SPAWN_C = 9; // start beside camp, on open ground you can dig
 const player = {x:0, y:0, w:30, h:40, vx:0, vy:0, face:1, onGround:false, mood:'happy', moodT:0};
 let pet = null, bag = [], labIdx = 0, uidN = 0, labResult = null;
 const notebook = []; // finished identifications: tests, guesses and XP
@@ -660,7 +832,10 @@ const MISSIONS = [
   {t:'Complete a Rock Cycle Challenge at the machine.', ok:() => chWins >= 1},
   {t:'Complete the Rock Dex: discover all 30!', ok:() => found.size >= DEX.length},
   {t:'Pass Dr. Rivera’s Final Field Exam at camp.', ok:() => examPassed},
-  {t:'At Crystal Ridge Mine, find all 6 gems for your Gem Dex.', ok:() => gemFound.size >= GEMS.length}
+  {t:'At Level 2 (Fossil Bluffs), find all 12 fossils for your Fossil Dex.', ok:() => fossilDexDone()},
+  {t:'Date every fossil layer in the Level 2 rock column.', ok:() => columnDone()},
+  {t:'Pass Dr. Rivera’s Fossil Field Exam to unlock Level 3.', ok:() => fossilPassed},
+  {t:'At Level 3 (Crystal Ridge Mine), find all 10 gems and precious minerals.', ok:() => gemFound.size >= GEMS.length}
 ];
 
 /* ---------- 4. SOUND (Web Audio, all generated) -------------------- */
@@ -858,6 +1033,64 @@ Object.assign(ART, {
     c.save(); c.translate(50, 86); c.rotate(-.1); const P = polyP([[-13, 0], [-13, -50], [-4, -64], [13, -54], [13, 0]]); c.fillStyle = '#e8a33c'; c.fill(P); c.fillStyle = 'rgba(255,240,200,.45)'; c.fill(polyP([[-13, 0], [-13, -50], [-4, -64], [-4, 0]]));
     c.strokeStyle = 'rgba(80,40,0,.8)'; c.lineWidth = 2; c.stroke(P); c.beginPath(); c.moveTo(-4, -64); c.lineTo(-4, 0); c.moveTo(-13, -50); c.lineTo(13, -54); c.stroke(); c.restore(); shine(c, 44, 36, 5); }
 });
+Object.assign(ART, {
+  gold(c, R) { rockShape(c, R, '#eef0f2', () => dots(c, R, 60, ['#d9dde2', '#ffffff'], .6, 1.6), {path:blobP(R, 50, 70, 40, 22, 10, .15)});
+    const p = blobP(R, 52, 52, 22, 15, 9, .35); const gr = c.createLinearGradient(30, 40, 70, 66); gr.addColorStop(0, '#fff2a8'); gr.addColorStop(.5, '#e6b422'); gr.addColorStop(1, '#a87a10');
+    c.fillStyle = gr; c.fill(p); c.strokeStyle = '#7a5a10'; c.lineWidth = 2; c.stroke(p); for (let i = 0; i < 6; i++) { c.fillStyle = '#e6b422'; c.beginPath(); c.arc(25 + R() * 50, 62 + R() * 18, 1.5 + R() * 2, 0, 7); c.fill(); } shine(c, 44, 46, 5); },
+  silver(c, R) { rockShape(c, R, '#e9edf2', () => dots(c, R, 60, ['#d0d6dd', '#ffffff'], .6, 1.6), {path:blobP(R, 50, 72, 40, 20, 10, .15)});
+    c.lineCap = 'round'; const branch = (x, y, a, len, w) => { if (len < 4) return; const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len; c.strokeStyle = R() < .4 ? '#3a3d44' : '#c9ced6'; c.lineWidth = w; c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke(); branch(x2, y2, a - .5 + R() * .3, len * .7, w * .75); branch(x2, y2, a + .3 + R() * .3, len * .6, w * .7); };
+    branch(40, 70, -1.6, 22, 4); branch(58, 72, -1.2, 18, 3.5); shine(c, 46, 40, 4); },
+  platinum(c, R) { for (let i = 0; i < 5; i++) { const x = 28 + R() * 44, y = 50 + R() * 26, r = 7 + R() * 7, gr = c.createRadialGradient(x - r * .4, y - r * .4, 1, x, y, r); gr.addColorStop(0, '#f4f6f8'); gr.addColorStop(.5, '#a9b0b8'); gr.addColorStop(1, '#5e646c');
+    c.fillStyle = gr; c.beginPath(); c.ellipse(x, y, r, r * .8, R(), 0, 7); c.fill(); c.strokeStyle = '#3a3d44'; c.lineWidth = 1.5; c.stroke(); } shine(c, 40, 50, 4); },
+  malachite(c, R) { const p = blobP(R, 50, 56, 38, 28, 10, .14); c.fillStyle = '#1f8f55'; c.fill(p); c.save(); c.clip(p);
+    for (let k = 0; k < 2; k++) { const cx = 38 + k * 26, cy = 54 + k * 6; for (let rr2 = 32; rr2 > 2; rr2 -= 4) { c.strokeStyle = (rr2 / 4) % 2 ? '#0f6b3c' : '#4cc485'; c.lineWidth = 2.4; c.beginPath(); c.arc(cx, cy, rr2, 0, 7); c.stroke(); } }
+    c.restore(); c.strokeStyle = 'rgba(15,40,25,.7)'; c.lineWidth = 2.5; c.stroke(p); shine(c, 36, 40, 3); }
+});
+// ART: refined products
+function drawBar(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = col[0]; c.strokeStyle = '#3a2a10'; c.lineWidth = 1.5;
+  c.beginPath(); c.moveTo(-14, 6); c.lineTo(14, 6); c.lineTo(10, -6); c.lineTo(-10, -6); c.closePath(); c.fill(); c.stroke(); c.fillStyle = col[1]; c.fillRect(-9, -5, 18, 3); c.restore(); }
+function drawNugget(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s); c.fillStyle = col[0]; c.strokeStyle = '#3a2a10'; c.lineWidth = 1.2; c.beginPath(); c.ellipse(0, 0, 5, 3.5, .4, 0, 7); c.fill(); c.stroke(); c.fillStyle = col[1]; c.beginPath(); c.arc(-1.5, -1, 1.2, 0, 7); c.fill(); c.restore(); }
+function drawCutGem(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = 'rgba(20,20,40,.8)'; c.lineWidth = 1.3;
+  c.fillStyle = col; c.beginPath(); c.moveTo(-12, -3); c.lineTo(-7, -9); c.lineTo(7, -9); c.lineTo(12, -3); c.lineTo(0, 12); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = 'rgba(255,255,255,.45)'; c.beginPath(); c.moveTo(-7, -9); c.lineTo(-3, -3); c.lineTo(3, -3); c.lineTo(7, -9); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-12, -3); c.lineTo(12, -3); c.moveTo(-3, -3); c.lineTo(0, 12); c.lineTo(3, -3); c.stroke(); shine(c, -4, -6, 2.5); c.restore(); }
+// ART: fossils in a slab of their rock (drawn to look like real specimens)
+function slab(c, R, col) { const p = polyP([[8, 40], [22, 22], [70, 18], [92, 34], [90, 72], [60, 86], [14, 78]]); c.fillStyle = col; c.fill(p); c.save(); c.clip(p); dots(c, R, 90, [shade(col, .85), shade(col, 1.1)], .6, 1.5);
+  const gr = c.createRadialGradient(35, 35, 4, 55, 60, 60); gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(0,0,0,.25)'); c.fillStyle = gr; c.fillRect(0, 0, 100, 100); c.restore(); c.strokeStyle = 'rgba(20,20,30,.6)'; c.lineWidth = 2.5; c.stroke(p); }
+const FINK = 'rgba(40,30,20,.75)';
+Object.assign(ART, {
+  trilobite(c, R) { slab(c, R, '#a88c62'); c.fillStyle = '#6b5640'; c.strokeStyle = FINK; c.lineWidth = 1.5;
+    c.beginPath(); c.ellipse(50, 34, 20, 11, 0, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+    for (let i = 0; i < 9; i++) { const w = 18 - i * 1.3, y = 37 + i * 4.2; c.beginPath(); c.ellipse(50, y, w, 2.2, 0, 0, 7); c.fill(); c.stroke(); }
+    c.strokeStyle = 'rgba(255,240,210,.5)'; c.beginPath(); c.moveTo(43, 36); c.lineTo(45, 74); c.moveTo(57, 36); c.lineTo(55, 74); c.stroke(); c.fillStyle = '#2b2218'; c.beginPath(); c.arc(42, 30, 2, 0, 7); c.arc(58, 30, 2, 0, 7); c.fill(); },
+  brachiopod(c, R) { slab(c, R, '#bdb8a0'); c.fillStyle = '#8f8670'; c.strokeStyle = FINK; c.lineWidth = 1.6; c.beginPath(); c.moveTo(50, 70); c.quadraticCurveTo(20, 60, 24, 36); c.quadraticCurveTo(50, 22, 76, 36); c.quadraticCurveTo(80, 60, 50, 70); c.fill(); c.stroke();
+    for (let k = -4; k <= 4; k++) { c.beginPath(); c.moveTo(50, 68); c.lineTo(50 + k * 6.5, 32 - Math.abs(k) * -1); c.stroke(); } },
+  crinoid(c, R) { slab(c, R, '#5a616c'); c.strokeStyle = FINK; c.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const x = 26 + i * 6, y = 62 - i * 3.5; c.fillStyle = i % 2 ? '#c9c2ac' : '#d9d2bc'; c.beginPath(); c.ellipse(x, y, 3, 7, -.5, 0, 7); c.fill(); c.stroke(); }
+    c.fillStyle = '#d9d2bc'; for (const [x, y] of [[70, 70], [30, 38]]) { c.beginPath(); c.arc(x, y, 5, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(x, y, 1.5, 0, 7); c.stroke(); } },
+  placoderm(c, R) { slab(c, R, '#5a616c'); c.fillStyle = '#c9b08a'; c.strokeStyle = FINK; c.lineWidth = 1.8; c.beginPath(); c.moveTo(22, 60); c.quadraticCurveTo(30, 28, 70, 30); c.lineTo(80, 40); c.lineTo(68, 46); c.lineTo(74, 56); c.quadraticCurveTo(50, 72, 22, 60); c.fill(); c.stroke();
+    c.fillStyle = 'rgba(90,70,40,.6)'; for (let i = 0; i < 18; i++) { c.beginPath(); c.arc(30 + R() * 36, 38 + R() * 20, 1.4, 0, 7); c.fill(); } },
+  seedfern(c, R) { slab(c, R, '#4a4644'); c.strokeStyle = '#141212'; c.lineWidth = 2; c.beginPath(); c.moveTo(24, 76); c.quadraticCurveTo(50, 50, 76, 24); c.stroke(); c.fillStyle = '#1a1716';
+    for (let i = 0; i < 9; i++) { const t = i / 9, x = 24 + t * 52, y = 76 - t * 52; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(x + s * 6, y + s * 6 - 2, 5, 3, -.8 + s * .1, 0, 7); c.fill(); } } },
+  mesosaurus(c, R) { slab(c, R, '#b5523a'); c.strokeStyle = '#efe4cc'; c.lineWidth = 2; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(12, 42); c.lineTo(30, 46); c.stroke(); c.beginPath(); c.ellipse(34, 47, 5, 4, 0, 0, 7); c.stroke();
+    c.beginPath(); c.moveTo(38, 48); c.quadraticCurveTo(60, 56, 70, 52); c.quadraticCurveTo(82, 48, 92, 60); c.stroke();
+    for (let i = 0; i < 9; i++) { const x = 42 + i * 3.3, y = 50 + Math.sin(i / 3) * 2; c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x, y + 6); c.stroke(); }
+    c.lineWidth = 1.5; for (const [x, y] of [[44, 56], [64, 58]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y + 10); c.lineTo(x - 8, y + 12); c.stroke(); }
+    c.lineWidth = .8; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(14 + i * 3, 41); c.lineTo(14 + i * 3, 38); c.stroke(); } },
+  glossopteris(c, R) { slab(c, R, '#b5523a'); c.fillStyle = '#2a1a14'; c.beginPath(); c.moveTo(30, 78); c.quadraticCurveTo(18, 40, 54, 20); c.quadraticCurveTo(80, 44, 30, 78); c.fill();
+    c.strokeStyle = 'rgba(200,150,120,.6)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(30, 78); c.quadraticCurveTo(40, 50, 54, 22); c.stroke(); c.lineWidth = .7;
+    for (let i = 0; i < 9; i++) { const t = .15 + i * .09, x = 30 + t * 24, y = 78 - t * 56; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 10, y - 4); c.moveTo(x, y); c.lineTo(x + 10, y + 2); c.stroke(); } },
+  dino(c, R) { slab(c, R, '#d6ad74'); c.fillStyle = '#7a5a3a'; c.strokeStyle = FINK; c.lineWidth = 1.8; c.beginPath(); c.ellipse(50, 58, 16, 13, 0, 0, 7); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(44, 47); c.lineTo(47, 22); c.lineTo(53, 22); c.lineTo(56, 47); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#5a3f28'; c.beginPath(); c.ellipse(50, 58, 7, 6, 0, 0, 7); c.fill();
+    c.fillStyle = 'rgba(30,20,10,.5)'; for (let i = 0; i < 14; i++) { c.beginPath(); c.arc(40 + R() * 20, 50 + R() * 16, .9, 0, 7); c.fill(); } },
+  ammonite(c, R) { slab(c, R, '#ece8dc'); c.strokeStyle = '#6b5a40'; c.lineWidth = 2.2; c.beginPath(); for (let a = 0; a < 15; a += .15) { const r = 2 + a * 1.75; c.lineTo(50 + Math.cos(a) * r, 52 + Math.sin(a) * r); } c.stroke();
+    c.lineWidth = 1; for (let a = 2; a < 15; a += .55) { const r1 = 2 + (a - 6.28) * 1.75, r2 = 2 + a * 1.75; if (r1 < 0) continue; c.beginPath(); c.moveTo(50 + Math.cos(a) * r1, 52 + Math.sin(a) * r1); c.quadraticCurveTo(50 + Math.cos(a + .1) * (r1 + r2) / 2 + 2, 52 + Math.sin(a + .1) * (r1 + r2) / 2, 50 + Math.cos(a) * r2, 52 + Math.sin(a) * r2); c.stroke(); } },
+  shark(c, R) { slab(c, R, '#ece8dc'); c.fillStyle = '#3a3a44'; c.strokeStyle = FINK; c.lineWidth = 1.6; c.beginPath(); c.moveTo(34, 66); c.lineTo(50, 24); c.lineTo(66, 66); c.quadraticCurveTo(50, 60, 34, 66); c.fill(); c.stroke();
+    c.fillStyle = '#9a8a70'; c.beginPath(); c.moveTo(32, 66); c.quadraticCurveTo(50, 58, 68, 66); c.lineTo(64, 74); c.quadraticCurveTo(50, 70, 36, 74); c.closePath(); c.fill(); c.stroke(); shine(c, 46, 42, 3); },
+  horse(c, R) { slab(c, R, '#8d8f5c'); c.fillStyle = '#e8dcc0'; c.strokeStyle = FINK; c.lineWidth = 1.6; rr(c, 38, 40, 24, 22, 5); c.fill(); c.stroke(); c.fillStyle = '#c9b88f';
+    for (const [x, y] of [[44, 46], [56, 46], [44, 56], [56, 56]]) { c.beginPath(); c.arc(x, y, 3.5, 0, 7); c.fill(); c.stroke(); } c.fillStyle = '#b8a37a'; c.fillRect(41, 62, 6, 8); c.fillRect(53, 62, 6, 8); },
+  mammoth(c, R) { slab(c, R, '#8f7f63'); c.fillStyle = '#d9cbb0'; c.strokeStyle = FINK; c.lineWidth = 1.6; rr(c, 20, 34, 60, 34, 8); c.fill(); c.stroke();
+    c.strokeStyle = '#7a6a50'; c.lineWidth = 2; for (let i = 0; i < 10; i++) { const x = 25 + i * 5.4; c.beginPath(); c.moveTo(x, 37); c.quadraticCurveTo(x + 2, 51, x, 65); c.stroke(); } }
+});
 function drawSpecimen(c, s, S) {
   const R = rng(hashStr(s.id)); c.save(); c.scale(S / 100, S / 100);
   c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(50, 91, 36, 6, 0, 0, 7); c.fill();
@@ -971,8 +1204,22 @@ function playerZone() {
 }
 
 /* ---------- 8. DIGGING AND FINDING --------------------------------- */
+/* CAMP GROUND: the top layer of blocks under camp objects can't be dug,
+   so the tent, Dr. Rivera, the machine, the signs and the jeep never float. */
+function campObjects() {
+  const span = (x0, x1) => { const out = []; for (let c = Math.floor(x0 / T); c <= Math.floor(x1 / T); c++) out.push(c); return out; };
+  const list = [['the tent', span(6.2 * T - 30, 6.2 * T + 70)], ['the camp sign', span(10.5 * T - 3, 10.5 * T + 3)], ['Dr. Rivera', span(DOC_X - 8, DOC_X + 8)],
+    [SITE === 'gem' ? 'the refinery' : SITE === 'fossil' ? 'the fossil prep lab' : 'the Rock Cycle Machine', span(MACH_X - 56, MACH_X + 56)], ['the trail sign', span(trailCol() * T - 3, trailCol() * T + 3)]];
+  if (examPassed) list.push(['the jeep', span(JEEP_X - 40, JEEP_X + 40)]);
+  return list;
+}
+function campObjectAt(r, c) { if (r !== SURF) return null; const o = campObjects().find(([, cols]) => cols.includes(c)); return o ? o[0] : null; }
+function restoreCampGround() { for (const [, cols] of campObjects()) for (const c of cols) if (c >= 0 && c < COLS && tile[SURF][c] === AIR) { tile[SURF][c] = back[SURF][c]; ladders.delete(LK(SURF, c)); } }
+let campNagT = 0;
 function hit(r, c) {
   const t = tile[r][c]; if (t === AIR) return;
+  const obj = campObjectAt(r, c);
+  if (obj) { digCool = .3; if (time > campNagT) { campNagT = time + 3; toast(`⛺ You can’t dig here: this ground holds up ${obj}. Try digging a little to the side.`, 3500); } return; }
   if (tool.broken) { digCool = .4; brokenNag(); return; }
   digCool = 0.2; digAnim = 0.2;
   if (t === MAGMA) { ouch(); return; }
@@ -987,7 +1234,10 @@ function hit(r, c) {
 }
 function foundSpecimen(r, c) {
   const sid = spec[r][c]; spec[r][c] = null;
-  const sp = {uid:++uidN, sid, zone:zoneOfType(back[r][c]), depth:depthKm(r), done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[], site:SITE};
+  if (SP[sid] && SP[sid].kind === 'fossil') { const zf = zoneOfType(back[r][c]); fbag.push({uid:++uidN, sid, zone:zf, depth:depthKm(r), done:new Set(), tries:0, stage:'id'}); gainEvidence(); sfx('find');
+    burst(c * T + T / 2, r * T + T / 2, ['#fff', '#ffcc33', '#c98a4b'], 24); floatText(c * T + T / 2, r * T, 'Fossil!'); setMood('wow', 1.6);
+    toast(`🦴 You found a fossil in Layer ${LAY[zf] ? LAY[zf].L : '?'}! Press F (or 🔬 → Fossil lab) to identify it and date the layer.`); if (pet) { petSay('A fossil! Let’s figure out how old this layer is!', 'wow', 3.5); pet.hop = .4; } return; }
+  const zn = zoneOfType(back[r][c]), sp = {uid:++uidN, sid, zone:zn, depth:depthKm(r), grade:SITE === 'gem' ? gradeAt(r, c, sid, zn) : null, done:new Set(), notes:[], tries:0, fb:null, guess:'', wrong:[], site:SITE};
   bag.push(sp); labIdx = bag.length - 1; gainEvidence();
   sfx('find'); burst(c * T + T / 2, r * T + T / 2, ['#fff', '#ffcc33', '#3a86c8'], 24);
   floatText(c * T + T / 2, r * T, 'Mystery specimen!'); setMood('wow', 1.6);
@@ -1263,6 +1513,7 @@ function petAnswer(q) {
 }
 // Depth range of each layer, using 1 block = 100 m
 function zoneDepth(z) {
+  if (LAY[z] || z === 'fdike') return 'at different depths (the lower layers are tilted)';
   if (SITE === 'gem' && (z === 'kimberlite' || z === 'pegmatite')) return z === 'kimberlite' ? 'from the surface down; diamonds deeper than 1.8 km' : 'in veins at many depths';
   const rng = (SITE === 'gem' ? {metamorphic:[SURF + 3, SURF + 30], igneous:[SURF + 31, ROWS - 1]} : {sedimentary:[SURF + 3, SED_END], metamorphic:[SED_END + 1, MET_END], igneous:[MET_END + 1, MAG_START - 1]})[z];
   if (!rng) return z === 'volcanic' ? 'at the surface, on the east side' : 'near the surface';
@@ -1273,6 +1524,9 @@ function whyHere(z) {
     metamorphic:'Why here? Deeper down, heat and pressure change rocks without melting them.',
     igneous:'Why here? Magma cooled slowly this deep, so crystals grew big.',
     volcanic:'Why here? Lava cooled fast at the surface, so crystals stayed tiny or never formed.',
+    placer:'Why here? Flowing water drops the heaviest grains first, so gold and platinum collect at the bottom of stream gravels.',
+    vein:'Why here? Hot water flowing through cracks left quartz and precious metals behind as it cooled.',
+    gossan:'Why here? Air and water weathered metal minerals near the surface into rust and green copper minerals.',
     kimberlite:'Why here? Kimberlite magma rushed up from the mantle so fast that diamonds survived the trip.',
     pegmatite:'Why here? Slow-cooling, watery magma in cracks grew giant crystals and rare gems.'}[z] || '';
 }
@@ -1312,14 +1566,15 @@ function identify() {
     const gain = xpFor(sp), lvBefore = levelOf(xp);
     xp += gain.xp; idTotal++; idBy[sp.zone] = (idBy[sp.zone] || 0) + 1;
     const fset = a.gem ? gemFound : found, isNew = !fset.has(a.id); fset.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
+    if (sp.grade && procKind(a.id)) addRaw(a.id, sp.grade, sp.zone); // rough material for the Level 3 refinery
     notebook.push({uid:sp.uid, sid:a.id, zone:sp.zone, depth:sp.depth, tests:[...sp.done], wrong:sp.wrong.slice(), xp:gain.xp, lines:gain.lines});
     stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++; gainEvidence();
-    labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew};
+    labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew, grade:sp.grade && procKind(a.id) ? sp.grade : null, zone:sp.zone};
     bag.splice(labIdx, 1); labIdx = Math.max(0, Math.min(labIdx, bag.length - 1));
     sfx('right'); burst(player.x + player.w / 2, player.y, ['#ffcc33', '#fff', '#3a86c8'], 30); setMood('happy', 3);
     if (pet) { petSay(`We did it! ${a.name}!`, 'happy', 4); pet.hop = .4; }
     const lvAfter = levelOf(xp);
-    if (lvAfter > lvBefore) setTimeout(() => { toast(`⬆️ Level up! You earned the ${LEVELS[lvAfter][1]} badge! 🏅 (see Levels and badges)`, 5000); sfx('right'); }, 900);
+    if (lvAfter > lvBefore) setTimeout(() => { toast(`⬆️ Level up! You earned the ${LEVELS[lvAfter][1]} badge! 🏅 (see the 🏆 Trophy room)`, 5000); sfx('right'); }, 900);
     checkMissions(); checkAssignID(a, sp);
   } else {
     sfx('wrong'); setMood('think', 2); if (pet) petSay('Hmm, let’s check the evidence!', 'think', 3);
@@ -1441,7 +1696,7 @@ function animate(A, done) {
     drawRC(t, A); if (t < 1) requestAnimationFrame(stepF); else done(); };
   requestAnimationFrame(stepF);
 }
-function addXP(n) { const lv = levelOf(xp); xp += n; if (levelOf(xp) > lv) toast(`⬆️ Level up! You earned the ${LEVELS[levelOf(xp)][1]} badge! 🏅 (see Levels and badges)`, 5000); }
+function addXP(n) { const lv = levelOf(xp); xp += n; if (levelOf(xp) > lv) toast(`⬆️ Level up! You earned the ${LEVELS[levelOf(xp)][1]} badge! 🏅 (see the 🏆 Trophy room)`, 5000); }
 
 /* ----- Free mode: change one of YOUR rocks (it really changes, like an evolution) ----- */
 let rc = {phase:'pick'}, rcCorrect = 0;
@@ -1685,7 +1940,7 @@ function renderLab() {
     el.innerHTML = `<div class="result"><div class="detail good pop" role="status"><img src="${spriteURL[a.id]}" alt="${a.name}"><div>
       <h3>✔ Specimen #${labResult.uid} is ${a.name}!</h3><p>${a.kind === 'mineral' ? 'A mineral.' : 'A ' + a.rtype.toLowerCase() + ' rock.'} ${a.info}</p>
       <p><b>+${labResult.xp} XP</b><br>${labResult.lines.join('<br>')}</p>
-      <p>${labResult.isNew ? '📚 New Rock Dex entry! ' : ''}📦 Added to your Collection Box. 📓 Your tests are saved in the Lab notebook.</p></div></div>
+      <p>${labResult.isNew ? '📚 New Dex entry! ' : ''}📦 Added to your Collection Box. 📓 Your tests are saved in the Lab notebook.</p>${labResult.grade ? `<p class="fb good" style="margin:6px 0">⚗️ <b>Rough material saved for the refinery</b> (from the ${ZONES[labResult.zone].short}). Its purity depends on where you found it. Assay it at the refinery to find out!</p>` : ''}</div></div>
       ${nxt ? `<button id="labNext">🔬 Test specimen #${nxt.uid} next</button> ` : ''}<button data-open="notebook">📓 Open lab notebook</button> <button data-close>⛏️ Back to digging</button></div>`;
     return;
   }
@@ -1739,7 +1994,7 @@ function renderDex(sel) {
     : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>${gemsOpen ? '<p><button data-open="gemdex">💎 Open the Gem Dex</button></p>' : ''}`;
 }
 function renderBox() {
-  const have = DEX.concat(GEMS).filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
+  const have = DEX.concat(GEMS, FOSSILS).filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
   $('#boxBody').innerHTML = have.length
     ? `<p class="big">You have ${total} specimen${total > 1 ? 's' : ''} (${have.length} kinds) and ${xp} XP. Choose one to be your pet rock!</p><div class="grid">${have.map(s => `<div class="card"><img src="${spriteURL[s.id]}" alt="${s.name}"><b>${s.name}</b> ×${counts[s.id]}<br><span class="tag">${s.rtype}</span><br><br>${pet && pet.sid === s.id ? '<b>🐾 Your pet!</b>' : `<button data-pet="${s.id}">🐾 Make my pet</button>`}</div>`).join('')}</div>`
     : '<p class="big">Your box is empty. Identify a mystery specimen in the 🧪 Lab and it will appear here.</p>';
@@ -1772,8 +2027,9 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#keysModal .keys').innerHTML + '</div>';
 }
-const RENDER = {bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {fossillab:() => { fResult = null; renderFossilLab(); }, fossildex:() => renderFossilDex(), timeguide:renderTimeGuide, jeep:renderJeep, refguide:renderRefGuide, refinery:() => { refState = null; renderRefinery(); }, bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
+  if (id === 'fossildex' && !fossilIntroSeen) { toast('🦴 The Fossil Dex opens when you reach Level 2 (Fossil Bluffs).'); return; }
   if (id === 'gemdex' && !gemIntroSeen) { toast('💎 The Gem Dex opens when you reach Crystal Ridge Mine.'); return; }
   if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
   if (id === 'machine' && ch && ch.phase === 'run') ch.phase = 'play';
@@ -1798,6 +2054,7 @@ function setMotion(v) { reduceMotion = v; document.body.classList.toggle('reduce
 
 /* ---------- 13. INPUT ---------------------------------------------- */
 addEventListener('keydown', e => {
+  if (!$('#adminModal').hidden) { if (e.key === 'Escape') closeAdmin(); else if (e.key === 'Enter' && e.target.id === 'adminCode') tryAdmin(); return; }
   if (e.key === 'Escape' && !$('#keysModal').hidden) { $('#keysModal').hidden = true; $('#keysBtn').focus(); return; }
   if (e.key === 'Escape') { if (document.querySelector('.mbtn[aria-expanded="true"]')) { const m = document.querySelector('.mbtn[aria-expanded="true"]'); closeMenus(); m.focus(); return; } closeTop(); return; }
   if (e.target.matches && e.target.matches('input,select,textarea')) { if (e.key === 'Enter' && e.target.id === 'petName') saveName(); return; }
@@ -1805,7 +2062,7 @@ addEventListener('keydown', e => {
   if (current === 'title') return;
   if (!current && !document.activeElement.closest('.mlist')) { if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault(); keys[k] = true; }
   if (e.repeat) return;
-  const map = {t:'bag', j:'gemdex', v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
+  const map = {f:'fossillab', z:'fossildex', i:'timeguide', t:'bag', j:'gemdex', v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
   if (map[k]) { if (current === map[k]) closeTop(); else openPanel(map[k], false); }
   if (k === 'r') ropeUp();
   if (k === 'm') setSound(!soundOn);
@@ -1845,6 +2102,11 @@ document.addEventListener('click', e => {
   if (b && b.dataset.doc) { docClick(b.dataset.doc); return; }
   if (b && b.dataset.exam) { examClick(b.dataset.exam); return; }
   if (b && b.dataset.trophy) { trophySel = b.dataset.trophy === 'close' ? null : b.dataset.trophy; const top = $('#levels').scrollTop; renderLevels(); $('#levels').scrollTop = top; const f = $(trophySel ? '#levelsBody [data-trophy="close"]' : '#levelsBody .shelfbtn'); if (f) { f.focus({preventScroll:true}); if (trophySel) f.closest('.museum').scrollIntoView({block:'nearest'}); } return; }
+  if (b && b.dataset.ref) { refClick(b.dataset.ref); return; }
+  if (b && b.dataset.fl) { flClick(b.dataset.fl); return; }
+  if (b && b.dataset.fdex) { renderFossilDex(b.dataset.fdex); $('#fossildex').scrollTop = 0; return; }
+  if (b && b.dataset.fx) { fxClick(b.dataset.fx); return; }
+  if (b && b.dataset.go) { closeTop(); travel(b.dataset.go); return; }
   if (b && b.dataset.bag) { bagClick(b.dataset.bag); return; }
   if (b && b.dataset.gem) { renderGemDex(b.dataset.gem); $('#gemdex').scrollTop = 0; return; }
   if (b && b.dataset.av) { avClick(b.dataset.av); return; }
@@ -1863,6 +2125,8 @@ document.addEventListener('click', e => {
   if (b.id === 'idBtn') identify();
   else if (b.id === 'nameBtn') saveName();
   else if (b.id === 'startBtn') { audioInit(); $('#title').classList.remove('open'); current = null; $('#game').focus(); toast('🎯 ' + MISSIONS[0].t, 4500); }
+  else if (b.id === 'adminGo') tryAdmin();
+  else if (b.id === 'adminCancel') closeAdmin();
   else if (b.id === 'keysBtn') { $('#keysModal').hidden = false; $('#keysClose').focus(); }
   else if (b.id === 'keysClose') { $('#keysModal').hidden = true; $('#keysBtn').focus(); }
   else if (b.id === 'bSound') setSound(!soundOn);
@@ -1902,11 +2166,11 @@ function resize() {
 }
 addEventListener('resize', resize);
 function drawSky() {
-  const top = cam.y, bot = SURF * T + T; if (top > bot) return;
-  const gr = g.createLinearGradient(0, -4 * T, 0, SURF * T); gr.addColorStop(0, SITE === 'gem' ? '#5b4f9e' : '#3a86c8'); gr.addColorStop(1, SITE === 'gem' ? '#f6c7a1' : '#c9e6f6');
+  const top = cam.y, bot = SURF * T + (SITE === 'fossil' ? 10 : 1) * T; if (top > bot) return; // at Level 2 the sky shows down into the river canyon
+  const gr = g.createLinearGradient(0, -4 * T, 0, SURF * T); gr.addColorStop(0, {gem:'#5b4f9e', fossil:'#e39a5a'}[SITE] || '#3a86c8'); gr.addColorStop(1, {gem:'#f6c7a1', fossil:'#fbe7c4'}[SITE] || '#c9e6f6');
   g.fillStyle = gr; g.fillRect(cam.x, top, viewW, bot - top);
   g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(cam.x + viewW * .82, SURF * T - 6.5 * T, 34, 0, 7); g.fill();
-  for (const [par, amp, base, col] of (SITE === 'gem' ? [[.3, 90, 190, '#8c7fa8'], [.55, 50, 90, '#6f8a6a']] : [[.3, 40, 150, '#a9d48c'], [.55, 26, 70, '#86c26a']])) {
+  for (const [par, amp, base, col] of (SITE === 'gem' ? [[.3, 90, 190, '#8c7fa8'], [.55, 50, 90, '#6f8a6a']] : SITE === 'fossil' ? [[.3, 60, 170, '#c97f55'], [.55, 34, 80, '#b5a26a']] : [[.3, 40, 150, '#a9d48c'], [.55, 26, 70, '#86c26a']])) {
     g.fillStyle = col; g.beginPath(); g.moveTo(cam.x, bot);
     for (let x = cam.x; x <= cam.x + viewW + 20; x += 20) { const xx = x - cam.x * par; g.lineTo(x, SURF * T - base + Math.sin(xx / 110) * amp + Math.sin(xx / 47) * amp * .3); }
     g.lineTo(cam.x + viewW + 20, bot); g.closePath(); g.fill();
@@ -1927,12 +2191,12 @@ function drawCamp() {
   g.fillStyle = '#7a5233'; g.fillRect(sx - 3, sy - 52, 6, 52);
   g.fillStyle = '#f2f7f5'; rr(g, sx - 70, sy - 92, 140, 44, 8); g.fill(); g.strokeStyle = '#1c2541'; g.stroke();
   g.fillStyle = '#1c2541'; g.font = 'bold 14px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(SITE === 'gem' ? 'Crystal Ridge' : 'Pebble Creek', sx, sy - 79); g.fillText(SITE === 'gem' ? 'Mine Camp 💎' : 'Survey Camp ⛏', sx, sy - 61);
-  const vx = SITE === 'gem' ? KC * T : (VC - 9) * T;
+  g.fillText({gem:'Crystal Ridge', fossil:'Fossil Bluffs'}[SITE] || 'Pebble Creek', sx, sy - 79); g.fillText({gem:'Mine Camp 💎', fossil:'Dig Camp 🦴'}[SITE] || 'Survey Camp ⛏', sx, sy - 61);
+  const vx = trailCol() * T;
   g.fillStyle = '#7a5233'; g.fillRect(vx - 3, sy - 52, 6, 52); g.fillStyle = '#f2f7f5'; rr(g, vx - 64, sy - 92, 128, 44, 8); g.fill(); g.stroke();
-  g.fillStyle = '#1c2541'; g.fillText(SITE === 'gem' ? 'Kimberlite pipe' : 'Old volcano', vx, sy - 79); g.fillText(SITE === 'gem' ? '↓ dig here ↓' : 'this way →', vx, sy - 61);
-  drawMachine();
-  if (examPassed) { drawJeep(g, JEEP_X, SURF * T, 1); if (nearJeep() && !current) bubble(JEEP_X, SURF * T - 56, `Press E to drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'}`); }
+  g.fillStyle = '#1c2541'; g.fillText({gem:'Kimberlite pipe', fossil:'River canyon'}[SITE] || 'Old volcano', vx, sy - 79); g.fillText({gem:'↓ dig here ↓', fossil:'layers exposed →'}[SITE] || 'this way →', vx, sy - 61);
+  if (SITE === 'gem') drawRefinery(); else if (SITE === 'fossil') drawFossilStation(); else drawMachine();
+  if (examPassed) { drawJeep(g, JEEP_X, SURF * T, 1); if (nearJeep() && !current) bubble(JEEP_X, SURF * T - 56, 'Press E to drive to another level'); }
   drawColleague(g, DOC_X, SURF * T, .62, tool.broken && !reduceMotion);
   if (tool.broken || (assign && assign.status === 'done')) { g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(DOC_X, SURF * T - 62, 10, 0, 7); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', DOC_X, SURF * T - 61); }
   if (nearColleague() && !current) bubble(DOC_X, SURF * T - 50, tool.broken ? 'Press E: Dr. Rivera can give you a new tool!' : assign && assign.status === 'done' ? 'Press E to report your assignment!' : 'Press E to talk to Dr. Rivera');
@@ -1956,13 +2220,15 @@ function drawMachine() {
 }
 function nearMachine() { const cx = player.x + player.w / 2, feet = player.y + player.h; return Math.abs(cx - MACH_X) < T * 1.8 && feet <= SURF * T + 2 && feet > SURF * T - 2 * T; }
 function tryMachine() {
+  if (SITE === 'fossil') { toast('♻️ The Rock Cycle Machine is at the Level 1 camp. At Level 2, use the 🦴 Fossil lab.'); return; }
+  if (SITE === 'gem') { toast('♻️ The Rock Cycle Machine is at the Level 1 camp. At Level 3, use the ⚗️ Gem & Ore Refinery.'); return; }
   if (nearMachine()) { openPanel('machine', false); return; }
   toast('♻️ Walk to the Rock Cycle Machine at camp to use it. Press R to rope up to camp.');
 }
 function drawTile(x, y, t, r, c) {
   g.fillStyle = TI[t].c; rr(g, x + 1, y + 1, T - 2, T - 2, 8); g.fill();
   const q = k => hr(r, c, k);
-  const TEX = {[SOIL]:[['#6e4428', '#a06b42'], 5, 2.6], [SAND]:[['#ecc08c', '#b07a45'], 12, 1.4], [LIME]:[['#b5ac8e', '#e0dac8'], 8, 1.6], [GRAN]:[['#e59a8a', '#1f1f22', '#f4f0ea'], 14, 2.6], [BASA]:[['#2a2b30', '#55565e'], 8, 1.6], [LAT]:[['#7d3a1e', '#c4703f'], 6, 2.4], [KIMB]:[['#7d8a86', '#2b3633', '#7fae6b', '#a3967a'], 12, 2.8], [PEG]:[['#f6efe8', '#e39a8a', '#1e1e22', '#c9c4bd'], 6, 5.5]}[t];
+  const TEX = {[SOIL]:[['#6e4428', '#a06b42'], 5, 2.6], [SAND]:[['#ecc08c', '#b07a45'], 12, 1.4], [LIME]:[['#b5ac8e', '#e0dac8'], 8, 1.6], [GRAN]:[['#e59a8a', '#1f1f22', '#f4f0ea'], 14, 2.6], [BASA]:[['#2a2b30', '#55565e'], 8, 1.6], [LAT]:[['#7d3a1e', '#c4703f'], 6, 2.4], [KIMB]:[['#7d8a86', '#2b3633', '#7fae6b', '#a3967a'], 12, 2.8], [PEG]:[['#f6efe8', '#e39a8a', '#1e1e22', '#c9c4bd'], 6, 5.5], [GRAVEL]:[['#c9bda5', '#6c6458', '#b09a7a', '#7f8a90'], 9, 4.2], [QVEIN]:[['#ffffff', '#cfd6de', '#e6b422'], 7, 2.2], [GOSSAN]:[['#e0a33c', '#5c2a14', '#c8692e', '#2a9d8f'], 10, 2.4]}[t] || (t >= 18 ? [[shade(TI[t].c, .78), shade(TI[t].c, 1.18)], 8, 2] : undefined);
   if (TEX) for (let i = 0; i < TEX[1]; i++) { g.fillStyle = TEX[0][i % TEX[0].length]; g.beginPath(); g.arc(x + 6 + q(i) * (T - 12), y + 6 + q(i + 50) * (T - 12), TEX[2] * (.6 + q(i + 99) * .6), 0, 7); g.fill(); }
   g.lineWidth = 2;
   if (t === GRASS) { g.fillStyle = '#6cc04a'; rr(g, x + 1, y + 1, T - 2, 16, 8); g.fill(); g.fillRect(x + 1, y + 9, T - 2, 8); g.fillStyle = '#57a63b'; for (let i = 0; i < 4; i++) { const bx = x + 5 + i * 11 + q(i) * 4; g.beginPath(); g.moveTo(bx, y + 17); g.lineTo(bx + 3, y + 22); g.lineTo(bx + 6, y + 17); g.fill(); } }
@@ -2007,7 +2273,7 @@ function petSense(dt) {
 }
 /* ART: layer details. Dashed lines mark where each rock layer begins. */
 function drawLayerLines(x0, x1) {
-  const lines = SITE === 'gem' ? [[SURF + 3, 'Metamorphic rock (gneiss and marble) begins', 'metamorphic'], [SURF + 31, 'Granite base begins', 'igneous']] : [[SURF + 3, 'Sedimentary layers begin', 'sedimentary'], [SED_END + 1, 'Metamorphic zone begins', 'metamorphic'], [MET_END + 1, 'Igneous zone begins', 'igneous']];
+  const lines = SITE !== 'main' ? [] /* Level 3 layers vary naturally, so there are no straight boundary lines */ : [[SURF + 3, 'Sedimentary layers begin', 'sedimentary'], [SED_END + 1, 'Metamorphic zone begins', 'metamorphic'], [MET_END + 1, 'Igneous zone begins', 'igneous']];
   g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'bottom';
   for (const [row, label, z] of lines) {
     const y = row * T; if (y < cam.y - T || y > cam.y + viewH + T) continue;
@@ -2096,12 +2362,12 @@ function draw() {
 let hudT = 0, hudPx = 50;
 function updateHUD() {
   const d = depthKm((player.y + player.h) / T), z = playerZone(), temp = Math.round(15 + 25 * d);
-  const site = SITE === 'gem' ? 'Crystal Ridge Mine' : 'Pebble Creek';
-  $('#locBox').innerHTML = `📍 ${site}<br>⛏️ ${d.toFixed(1)} km · ${ZONES[z].name} · 🌡️ ~${temp} °C`;
-  $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : (tool.unbreakable ? '🪓 ' : '🔨 ') + toolName()} · 📚 ${found.size}/${DEX.length}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
-  $('#mission').textContent = mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!';
+  const site = `Level ${siteLvl(SITE)} · ${siteName(SITE)}`;
+  $('#locBox').innerHTML = `📍 ${site}<br>⛏️ ${d.toFixed(1)} km · ${ZONES[z].name}${colConf[z] ? ' (' + perName(colConf[z].period) + ')' : ''} · 🌡️ ~${temp} °C`;
+  $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : (tool.unbreakable ? '🪓 ' : '🔨 ') + toolName()} · 📚 ${found.size}/${DEX.length}${examPassed ? ` · 🦴 ${fossilFound.size}/${FOSSILS.length}` : ''}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
+  $('#mission').textContent = (testMode ? '🧪 TEST MODE · ' : '') + (mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!');
   $('#assignLine').textContent = assign && assign.status === 'active' ? `📋 Assignment: ${assign.text}` : assign && assign.status === 'done' ? '📋 Assignment done: report to Dr. Rivera at camp!' : '';
-  $('#bGemDex').hidden = !gemIntroSeen; checkTrophies();
+  $('#bGemDex').hidden = !gemIntroSeen; $('#bFossilDex').hidden = !fossilIntroSeen; checkTrophies();
   hudPx = $('#hud').offsetHeight; const hh = hudPx + 'px'; if (document.documentElement.style.getPropertyValue('--hudH') !== hh) document.documentElement.style.setProperty('--hudH', hh); // keep windows below the top bar
   $('#bagN').textContent = bag.length ? `(${bag.length})` : '';
 }
@@ -2143,6 +2409,7 @@ function renderReport() {
     ${card('🏆 Rock cycle challenges', `${chDone} / ${CHALLENGES.length}`, `Stars: ${chStars} / ${CHALLENGES.length * 3}`)}
     ${card('🧠 Science checks', `${stats.expOk} / ${stats.exps} correct`, 'Explaining why each rock changed')}
     ${card('🔬 Science vault', `${VAULT.filter(v => vault[v.id].status === 'won').length} / ${VAULT.length} prizes`, 'Won with science questions')}
+    ${examPassed ? card('🦴 Fossil Dex', `${fossilFound.size} / ${FOSSILS.length}`, `Layers dated: ${DATED_LAYERS.filter(z => colConf[z]).length} / ${DATED_LAYERS.length}`) : ''}
     ${gemsOpen ? card('💎 Gem Dex', `${gemFound.size} / ${GEMS.length}`, 'Crystal Ridge Mine') : card('🎓 Final Field Exam', examPassed ? 'Passed' : 'Not yet', 'Complete the Rock Dex, then see Dr. Rivera')}
     ${card('📋 Field assignments', `${stats.assigns || 0} completed`, assign && assign.status === 'active' ? 'Current: ' + assign.text : 'Get one from Dr. Rivera at camp')}
     ${card('🏆 Trophies', `${earned.size} / ${TROPHIES.length}`, '<button data-open="levels">🏆 Open the Trophy room</button>')}
@@ -2160,13 +2427,13 @@ function snapshot() {
     rcPaths:[...rcPaths], rcTried:[...rcTried], rcSeen:[...rcSeen.values()], visited:[...visited], edited:editedFlag,
     pet:pet ? {sid:pet.sid, name:pet.name} : null, avatar:{...avatar}, tool:{...tool}, assign:assign ? {type:assign.type, grp:assign.grp, text:assign.text, status:assign.status, sid:assign.sid, depth:assign.depth, zone:assign.zone} : null, evidence, vault, vaultAsked:[...vaultAsked],
     shop:{spent:shopState.spent, owned:[...shopState.owned], hat:shopState.hat, glasses:shopState.glasses, display:[...shopState.display]},
-    bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong})),
+    bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong, grade:b.grade, site:b.site})),
     notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
-    site:SITE, gemsOpen, examPassed, gemFound:[...gemFound], earned:[...earned], earnedAt, gemIntroSeen,
-    world:worldData(), world2:(() => { const other = SITE === 'gem' ? 'main' : 'gem', w = worlds[other]; if (!w) return savedWorlds[other] || null; const keep = {tile, spec, ladders}; tile = w.tile; spec = w.spec; ladders = w.ladders; const d = worldData(); tile = keep.tile; spec = keep.spec; ladders = keep.ladders; return d; })()
+    raw:raw.slice(), treasure, rec, assayStats, site:SITE, gemsOpen, examPassed, fossilPassed, fossilIntroSeen, fossilFound:[...fossilFound], colConf, fbag:fbag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries})), gemFound:[...gemFound], earned:[...earned], earnedAt, gemIntroSeen,
+    world:worldData(), worlds2:Object.fromEntries(['main', 'fossil', 'gem'].filter(o => o !== SITE).map(o => { const w = worlds[o]; if (!w) return [o, savedWorlds[o] || null]; const keep = {tile, spec, ladders}; tile = w.tile; spec = w.spec; ladders = w.ladders; const d = worldData(); tile = keep.tile; spec = keep.spec; ladders = keep.ladders; return [o, d]; }))
   };
 }
-function saveSig() { return String(xp) + '|' + earned.size + '|' + SITE + gemFound.size + (examPassed ? 'E' : '') + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
+function saveSig() { return String(xp) + '|' + fossilFound.size + Object.keys(colConf).length + fbag.length + (fossilPassed ? 'F' : '') + '|' + assayStats.n + '|' + raw.length + '|' + treasure.gold + treasure.gems.length + '|' + earned.size + '|' + SITE + gemFound.size + (examPassed ? 'E' : '') + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
 function downloadSave() {
   const payload = snapshot(), body = JSON.stringify(payload);
   const file = {game:'rock-hound', version:1, savedAt:new Date().toISOString(), check:hashStr(body + '|rock-hound'), payload};
@@ -2197,7 +2464,7 @@ function applySave(file) {
   visited.clear(); visited.add('surface'); (P.visited || []).forEach(z => { if (ZONES[z]) visited.add(z); });
   bag = (P.bag || []).filter(b => b && isId(b.sid) && ZONES[b.zone]).map(b => {
     const done = new Set((b.done || []).filter(t => TB[t]));
-    return {uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done, notes:notesFor(b.sid, [...done]), tries:num(b.tries, 0, 99, 0), fb:null, guess:'', wrong:(b.wrong || []).filter(isId)};
+    return {uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done, notes:notesFor(b.sid, [...done]), tries:num(b.tries, 0, 99, 0), fb:null, guess:'', wrong:(b.wrong || []).filter(isId), site:b.site === 'gem' ? 'gem' : 'main', grade:b.grade && GRADES[b.grade.gi] ? {g:GRADES[b.grade.gi][0], gi:b.grade.gi, pct:num(b.grade.pct, 1, 99, 30)} : null};
   });
   notebook.length = 0; (P.notebook || []).forEach(e => { if (e && isId(e.sid) && ZONES[e.zone]) notebook.push({uid:num(e.uid, 1, 1e6, 1), sid:e.sid, zone:e.zone, depth:num(e.depth, 0, 99, 0),
     tests:(e.tests || []).filter(t => TB[t]), wrong:(e.wrong || []).filter(isId), xp:num(e.xp, 0, 999, 0), lines:(e.lines || []).slice(0, 5).map(l => String(l).slice(0, 200))}); });
@@ -2217,13 +2484,21 @@ function applySave(file) {
     assign.text = AS.type === 'rock' ? `Bring me ${GRP_NAME[assign.grp || 'igneous']} rock: identify one.` : ATYPE[AS.type].make().text; if (assign.type === 'rock' && !assign.grp) assign.grp = 'igneous'; if (assign.status === 'done' && !assign.sid) assign.status = 'active'; }
   pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
   earned.clear(); (P.earned || []).forEach(id => { if (TROPHIES.some(t => t.id === id)) earned.add(id); }); for (const k in earnedAt) delete earnedAt[k]; for (const id of earned) { const d = P.earnedAt && P.earnedAt[id]; if (typeof d === 'string' && !isNaN(Date.parse(d))) earnedAt[id] = d; } gemIntroSeen = !!P.gemIntroSeen;
-  examPassed = !!P.examPassed; gemsOpen = !!P.gemsOpen || examPassed; exam = null;
+  raw.length = 0; (P.raw || []).forEach(it => { if (it && isId(it.id) && procKind(it.id)) { const gi = num(it.gi, 0, 2, 0); raw.push({id:it.id, gi, g:GRADES[gi][0], pct:num(it.pct, 1, 99, 30), zone:ZONES[it.zone] ? it.zone : 'kimberlite'}); } });
+  const TR = P.treasure || {}; for (const k of ['gold', 'silver', 'platinum', 'copper']) treasure[k] = num(TR[k], 0, 1e7, 0); treasure.gems = (TR.gems || []).filter(gm => gm && GEMCUT[gm.id]).map(gm => ({id:gm.id, ct:num(gm.ct, 0, 99, 1), q:String(gm.q || 'Eye-clean').slice(0, 30)}));
+  const RC = P.rec || {}; REC_IDS.forEach(id => { const o = RC[id] || {}; rec[id] = {best:num(o.best, 0, 100, 0), n:num(o.n, 0, 1e6, 0), made:num(o.made, 0, 1e7, 0), goals:[0, 1, 2].map(i => !!(o.goals && o.goals[i]))}; });
+  assayStats.n = num(P.assayStats && P.assayStats.n, 0, 1e6, 0); assayStats.ok = Math.min(assayStats.n, num(P.assayStats && P.assayStats.ok, 0, 1e6, 0));
+  examPassed = !!P.examPassed; fossilPassed = !!P.fossilPassed; gemsOpen = fossilPassed; exam = null; fx = null;
+  fossilIntroSeen = !!P.fossilIntroSeen; fossilFound.clear(); (P.fossilFound || []).forEach(id => { if (SP[id] && SP[id].kind === 'fossil') fossilFound.add(id); });
+  for (const k in colConf) delete colConf[k]; for (const z in (P.colConf || {})) { const o = P.colConf[z]; if (LAY[z] && o && (PER[o.period] || o.period === 'kpg')) colConf[z] = {period:o.period, by:String(o.by || '').slice(0, 120)}; }
+  fbag.length = 0; (P.fbag || []).forEach(b => { if (b && SP[b.sid] && SP[b.sid].kind === 'fossil' && LAY[b.zone]) fbag.push({uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done:new Set((b.done || []).filter(k => FTESTS.some(t => t[0] === k))), tries:num(b.tries, 0, 99, 0), stage:'id'}); }); fIdx = 0; fResult = null;
   gemFound.clear(); (P.gemFound || []).forEach(id => { if (isId(id) && SP[id].gem) gemFound.add(id); });
-  SITE = P.site === 'gem' && gemsOpen ? 'gem' : 'main'; worlds.main = worlds.gem = null; for (const k in savedWorlds) delete savedWorlds[k];
-  if (SITE === 'gem') genGemWorld(); else genWorld();
-  if (P.world2) savedWorlds[SITE === 'gem' ? 'main' : 'gem'] = P.world2;
+  SITE = ['fossil', 'gem'].includes(P.site) && levelOpen(P.site) ? P.site : 'main'; worlds.main = worlds.gem = worlds.fossil = null; for (const k in savedWorlds) delete savedWorlds[k];
+  genFor(SITE);
+  if (P.worlds2) for (const o in P.worlds2) if (P.worlds2[o] && ['main', 'fossil', 'gem'].includes(o)) savedWorlds[o] = P.worlds2[o];
+  if (P.world2) savedWorlds[SITE === 'gem' ? 'main' : 'gem'] = savedWorlds[SITE === 'gem' ? 'main' : 'gem'] || P.world2;
   const W = P.world;
-  if (applyWorldData(W)) {
+  if (applyWorldData(W)) { restoreCampGround();
     player.x = num(W.px, 0, COLS * T - player.w, player.x); player.y = num(W.py, -3 * T, ROWS * T, player.y);
     const r = Math.floor((player.y + player.h / 2) / T), c = Math.floor((player.x + player.w / 2) / T);
     if (!tile[r] || tile[r][c] !== AIR) { const l = safeLanding(); player.x = l.x; player.y = l.y; } // never load inside rock
@@ -2243,7 +2518,7 @@ filePick.addEventListener('change', () => {
       const edited = applySave(JSON.parse(rd.result));
       if (current === 'title') { audioInit(); $('#title').classList.remove('open'); current = null; }
       else if (current) closeTop();
-      drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML();
+      drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); applyTestMode();
       $('#game').focus(); sfx('find');
       toast(`📂 Welcome back, Rock Hound! ${found.size} Dex entries and ${xp} XP loaded.${edited ? ' ⚠️ This file was changed outside the game.' : ''}`, 5500);
     } catch (err) { toast('⚠️ That file couldn’t be loaded. Choose a Rock Hound save file (it ends in .json).', 5000); }
@@ -2410,6 +2685,7 @@ const XP_RULES = [
   ['🧠 Explain your path', '+20 XP for a correct science check after a challenge (+5 on replays).'],
   ['📋 Field Guide Quiz', 'Correct answers: ⭐ Remember +10, ⭐⭐ Explain +15, ⭐⭐⭐ Apply & analyze +20 (first quiz of each session).'],
   ['📋 Field assignments', '+50 XP when you finish Dr. Rivera’s assignment and choose the right evidence on your first try (+25 on a later try).'],
+  ['⚗️ Level 3 refinery', '+30 XP for the right process, +15 XP for an accurate assay estimate, and +25 / +50 / +75 XP for bronze, silver and gold refining goals on each material.'],
   ['🔬 Science vault', 'The best prizes (toys, trophies and gem displays) can’t be bought. Reach a milestone, then answer a science question to win them.'],
   ['🪙 Geo-Coins', 'Every XP you earn also gives you 1 Geo-Coin to spend in the 🛍️ Rock shop. Spending never lowers your XP or level.']
 ];
@@ -2673,7 +2949,7 @@ function drawShelf() {
 function vaultPreview(v) { const cv = document.createElement('canvas'); cv.width = cv.height = 120; const c = cv.getContext('2d'); c.fillStyle = ['', '#e2f0fb', '#fff4cc', '#efe6fb'][v.tier]; c.fillRect(0, 0, 120, 120); drawVault(c, v.id, 60, 100, 2.4); return cv.toDataURL(); }
 const vPrevCache = {}; const vPrev = v => vPrevCache[v.id] || (vPrevCache[v.id] = vaultPreview(v));
 function vaultCard(v) {
-  const st = vault[v.id], [have, need] = v.prog(), met = have >= need, left = MAX_TRIES - st.tries;
+  const st = vault[v.id], [have, need] = v.prog(), met = testMode || have >= need, left = MAX_TRIES - st.tries;
   let action;
   if (st.status === 'won') action = `<b>✔ Won!</b><br><button data-open="levels">🏆 See it in the Trophy room</button>`;
   else if (st.status === 'gone') action = '<b>🔒 No longer available</b><br><small>All 5 tries were used.</small>';
@@ -2701,7 +2977,7 @@ function vaultHTML() {
 function vaultClick(val) {
   const [act, arg] = val.split(':');
   if (act === 'try') { const v = VID[arg], st = vault[arg], [h, n] = v.prog();
-    if (st.status !== 'open' || h < n || (st.evAt !== null && evidence <= st.evAt)) return;
+    if (st.status !== 'open' || (h < n && !testMode) || (st.evAt !== null && evidence <= st.evAt && !testMode)) return;
     const q = vaultQuestion(v.tier);
     if (!q) { toast('🔍 You’ve seen every question we can make from your discoveries right now. Discover more, then try again!', 5000); return; }
     vaultAsked.add(q.q); vaultActive = {id:arg, q, answered:null}; }
@@ -2734,7 +3010,7 @@ function wearTool() {
 }
 function brokenNag() { if (nagT > 0) return; nagT = 4; toast('🔨 Your tool is broken. Press R to rope up to camp, then talk to Dr. Rivera (press E next to her).', 4500); }
 // Dr. Rivera stands at camp, between the tent and the camp sign
-const DOC_X = 8.9 * T;
+const DOC_X = 8.5 * T;
 function nearColleague() { const cx = player.x + player.w / 2, feet = player.y + player.h; return Math.abs(cx - DOC_X) < T * 1.3 && feet <= SURF * T + 2 && feet > SURF * T - 2 * T; }
 function drawColleague(c, x, by, sc, wave) {
   c.save(); c.translate(x, by); c.scale(-sc, sc); c.lineJoin = 'round'; c.lineCap = 'round'; const ink = '#1c2541', skin = '#c68a5e';
@@ -2991,21 +3267,21 @@ function examSubmit() {
   renderColleague(); const f = $('#colleagueBody .goalcard select, #colleagueBody .goalcard input, #colleagueBody .goalcard textarea'); f && f.focus({preventScroll:true});
 }
 function passExam() {
-  examPassed = true; gemsOpen = true; exam = null; addXP(300);
+  setTimeout(restoreCampGround, 0); // the jeep arrives: keep its ground solid
+  examPassed = true; exam = null; addXP(300);
   tool.tier = TOOLS.length - 1; tool.hits = 1e9; tool.broken = false; tool.unbreakable = true;
   sfx('find'); burst(player.x, player.y, ['#ffcc33', '#fff', '#8b5cc4', '#3a86c8'], 40);
-  toast('🎓 You passed the Final Field Exam! +300 XP, an UNBREAKABLE rock axe, and a field jeep in your 🎒 tool bag to drive to Crystal Ridge Mine anytime!', 8000);
-  if (pet) petSay('We did it! Diamonds, here we come!', 'happy', 5);
+  toast('🎓 You passed the Final Field Exam! +300 XP, an UNBREAKABLE rock axe, and a field jeep (press K) to drive to Level 2: Fossil Bluffs!', 8000);
+  if (pet) petSay('We did it! Fossils, here we come!', 'happy', 5);
   renderColleague();
 }
 function finalHTML() {
-  const done = DEX.every(s => found.has(s.id));
+  const done = testMode || DEX.every(s => found.has(s.id));
   if (examPassed) return `<div class="goalcard"><h3>🎓 Master Rock Hound: field assignment</h3>
-    <p>“You passed my Final Field Exam! Your new assignment is <b>Crystal Ridge Mine</b>: a kimberlite pipe with <b>diamonds</b>, marble with <b>rubies and sapphires</b>, and pegmatite veins with <b>emeralds and topaz</b>. Find all ${GEMS.length} gems for your 💎 Gem Dex!”</p>
-    <p>💎 Gems found: <b>${gemFound.size} / ${GEMS.length}</b></p>
-    <p>🚙 Your field jeep is in your 🎒 tool bag (press T, or K to drive). Travel between the two dig sites anytime, no questions asked!</p><p><button data-bag="jeep">🚙 Drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'} now</button></p></div>`;
+    <p>“You passed my Final Field Exam! Your new assignment is <b>Level 2: Fossil Bluffs</b>, a cliff of rock layers full of fossils. Identify the fossils, use them to date each layer, and figure out the cliff’s history. Pass my Fossil Field Exam there to unlock Level 3.”</p>
+    <p>🚙 Your field jeep is in your 🎒 tool bag (press K). Once a level is open, you can travel back and forth anytime, no questions asked!</p><p><button data-bag="jeep">🚙 Choose a level to drive to</button></p></div>` + fossilFinalHTML();
   if (!done) return `<div class="goalcard"><h3>🎓 Final Field Exam (locked)</h3><p>“When your Rock Dex is complete (${found.size} / ${DEX.length}), come back for my Final Field Exam. Pass it and I’ll send you to a secret dig site full of rare gems.”</p></div>`;
-  if (!exam) return `<div class="goalcard"><h3>🎓 Final Field Exam</h3><p>“Your Rock Dex is complete. Impressive! My Final Field Exam has <b>5 parts</b>: analyze lab data, apply the rock cycle, build a claim with evidence and reasoning, read a rock outcrop, and explain in your own words. Take your time and use the guide and chart. Pass and you’ll earn <b>300 XP</b>, an <b>unbreakable rock axe</b>, and a <b>field jeep</b> to drive to <b>Crystal Ridge Mine</b> anytime.”</p><p><button data-exam="start">🎓 Start the Final Field Exam</button></p></div>`;
+  if (!exam) return `<div class="goalcard"><h3>🎓 Final Field Exam</h3><p>“Your Rock Dex is complete. Impressive! My Final Field Exam has <b>5 parts</b>: analyze lab data, apply the rock cycle, build a claim with evidence and reasoning, read a rock outcrop, and explain in your own words. Take your time and use the guide and chart. Pass and you’ll earn <b>300 XP</b>, an <b>unbreakable rock axe</b>, and a <b>field jeep</b> to drive to <b>Level 2: Fossil Bluffs</b>.”</p><p><button data-exam="start">🎓 Start the Final Field Exam</button></p></div>`;
   return examHTML();
 }
 function examClick(v) {
@@ -3026,7 +3302,7 @@ function drawPetPlay(px, py) {
 function interact() {
   if (nearColleague()) { openPanel('colleague', false); return; }
   if (nearJeep()) { driveJeep(); return; }
-  if (nearMachine()) { openPanel('machine', false); return; }
+  if (nearMachine()) { openPanel(SITE === 'gem' ? 'refinery' : SITE === 'fossil' ? 'fossillab' : 'machine', false); return; }
   toast('Walk up to Dr. Rivera or the Rock Cycle Machine at camp, then press E. (Press R to rope up to camp.)');
 }
 
@@ -3044,8 +3320,7 @@ function drawJeep(c, x, G, s) {   // ART: the field jeep parked at camp
 }
 function driveJeep() {
   if (!examPassed) { toast('🚙 The jeep is earned by passing Dr. Rivera’s Final Field Exam.'); return; }
-  if (current) closeTop();
-  travel(SITE === 'gem' ? 'main' : 'gem');
+  openPanel('jeep', !!current);
 }
 // Take down the nearest ladder (the whole connected ladder) next to you
 function takeDownLadder() {
@@ -3067,7 +3342,7 @@ function renderBag() {
     ${item('🪜', 'Ladder', 'Place it in a dug shaft; it grows up to the rock above or the surface. Climb one block at a time with ↑ ↓. Dig sideways with ← →, or dig UP with ↑ when rock is above you (the ladder grows into the new space). Walk into a ladder from a tunnel and you’ll grab it instead of falling.', '<button data-bag="ladder">🪜 Place a ladder (U)</button> <button data-bag="unladder">🧹 Take down a ladder (Y)</button>')}
     ${item('🪢', 'Rope', 'The camp crew pulls you all the way out to solid ground.', '<button data-bag="rope">🪢 Rope up to camp (R)</button>')}
     ${item('🧱', 'Rebuild', 'Put back the rock that was dug out of a space.', '<button data-bag="build">🧱 Build rock back (B)</button>')}
-    ${examPassed ? item('🚙', 'Field jeep', `Drive between Pebble Creek and Crystal Ridge Mine anytime. You’re at <b>${SITE === 'gem' ? 'Crystal Ridge Mine' : 'Pebble Creek'}</b>.`, `<button data-bag="jeep">🚙 Drive to ${SITE === 'gem' ? 'Pebble Creek' : 'Crystal Ridge Mine'} (K)</button>`)
+    ${examPassed ? item('🚙', 'Field jeep', `Drive to any level you’ve unlocked, anytime. You’re at <b>Level ${siteLvl(SITE)}: ${siteName(SITE)}</b>.`, `<button data-bag="jeep">🚙 Choose a level (K)</button>`)
       : item('🔒', 'Field jeep (locked)', 'Complete the Rock Dex and pass Dr. Rivera’s Final Field Exam to earn a jeep for traveling to a gem mine.', '')}
   </div>`;
 }
@@ -3075,6 +3350,443 @@ function bagClick(v) {
   if (v === 'jeep') { driveJeep(); return; }
   closeTop();
   if (v === 'ladder') placeLadder(); else if (v === 'unladder') takeDownLadder(); else if (v === 'rope') ropeUp(); else if (v === 'build') tryBuild(true);
+}
+
+/* ---------- 15l. LEVEL 2 REFINERY: rough material in, valuable products out ----------
+   ORES: crush, CONCENTRATE (student chooses the method), smelt, cast into bars and nuggets.
+   ROUGH GEMS: student chooses an abrasive HARDER than the gem (Mohs rule), then cut and polish.
+   KIMBERLITE: crush and sort to recover rough diamonds.
+   How much you get depends on the sample's purity, which depends on where it was found.   */
+const raw = [], treasure = {gold:0, silver:0, platinum:0, copper:0, gems:[]}; let refSel = null, refState = null, refinedCount = 0;
+const METAL = {gold:{metal:'gold', name:'gold', method:'gravity', col:['#e6b422', '#fff2a8']}, platinum:{metal:'platinum', name:'platinum', method:'gravity', col:['#a9b0b8', '#f4f6f8']},
+  silver:{metal:'silver', name:'silver', method:'flotation', col:['#c9ced6', '#ffffff']}, malachite:{metal:'copper', name:'copper', method:'leach', col:['#c8692e', '#f2b48a']}};
+const GEMCUT = {diamond:'#e6f3fb', ruby:'#c1121f', sapphire:'#1f4fbf', emerald:'#1f9d55', topaz:'#e8a33c'};
+const METHODS = [['gravity', '💧 Gravity separation', 'Shake the crushed ore with water; the heaviest grains sink and are collected.'],
+  ['flotation', '🫧 Froth flotation', 'Stir crushed ore in water with soapy chemicals; air bubbles carry certain metal minerals to the top.'],
+  ['leach', '🧪 Acid leaching', 'Soak crushed ore in dilute acid so the metal dissolves into the liquid, then recover it.']];
+const ABRASIVES = [['diamond', '💎 Diamond grit', 10], ['corundum', '🔺 Corundum grit', 9], ['quartz', '🏖️ Quartz sand', 7], ['steel', '🔩 Steel file', 6.5]];
+const SORTS = [['xray', '🔦 Crush, then X-ray sort (diamonds glow) and grease tables (diamonds stick)'], ['furnace', '🔥 Melt the kimberlite in a furnace'], ['magnet', '🧲 Pull the diamonds out with a magnet'], ['water', '💧 Dissolve the kimberlite in water']];
+const procKind = id => METAL[id] ? 'ore' : GEMCUT[id] ? 'gem' : id === 'kimberlite' ? 'kimb' : null;
+function addRaw(id, grade, zone) { if (procKind(id)) raw.push({id, g:grade.g, gi:grade.gi, pct:grade.pct, zone}); }
+function drawFossilStation() {   // ART: a canopy tent with a prep table, brushes and a bone
+  const x = MACH_X, G = SURF * T; g.strokeStyle = '#1c2541'; g.lineWidth = 3;
+  g.fillStyle = '#e8711c'; g.beginPath(); g.moveTo(x - 60, G - 70); g.lineTo(x + 60, G - 70); g.lineTo(x + 50, G - 90); g.lineTo(x - 50, G - 90); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#7a5233'; for (const px of [x - 54, x + 54]) { g.fillRect(px - 3, G - 70, 6, 70); } g.fillRect(x - 46, G - 34, 92, 8); g.strokeRect(x - 46, G - 34, 92, 8); g.fillRect(x - 40, G - 26, 6, 26); g.fillRect(x + 34, G - 26, 6, 26);
+  g.fillStyle = '#efe4cc'; g.beginPath(); g.ellipse(x - 10, G - 38, 14, 4, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(x - 24, G - 38, 4, 0, 7); g.arc(x + 4, G - 38, 4, 0, 7); g.fill();
+  g.strokeStyle = '#7a5233'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 18, G - 36); g.lineTo(x + 34, G - 46); g.stroke();
+  g.fillStyle = '#f2f7f5'; rr(g, x - 70, G - 122, 140, 24, 8); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Fossil Prep Lab 🦴', x, G - 110);
+  if (nearMachine() && !current) bubble(x, G - 126, 'Press E to open the Fossil lab');
+}
+function nearRefinery() { return SITE === 'gem' && nearMachine(); }
+function drawRefinery() {
+  const x = MACH_X - 56, y = SURF * T - 108; g.lineWidth = 3; g.strokeStyle = '#1c2541';
+  g.fillStyle = '#6e5a8a'; rr(g, x, y + 16, 112, 92, 14); g.fill(); g.stroke();
+  g.fillStyle = '#9aa3ad'; g.beginPath(); g.moveTo(x + 8, y + 16); g.lineTo(x + 38, y + 16); g.lineTo(x + 30, y + 2); g.lineTo(x + 14, y + 2); g.closePath(); g.fill(); g.stroke(); // crusher hopper
+  g.fillStyle = '#4a4040'; g.fillRect(x + 80, y - 22, 16, 38); g.strokeRect(x + 80, y - 22, 16, 38); // furnace chimney
+  if (!reduceMotion) { g.fillStyle = 'rgba(220,220,230,.6)'; for (let i = 0; i < 3; i++) { const t = (time * .6 + i / 3) % 1; g.beginPath(); g.arc(x + 88 + Math.sin(t * 6) * 4, y - 26 - t * 30, 5 + t * 6, 0, 7); g.fill(); } }
+  g.fillStyle = '#e8711c'; rr(g, x + 62, y + 34, 40, 30, 8); g.fill(); g.stroke(); g.fillStyle = reduceMotion ? '#ffcc33' : `rgba(255,${200 + Math.sin(time * 6) * 40 | 0},60,1)`; rr(g, x + 70, y + 42, 24, 14, 5); g.fill();
+  g.fillStyle = '#9cc8ea'; rr(g, x + 10, y + 34, 44, 30, 8); g.fill(); g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 16px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⚙️', x + 32, y + 49);
+  g.fillStyle = '#ffcc33'; rr(g, x + 22, y + 76, 68, 22, 6); g.fill(); g.stroke(); drawBar(g, x + 56, y + 88, .9, ['#e6b422', '#fff2a8']);
+  g.fillStyle = '#f2f7f5'; rr(g, x - 18, y - 30, 148, 24, 8); g.fill(); g.lineWidth = 2.5; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.fillText('Gem & Ore Refinery', x + 56, y - 18);
+  if (nearMachine() && !current) bubble(MACH_X, y - 34, 'Press E to use the refinery');
+}
+function gramsOf(it, rec) { return Math.round(200 * it.pct / 100 * rec); }   // each sample = 200 g of ore
+function treasureHTML() {
+  const t = treasure, metals = [['gold', 'Gold'], ['silver', 'Silver'], ['platinum', 'Platinum'], ['copper', 'Copper']];
+  return `<h3>💰 Your treasure</h3><div class="shelfrow">${metals.map(([k, n]) => { const g2 = t[k], bars = Math.floor(g2 / 100), nug = Math.floor((g2 % 100) / 10);
+    return `<div class="shelfitem"><canvas class="tcv" data-metal="${k}" width="110" height="60" aria-hidden="true"></canvas><b>${n}: ${g2} g</b><small>${bars} bar${bars === 1 ? '' : 's'} (100 g) + ${nug} nugget${nug === 1 ? '' : 's'} (10 g)</small></div>`; }).join('')}
+    ${t.gems.length ? t.gems.map((gm, i) => `<div class="shelfitem"><canvas class="tcv" data-gemcut="${i}" width="110" height="60" aria-hidden="true"></canvas><b>${SP[gm.id].name}</b><small>${gm.ct} carats · ${gm.q}</small></div>`).join('') : '<div class="shelfitem"><b>No cut gems yet</b><small>Cut rough gems in the refinery</small></div>'}</div>`;
+}
+function paintTreasure(root) {
+  root.querySelectorAll('canvas.tcv').forEach(cv => { const c = cv.getContext('2d'); c.clearRect(0, 0, 110, 60);
+    if (cv.dataset.metal) { const k = cv.dataset.metal, gm = treasure[k], col = METAL[Object.keys(METAL).find(id => METAL[id].metal === k)].col, bars = Math.min(4, Math.floor(gm / 100)), nug = Math.min(9, Math.floor((gm % 100) / 10));
+      for (let i = 0; i < bars; i++) drawBar(c, 22 + i * 22, 40 - (i % 2) * 6, 1, col); for (let i = 0; i < nug; i++) drawNugget(c, 12 + i * 11, 53, 1.4, col); if (!bars && !nug) { c.fillStyle = '#9aa3ad'; c.font = '13px Verdana'; c.textAlign = 'center'; c.fillText('none yet', 55, 34); } }
+    else { const gm = treasure.gems[+cv.dataset.gemcut]; const n = Math.max(1, Math.min(4, Math.round(gm.ct))); for (let i = 0; i < n; i++) drawCutGem(c, 22 + i * 24, 30, Math.min(1.6, 1 + gm.ct / 10), GEMCUT[gm.id]); } });
+}
+/* ASSAY: measure a rough sample BEFORE refining, then compare your estimate with the result.
+   Ores: density. Weigh the sample in air and in water: SG = weight in air ÷ (weight in air − weight in water).
+   A sample is metal mixed with quartz (SG 2.65), so a higher SG means more metal.
+   Gems: count inclusions with a 10× loupe. Kimberlite: count indicator minerals.   */
+const QUARTZ_SG = 2.65;
+const sgMix = (metalSG, p) => 1 / (p / metalSG + (1 - p) / QUARTZ_SG);   // density of a metal + quartz mixture (p = fraction of metal by mass)
+const BANDS = [[20, 40], [40, 60], [60, 80], [80, 100]];
+const bandOf = pct => Math.max(0, Math.min(3, Math.floor((pct - 20) / 20)));
+function assayData(it) {
+  const k = procKind(it.id);
+  if (k === 'ore') { const sg = sgMix(SP[it.id].sg, it.pct / 100), water = Math.round((200 - 200 / sg) * 10) / 10; return {air:200, water, sg:Math.round(sg * 100) / 100}; }
+  if (k === 'gem') return {inc:[[5, 8], [2, 4], [0, 1]][it.gi].reduce((a, b) => a + Math.floor(Math.random() * (b - a + 1)), 0)};
+  return {ind:[[0, 3], [4, 7], [8, 12]][it.gi].reduce((a, b) => a + Math.floor(Math.random() * (b - a + 1)), 0)};
+}
+// RECORDS AND GOALS for each material
+const REC_IDS = ['gold', 'silver', 'platinum', 'malachite', 'diamond', 'ruby', 'sapphire', 'emerald', 'topaz', 'kimberlite'];
+const rec = {}; REC_IDS.forEach(id => rec[id] = {best:0, n:0, made:0, goals:[false, false, false]});
+const assayStats = {n:0, ok:0};
+const GOAL_XP = [25, 50, 75];
+const goalText = id => procKind(id) === 'gem' ? ['Cut your first one', 'Cut an eye-clean stone (Medium grade or better) with the right abrasive', 'Cut a FLAWLESS stone (High grade) with the right abrasive']
+  : procKind(id) === 'kimb' ? ['Process your first sample', 'Recover a diamond from Medium-grade kimberlite', 'Recover 2 or more diamonds from one sample']
+  : ['Refine your first sample', 'Refine a sample that is 40%+ pure with the right method', 'Refine a sample that is 65%+ pure with the right method'];
+const FIND_TIP = {gold:'Look at the bottom of the buried stream gravels (placer) and in the CENTER of white quartz veins.', silver:'Look in white quartz veins; the center of a vein is richer than its edge.',
+  platinum:'Look in the buried stream gravels (placer); heavy grains settle there.', malachite:'Look in the rusty gossan near the surface; the closer to the surface, the richer.',
+  diamond:'Dig DEEP in the kimberlite pipe, or refine kimberlite to recover rough diamonds.', ruby:'Look in marble pockets in the metamorphic rock, and in stream gravels.', sapphire:'Look in marble pockets in the metamorphic rock, and in stream gravels.',
+  emerald:'Look in the pink pegmatite dikes.', topaz:'Look in the pink pegmatite dikes and granite.', kimberlite:'Deeper kimberlite holds more diamonds.'};
+const MAKE_TIP = {ore:'Choose the concentrating method that matches the mineral’s properties (95% recovered instead of 30%).', gem:'Use an abrasive HARDER than the gem; a Medium or High grade rough gives a bigger, clearer stone.', kimb:'Use X-ray sorting and grease tables; high-grade kimberlite gives more diamonds.'};
+function recordRefine(it, ok, made, extra) {
+  const r = rec[it.id]; if (!r) return []; r.n++; r.made += made; r.best = Math.max(r.best, it.pct);
+  const k = procKind(it.id), hit = [true, k === 'kimb' ? ok && it.gi >= 1 && extra >= 1 : ok && it.pct >= 40, k === 'kimb' ? ok && extra >= 2 : ok && it.pct >= 65], got = [];
+  hit.forEach((h, i) => { if (h && !r.goals[i]) { r.goals[i] = true; got.push(i); addXP(GOAL_XP[i]); } });
+  return got;
+}
+function recordsHTML() {
+  const unit = id => procKind(id) === 'gem' ? 'carats' : procKind(id) === 'kimb' ? 'diamonds' : 'g';
+  return `<h3>📈 Records and goals</h3><p style="margin:0 0 6px">Assay accuracy: <b>${assayStats.ok} / ${assayStats.n}</b> estimates correct. Goals: 🥉 +25 XP · 🥈 +50 XP · 🥇 +75 XP (once each).</p>
+  <div class="scroll"><table><tr><th>Material</th><th>Best purity</th><th>Refined</th><th>Made</th><th>Goals</th><th>Next goal and tips</th></tr>${REC_IDS.map(id => { const r = rec[id], k = procKind(id), next = r.goals.findIndex(g2 => !g2);
+    return `<tr><td><b>${SP[id].name}</b></td><td>${r.n ? r.best + '%' : '—'}</td><td>${r.n}</td><td>${Math.round(r.made * 10) / 10} ${unit(id)}</td><td style="font-size:20px;white-space:nowrap">${r.goals.map((g2, i) => g2 ? ['🥉', '🥈', '🥇'][i] : '▫️').join(' ')}</td>
+      <td>${next < 0 ? '🏆 All goals met!' : `<b>${['🥉', '🥈', '🥇'][next]} ${goalText(id)[next]}</b>`}<br><small>🔎 Better raw material: ${FIND_TIP[id]}<br>⚗️ More product: ${MAKE_TIP[k]}</small></td></tr>`; }).join('')}</table></div>`;
+}
+function renderRefinery() {
+  const el = $('#refineryBody');
+  const guideBtn = '<button data-open="refguide">📘 Open the Refining guide</button>';
+  if (SITE !== 'gem') { el.innerHTML = `<p class="big">The Gem & Ore Refinery is at the Level 3 camp (Crystal Ridge Mine). ${guideBtn}</p>` + treasureHTML() + recordsHTML(); paintTreasure(el); return; }
+  let h = `<p style="margin-top:0">Every sample goes through 3 steps: <b>1. Assay</b> (measure it and estimate its purity), <b>2. Choose a process</b>, <b>3. Compare</b> your estimate with the result. ${guideBtn}</p>`;
+  if (refState) {
+    const it = refState.it, s = SP[it.id], k = procKind(it.id), A = refState.assay;
+    h += `<div class="detail"><img src="${spriteURL[s.id]}" alt="" style="width:110px;height:110px"><div><h3>${s.name} (rough sample)</h3><p style="margin:2px 0">Found in the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}. Purity: <b>${refState.done ? it.pct + '% (' + it.g + ' grade)' : 'unknown until you measure it'}</b></p>`;
+    h += stepsBar(['Assay', 'Process', 'Compare'], refState.done ? 2 : refState.est === null ? 0 : 1);
+    if (refState.est === null) {
+      if (k === 'ore') h += `<p class="big"><b>Step 1, density assay:</b> weigh the ${SP[it.id].name.toLowerCase()} sample in air and then hanging in water.</p>
+        <table style="max-width:520px"><tr><th>Weight in air</th><th>Weight in water</th><th>Specific gravity (SG)</th></tr><tr><td>${A.air} g</td><td>${A.water} g</td><td>${refState.showSG ? `<b>${A.air} ÷ (${A.air} − ${A.water}) = ${A.sg}</b>` : `<button data-ref="sg">🧮 Calculate SG</button>`}</td></tr></table>
+        <p>Find this SG in the 📘 Refining guide’s <b>${METAL[it.id].name}</b> density table. <b>Estimate the purity:</b></p><div class="choice">${BANDS.map(([lo, hi], i) => `<button data-ref="est:${i}">${lo}–${hi}% ${METAL[it.id].name}</button>`).join('')}</div>`;
+      else if (k === 'gem') h += `<p class="big"><b>Step 1, loupe inspection:</b> with a 10× magnifying loupe you count <b>${A.inc} inclusion${A.inc === 1 ? '' : 's'}</b> (tiny trapped crystals, bubbles or cracks).</p>
+        <p>Use the 📘 Refining guide’s clarity table. <b>Estimate the gem’s grade:</b></p><div class="choice">${['Low (included)', 'Medium (eye-clean)', 'High (flawless)'].map((n, i) => `<button data-ref="est:${i}">${n}</button>`).join('')}</div>`;
+      else h += `<p class="big"><b>Step 1, indicator count:</b> in a 1 kg sample you count <b>${A.ind}</b> indicator minerals (red garnets and black chromite grains that travel with diamonds).</p>
+        <p>Use the 📘 Refining guide’s indicator table. <b>Estimate how diamond-rich it is:</b></p><div class="choice">${['Low', 'Medium', 'High'].map((n, i) => `<button data-ref="est:${i}">${n}</button>`).join('')}</div>`;
+    } else if (!refState.done) {
+      h += `<p style="margin:4px 0">Your estimate: <b>${k === 'ore' ? BANDS[refState.est].join('–') + '%' : ['Low', 'Medium', 'High'][refState.est]}</b> (you’ll see the real result after processing).</p>`;
+      if (k === 'ore') h += `<p class="big"><b>Step 2: crushing is automatic. Which method will CONCENTRATE the ${METAL[it.id].name} best?</b> Hint: think about the mineral’s density and what your fizz test showed.</p><div class="choice" style="grid-template-columns:1fr">${METHODS.map(([id, n, d]) => `<button data-ref="m:${id}">${n}<br><small>${d}</small></button>`).join('')}</div>`;
+      else if (k === 'gem') h += `<p class="big"><b>Step 2: which abrasive can cut and polish ${s.name} (Mohs hardness ${s.hd})?</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${ABRASIVES.map(([id, n, hh]) => `<button data-ref="a:${id}">${n} (hardness ${hh})</button>`).join('')}</div>`;
+      else h += `<p class="big"><b>Step 2: how do miners get diamonds out of kimberlite?</b></p><div class="choice" style="grid-template-columns:1fr">${SORTS.map(([id, n]) => `<button data-ref="s:${id}">${n}</button>`).join('')}</div>`;
+    }
+    if (!refState.done) h += `<p><button data-ref="cancel">↩ Choose a different sample</button></p>`;
+    else h += `<canvas id="refCv" width="640" height="200" aria-label="Refinery animation"></canvas><div class="fb ${refState.ok ? 'good' : 'bad'} pop" role="status">${refState.msg}</div><p><button data-ref="cancel">⚗️ Refine another sample</button></p>`;
+    h += '</div></div>';
+  } else {
+    h += `<h3>🪨 Rough materials to refine (${raw.length})</h3>${raw.length ? `<div class="grid">${raw.map((it, i) => `<div class="card"><img src="${spriteURL[it.id]}" alt="" style="width:80px;height:80px"><b>${SP[it.id].name}</b><br><span class="tag">Purity: ? (assay it)</span><br><small>from the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}</small><br><button data-ref="pick:${i}">⚗️ Assay and refine</button></div>`).join('')}</div>`
+      : '<p>None yet. Identify rough gems, gold, silver, platinum, malachite or kimberlite found at Level 3. Each one you identify goes here.</p>'}`;
+  }
+  el.innerHTML = h + treasureHTML() + recordsHTML(); paintTreasure(el);
+  if (refState && refState.done) drawRefCv(1);
+}
+function refClick(v) {
+  const [a, b] = v.split(':');
+  if (a === 'pick') { const it = raw[+b]; if (it) refState = {it, done:false, est:null, showSG:false, assay:assayData(it)}; }
+  else if (a === 'cancel') refState = null;
+  else if (a === 'sg' && refState) refState.showSG = true;
+  else if (a === 'est' && refState && refState.est === null) { refState.est = +b; sfx('test'); }
+  else if (refState && !refState.done && refState.est !== null) {
+    const it = refState.it, s = SP[it.id], k = procKind(it.id); let ok = false, msg = '', made = 0, extra = 0;
+    if (a === 'm' && k === 'ore') { const M = METAL[it.id]; ok = b === M.method; const grams = gramsOf(it, ok ? .95 : .3); treasure[M.metal] += grams; made = grams;
+      const why = {gravity:`${s.name} is extremely dense (SG about ${s.sg}), so its grains sink while lighter rock washes away.`, flotation:'Silver minerals cling to air bubbles in froth flotation, while waste rock sinks.', leach:'Malachite is a carbonate: dilute acid dissolves it (fizzing out CO₂), leaving the copper in the liquid to be recovered.'}[M.method];
+      msg = `${ok ? '✔ Great choice!' : '✖ That method recovers only a little of this ore.'} ${why}<br>Then the concentrate was <b>smelted</b> (melted so the metal separates from waste called slag) and cast.<br><b>You made ${grams} g of ${M.name}</b> from a 200 g sample that was ${it.pct}% ${M.name} (${ok ? '95%' : 'only 30%'} recovered).`; }
+    else if (a === 'a' && k === 'gem') { const hh = ABRASIVES.find(x => x[0] === b)[2]; ok = hh > s.H;
+      const rough = [2, 4, 7][it.gi] + Math.round(it.pct / 40), ct = Math.round(rough * (ok ? .45 : .1) * 10) / 10, q = ['Included (cloudy)', 'Eye-clean', 'Flawless'][it.gi]; made = ct;
+      treasure.gems.push({id:it.id, ct, q: ok ? q : 'Chipped'});
+      msg = `${ok ? '✔ Correct!' : '✖ That abrasive is not harder than the gem, so it barely cut it and chipped the stone.'} An abrasive must be HARDER than the gem to cut it (Mohs scale). ${s.name} is ${s.hd}${it.id === 'diamond' ? ', so only diamond can cut diamond' : ''}.<br><b>You cut a ${ct}-carat ${ok ? q.toLowerCase() : 'chipped'} ${s.name.toLowerCase()}</b> from a ${rough}-carat rough stone. (Cutting usually keeps less than half of the rough.)`; }
+    else if (a === 's' && k === 'kimb') { ok = b === 'xray'; const n = ok ? [0, 1, 2][it.gi] + (Math.random() < it.pct / 100 ? 1 : 0) : 0; made = n; extra = n;
+      for (let i = 0; i < n; i++) raw.push({id:'diamond', g:GRADES[Math.min(2, it.gi)][0], gi:Math.min(2, it.gi), pct:Math.max(20, it.pct - 10 + Math.round(Math.random() * 10)), zone:'kimberlite'});
+      msg = ok ? `✔ Correct! Diamonds glow under X-rays and stick to grease while other minerals slide off. <b>You recovered ${n} rough diamond${n === 1 ? '' : 's'}</b>${n ? ' (now in your rough materials, ready to cut)' : ''}. Richer, deeper kimberlite gives more.`
+        : `✖ ${b === 'furnace' ? 'Diamonds are carbon: in a hot furnace with air they BURN!' : b === 'magnet' ? 'Diamonds are not magnetic.' : 'Kimberlite does not dissolve in water.'} No diamonds were recovered.`; }
+    else return;
+    // STEP 3: compare the assay estimate with the real purity
+    const truth = k === 'ore' ? bandOf(it.pct) : it.gi, estOk = refState.est === truth; assayStats.n++; if (estOk) { assayStats.ok++; addXP(15); }
+    const estTxt = k === 'ore' ? BANDS[refState.est].join('–') + '%' : ['Low', 'Medium', 'High'][refState.est], realTxt = k === 'ore' ? `${it.pct}% (${BANDS[truth].join('–')}% band)` : `${it.g} (${it.pct}%)`;
+    msg += `<br><br><b>📏 Assay check:</b> you estimated <b>${estTxt}</b>; the real purity was <b>${realTxt}</b>. ${estOk ? '✔ Accurate assay! +15 XP' : '✖ Not quite. Compare your measurement with the guide’s table again next time.'}`;
+    const goals = recordRefine(it, ok, made, extra);
+    if (goals.length) msg += `<br><b>🎯 Goal${goals.length > 1 ? 's' : ''} reached:</b> ${goals.map(i => `${['🥉', '🥈', '🥇'][i]} ${goalText(it.id)[i]} (+${GOAL_XP[i]} XP)`).join(', ')}`;
+    raw.splice(raw.indexOf(it), 1); refState.done = true; refState.ok = ok; refState.msg = msg + (ok ? '<br><b>+30 XP</b> for the right process.' : ''); refinedCount++;
+    if (ok) addXP(30); sfx(ok ? 'right' : 'wrong'); stats.refined = (stats.refined || 0) + 1;
+    renderRefinery(); animateRef(); return;
+  }
+  renderRefinery(); const f = $('#refineryBody [data-ref^="est"], #refineryBody [data-ref^="m:"], #refineryBody [data-ref^="a:"], #refineryBody [data-ref^="s:"], #refineryBody [data-ref]'); f && f.focus({preventScroll:true});
+}
+// 📘 REFINING GUIDE: the reference students use to assay and choose processes
+function renderRefGuide() {
+  const metals = ['gold', 'silver', 'platinum', 'malachite'], P = [20, 40, 60, 80, 100];
+  $('#refguideBody').innerHTML = `<p>Use this guide like the identification chart: measure your sample, look up what the measurement means, then match the material’s properties to the best process.</p>
+  <svg viewBox="0 0 760 150" width="100%" style="max-width:820px;display:block" role="img" aria-label="Refining flow: rough sample, assay, then for ores crush, concentrate, smelt and cast; for gems saw, grind facets and polish.">
+   <defs><marker id="ar3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#1c2541"/></marker></defs>
+   <g font-family="Trebuchet MS" font-size="15" font-weight="bold" text-anchor="middle" fill="#1c2541" stroke-width="2.5">
+    ${[[10, 'Rough sample', '#e3c9a3'], [140, '1. Assay', '#ffcc33']].map(([x, t, c]) => `<rect x="${x}" y="55" width="115" height="38" rx="10" fill="${c}" stroke="#1c2541"/><text x="${x + 57}" y="79">${t}</text>`).join('')}
+    ${[[290, 'Crush'], [410, 'Concentrate'], [530, 'Smelt'], [650, 'Cast bars']].map(([x, t]) => `<rect x="${x}" y="12" width="105" height="34" rx="10" fill="#9cc8ea" stroke="#1c2541"/><text x="${x + 52}" y="34">${t}</text>`).join('')}
+    ${[[290, 'Saw'], [410, 'Grind facets'], [530, 'Polish'], [650, 'Cut gem']].map(([x, t]) => `<rect x="${x}" y="104" width="105" height="34" rx="10" fill="#e6d4f7" stroke="#1c2541"/><text x="${x + 52}" y="126">${t}</text>`).join('')}
+    <g stroke="#1c2541" fill="none" marker-end="url(#ar3)"><path d="M125 74 L136 74"/><path d="M255 70 Q270 30 286 29"/><path d="M255 78 Q270 120 286 121"/><path d="M395 29 L406 29"/><path d="M515 29 L526 29"/><path d="M635 29 L646 29"/><path d="M395 121 L406 121"/><path d="M515 121 L526 121"/><path d="M635 121 L646 121"/></g>
+    <text x="350" y="70" font-size="13" font-weight="normal">ORES</text><text x="350" y="92" font-size="13" font-weight="normal">GEMS</text></g></svg>
+  <h3>1. Assay: density of ore samples</h3>
+  <p><b>Specific gravity (SG) = weight in air ÷ (weight in air − weight in water).</b> Each sample is metal mixed with quartz (SG 2.65). More metal → higher SG. Find the two rows your SG falls between.</p>
+  <div class="scroll"><table><tr><th>Purity (metal by mass)</th>${metals.map(id => `<th>${METAL[id].name[0].toUpperCase() + METAL[id].name.slice(1)} ore (${SP[id].name}, SG ${SP[id].sg})</th>`).join('')}</tr>
+   ${P.map(p => `<tr><td><b>${p}%</b></td>${metals.map(id => `<td>SG ${sgMix(SP[id].sg, p / 100).toFixed(2)}</td>`).join('')}</tr>`).join('')}</table></div>
+  <h3>1. Assay: gems and kimberlite</h3>
+  <div class="scroll"><table><tr><th>Gem inclusions seen with a 10× loupe</th><th>Grade</th><th></th><th>Indicator minerals in 1 kg of kimberlite</th><th>Diamond richness</th></tr>
+   <tr><td>0–1</td><td>High (flawless)</td><td></td><td>8 or more</td><td>High</td></tr><tr><td>2–4</td><td>Medium (eye-clean)</td><td></td><td>4–7</td><td>Medium</td></tr><tr><td>5 or more</td><td>Low (included)</td><td></td><td>0–3</td><td>Low</td></tr></table></div>
+  <h3>2. Choose a concentrating method (ores)</h3>
+  <div class="scroll"><table><tr><th>Method</th><th>How it works</th><th>Works best when the mineral…</th><th>Clue from your lab tests</th></tr>
+   <tr><td><b>💧 Gravity separation</b></td><td>Shake crushed ore with water; the heaviest grains sink.</td><td>is an extremely dense native metal (SG of 15 or more)</td><td>💧 Heft: “very heavy for its size”</td></tr>
+   <tr><td><b>🫧 Froth flotation</b></td><td>Air bubbles in soapy water carry certain metal minerals to the top.</td><td>is a heavy metal mineral, but with SG under 15, that clings to air bubbles</td><td>✨ Metallic luster; check its SG in your notes</td></tr>
+   <tr><td><b>🧪 Acid leaching</b></td><td>Dilute acid dissolves the metal out of the ore.</td><td>is a carbonate or oxide ore that dissolves in acid (copper ores)</td><td>🧪 Fizz test: it FIZZES</td></tr></table></div>
+  <p>After concentrating, <b>smelting</b> melts the concentrate so the metal separates from the waste (slag), and it is cast into bars (100 g) and nuggets (10 g).</p>
+  <h3>2. Choose an abrasive (gems)</h3>
+  <p><b>Rule: an abrasive cuts a gem only if the abrasive is HARDER than the gem</b> (Mohs scale). Equal hardness barely scratches.</p>
+  <div class="scroll"><table><tr><th>Abrasive</th><th>Hardness</th><th></th><th>Gem</th><th>Hardness</th></tr>
+   ${[0, 1, 2, 3, 4].map(i => `<tr><td>${ABRASIVES[i] ? ABRASIVES[i][1] : ''}</td><td>${ABRASIVES[i] ? ABRASIVES[i][2] : ''}</td><td></td><td>${['Diamond', 'Ruby', 'Sapphire', 'Topaz', 'Emerald'][i]}</td><td>${['10', '9', '9', '8', '7.5–8'][i]}</td></tr>`).join('')}</table></div>
+  <h3>2. Recover diamonds (kimberlite)</h3>
+  <p>Crush the kimberlite, then use <b>X-ray sorting</b> (diamonds glow) and <b>grease tables</b> (diamonds stick to grease; wet minerals slide off). Never heat it in air: diamond is carbon and can burn.</p>
+  <h3>🔎 How to get more and better product</h3>
+  <ul>
+   <li><b>Find richer raw material.</b> Where you dig decides purity. Heavy gold and platinum settle at the bottom of old stream gravels; the center of a quartz vein is richer than its edge; deeper kimberlite holds more and better diamonds; malachite is richest near the surface of the gossan.</li>
+   <li><b>Rich spots come in patches.</b> When you find a high-grade sample, dig nearby: the ground nearby is often rich too.</li>
+   <li><b>Choose the right process.</b> The right method keeps about 95% of the metal; a wrong one keeps only 30%.</li>
+   <li><b>Assay first.</b> Knowing your purity tells you which samples are worth refining, and accurate estimates earn XP.</li>
+  </ul>
+  <p><button data-open="refinery">⚗️ Go to the refinery</button></p>`;
+}
+function animateRef() { if (reduceMotion) { drawRefCv(1); return; } const t0 = performance.now(); const st = n => { const t = Math.min(1, (n - t0) / 2200); if (current !== 'refinery' || !$('#refCv')) return; drawRefCv(t); if (t < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); sfx('machine'); }
+function drawRefCv(t) {
+  const cv = $('#refCv'); if (!cv) return; const c = cv.getContext('2d'), it = refState.it, k = procKind(it.id); c.fillStyle = '#1c2541'; c.fillRect(0, 0, 640, 200);
+  const stages = k === 'ore' ? ['Crush', 'Concentrate', 'Smelt', 'Cast'] : k === 'gem' ? ['Inspect', 'Saw', 'Grind facets', 'Polish'] : ['Crush', 'X-ray sort', 'Grease table', 'Collect'];
+  stages.forEach((n, i) => { const x = 40 + i * 150, on = t * 4 > i; c.fillStyle = on ? '#ffcc33' : '#3a4560'; rr(c, x, 20, 120, 34, 10); c.fill(); c.fillStyle = on ? '#1c2541' : '#9aa3ad'; c.font = 'bold 15px Verdana'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(n, x + 60, 37); });
+  c.drawImage(spriteCv[it.id], 40, 80, 100, 100); c.fillStyle = '#f2f7f5'; c.font = 'bold 30px Verdana'; c.fillText('→', 320, 130);
+  if (t >= 1) { if (k === 'ore') { const col = METAL[it.id].col; drawBar(c, 470, 120, 2.2, col); drawNugget(c, 560, 150, 2.5, col); drawNugget(c, 590, 140, 2, col); }
+    else if (k === 'gem') drawCutGem(c, 500, 125, 2.8, GEMCUT[it.id]); else drawCutGem(c, 500, 125, 2.2, '#e6f3fb'); }
+  else { c.fillStyle = 'rgba(255,204,51,.5)'; for (let i = 0; i < 18; i++) c.fillRect(380 + ((i * 37 + t * 400) % 220), 80 + (i * 23) % 90, 5, 5); }
+}
+
+/* ---------- 15m. TEST MODE (teacher only) ----------------------------
+   Click the geologist on the title screen and enter the code to unlock
+   every site and tool for testing. Requirements are skipped.          */
+let testMode = false;
+function applyTestMode() {
+  if (!testMode) return;
+  examPassed = true; fossilPassed = true; gemsOpen = true; tool.tier = TOOLS.length - 1; tool.unbreakable = true; tool.broken = false; tool.hits = 1e9;
+  shopState.spent = Math.min(shopState.spent, xp - 10000);   // 10,000+ Geo-Coins to try the shop
+  updateHUD();
+}
+function openAdmin() { $('#adminModal').hidden = false; $('#adminMsg').textContent = ''; $('#adminCode').value = ''; $('#adminCode').focus(); }
+function closeAdmin() { $('#adminModal').hidden = true; $('#startBtn').focus({preventScroll:true}); }
+function tryAdmin() {
+  if ($('#adminCode').value.trim().toUpperCase() === 'BLAST') {
+    testMode = true; applyTestMode(); sfx('find');
+    $('#adminMsg').textContent = '✔ Test mode is ON. Everything is unlocked.';
+    setTimeout(() => { closeAdmin(); toast('🧪 TEST MODE: Levels 2 and 3, the jeep, the unbreakable axe, both field exams and all Science vault challenges are unlocked, plus 10,000 Geo-Coins. Start a new dig or load a save.', 7000); }, 700);
+  } else { $('#adminMsg').textContent = '✖ That code is not correct.'; sfx('wrong'); }
+}
+$('#titleArt').addEventListener('click', e => {   // the geologist in the title art is the hidden button
+  const r = e.currentTarget.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 600, y = (e.clientY - r.top) / r.height * 190;
+  if (x > 268 && x < 336 && y < 165) openAdmin();
+});
+/* ---------- 15n. LEVEL 2 FOSSIL LAB, FOSSIL DEX, ROCK COLUMN, GEOLOGIC TIME GUIDE ---------- */
+const fbag = [], fossilFound = new Set(), colConf = {}; let fIdx = 0, fResult = null, fossilIntroSeen = false, fossilPassed = false, fx = null;
+const fossilDexDone = () => FOSSILS.every(f => fossilFound.has(f.id));
+const columnDone = () => DATED_LAYERS.every(z => colConf[z]);
+function autoColumn() {   // layers with no fossils are dated by their position (superposition)
+  if (colConf.fB && colConf.fD && !colConf.fC) colConf.fC = {period:'kpg', by:'position: between the last Cretaceous layer and the first Paleogene layer'};
+  if (colConf.fJ && !colConf.fK) colConf.fK = {period:'prec', by:'position: below the oldest Cambrian layer'};
+}
+function fossilKeyHTML() {
+  return `<div class="card" style="text-align:left"><h3 style="margin:0 0 6px">🔑 Fossil key</h3><ol style="margin:0;padding-left:22px;line-height:1.5">
+   <li><b>Is it a thin black film shaped like a leaf?</b> Yes → go to 2. No (it’s an animal) → go to 3.</li>
+   <li>Many small rounded leaflets on a stem → <b>Seed fern (Neuropteris)</b>. One tongue-shaped leaf with a net of veins → <b>Glossopteris</b>.</li>
+   <li><b>Is it bone or a tooth?</b> Yes → go to 4. No (shell or hard outer skeleton) → go to 6.</li>
+   <li><b>A tooth?</b> Triangle with a sharp point → <b>Shark tooth</b>. Small square molar with round bumps → <b>Early horse tooth</b>. Huge molar of ridged plates → <b>Mammoth tooth</b>. Not a tooth → go to 5.</li>
+   <li>Small whole skeleton with a long, thin, toothy snout → <b>Mesosaurus</b>. One big spool-shaped backbone with a spike → <b>Dinosaur bone</b>. A thick bony plate with a jaw-like edge → <b>Armored fish plate</b>.</li>
+   <li>Body with 3 lengthwise lobes and many segments → <b>Trilobite</b>. Two fan-shaped ribbed shells → <b>Brachiopod</b>. Flat spiral shell with wavy chamber lines → <b>Ammonite</b>. Stack of round discs → <b>Crinoid stem</b>.</li></ol></div>`;
+}
+function columnHTML() {
+  autoColumn();
+  const row = l => { const cf = colConf[l.z]; return `<tr><td style="background:${l.col};width:16px"></td><td><b>Layer ${l.L}</b><br><small>${l.rock}</small></td><td>${cf ? `<b>${perName(cf.period)}</b>${cf.period !== 'kpg' ? `<br><small>${rangeTxt(PER[cf.period])}</small>` : ''}` : '❓ Not dated yet'}</td><td><small>${cf ? 'Dated by ' + (SP[cf.by] ? 'the index fossil ' + SP[cf.by].name : cf.by) : FOSSIL_ZONE[l.z].length ? 'Find and identify an index fossil here' : 'No fossils: date it by its position'}</small></td></tr>`; };
+  const upper = LAYERS.slice(0, 5).map(row).join(''), lower = LAYERS.slice(5).map(row).join('');
+  const gap = colConf.fE && colConf.fF ? `The Triassic (${rangeTxt(PER.tria)}) is MISSING here: those layers were eroded away before Layer E was deposited.` : 'Above this line the layers are flat; below it they are tilted and cut off. Date the layers on both sides to see how much time is missing.';
+  return `<h3>🪨 Rock column journal (${DATED_LAYERS.filter(z => colConf[z]).length} / ${DATED_LAYERS.length} fossil layers dated)</h3><p style="margin:0 0 6px">Youngest at the top, oldest at the bottom (superposition). Identify an <b>index fossil</b> from a layer, then name its period to date the layer.</p>
+   <div class="scroll"><table style="max-width:900px"><tr><th></th><th>Layer</th><th>Period and age</th><th>Evidence</th></tr>${upper}
+   <tr><td colspan="4" style="background:#fff1e3"><b>〰️ Erosion surface (unconformity)</b> under Layer E. ${gap}</td></tr>${lower}</table></div>
+   <p style="margin:6px 0 0"><small>📌 Field observations: a <b>basalt dike</b> cuts through Layers F–K but stops at the erosion surface, and a <b>fault</b> shifts Layers F–K but not Layer E. Use these with the cross-cutting rule in the 🕰️ time guide.</small></p>`;
+}
+function renderFossilLab() {
+  const el = $('#fossillabBody');
+  let h = `<p style="margin-top:0"><b>1.</b> Make observations and use the fossil key to identify the fossil. <b>2.</b> Use what you know about the fossil to date its rock layer. <button data-open="timeguide">🕰️ Geologic time guide</button></p>`;
+  if (fResult) h += fResult;
+  if (!fbag.length) h += '<p class="big">No fossils to study. Dig in the layers at Level 2 (Fossil Bluffs) and look for glints!</p>';
+  else {
+    if (fIdx >= fbag.length) fIdx = 0; const it = fbag[fIdx], F = SP[it.sid], lay = LAY[it.zone];
+    h += fbag.length > 1 ? `<div class="tabs">${fbag.map((b, i) => `<button data-fl="tab:${i}" class="${i === fIdx ? 'done' : ''}" aria-pressed="${i === fIdx}">Fossil #${b.uid}</button>`).join('')}</div>` : '';
+    h += `<div class="lab"><div class="specbox"><img class="specimg" src="${spriteURL[F.id]}" alt="Picture of the unknown fossil"><p><b>Mystery fossil #${it.uid}</b><br>Found in <b>Layer ${lay.L}</b> (${lay.rock}), ${it.depth.toFixed(1)} km deep.</p></div><div>`;
+    if (it.stage === 'id') {
+      h += `<h3>1. Observe</h3><div class="tests">${FTESTS.map(([k, ic, n]) => `<button data-fl="obs:${k}" class="${it.done.has(k) ? 'done' : ''}">${ic} ${n}${it.done.has(k) ? ' ✔' : ''}</button>`).join('')}</div>
+        <ul class="notes">${it.done.size ? FTESTS.filter(([k]) => it.done.has(k)).map(([k, ic, n]) => `<li><b>${ic} ${n}:</b> ${F[k]}</li>`).join('') : '<li>No observations yet.</li>'}</ul>
+        <h3>2. Identify it</h3><label for="fguess">My fossil is: </label><select id="fguess"><option value="">Choose…</option>${FOSSILS.map(f => `<option value="${f.id}">${f.name}</option>`).join('')}</select> <button data-fl="id">✔ Identify</button>
+        ${it.fb ? `<div class="fb bad pop" role="status">${it.fb}</div>` : ''}${fossilKeyHTML()}`;
+    } else {
+      const opts = it.popts;
+      h += `<div class="fb good">✔ It’s a <b>${F.name}</b>! ${F.info}</div><h3>3. Date the layer: which period is Layer ${lay.L} from?</h3>
+        <p>Use the fossil’s time range in the 🕰️ guide’s range chart${F.index ? '' : ', and think about whether this fossil alone is enough evidence'}.</p>
+        <div class="choice" style="grid-template-columns:1fr 1fr">${opts.map(o => `<button data-fl="per:${o}">${o === 'none' ? '🤔 Not enough evidence yet: this fossil lived during more than one period' : PER[o].name + ' (' + rangeTxt(PER[o]) + ')'}</button>`).join('')}</div>`;
+    }
+    h += '</div></div>';
+  }
+  el.innerHTML = h + columnHTML();
+}
+function flClick(v) {
+  const [a, b] = v.split(':'), it = fbag[fIdx];
+  if (a === 'tab') { fIdx = +b; fResult = null; }
+  else if (a === 'obs' && it) { it.done.add(b); sfx('test'); gainEvidence(); fResult = null; }
+  else if (a === 'id' && it) {
+    const gid = $('#fguess').value; if (!gid) return; it.tries++; const F = SP[it.sid], G = SP[gid];
+    if (gid === it.sid) {
+      const xp1 = it.tries === 1 ? 60 : 30; addXP(xp1); sfx('right'); const isNew = !fossilFound.has(F.id); fossilFound.add(F.id); counts[F.id] = (counts[F.id] || 0) + 1;
+      it.stage = 'period'; it.xp = xp1; it.isNew = isNew; fResult = null;
+      // choices for the period question (the long-range logic is the key ESS1-4 idea)
+      const truth = LAY[it.zone].per, fp = fossilPeriods(F), others = shuffle(PERIODS.map(p => p.id).filter(id => id !== truth && id !== 'prec'));
+      if (F.index) it.pans = truth; else it.pans = colConf[it.zone] ? truth : 'none';
+      const set = new Set([truth, 'none', ...shuffle(fp.filter(x => x !== truth)).slice(0, 2), ...others]);
+      it.popts = shuffle([...set].slice(0, 4)); if (!it.popts.includes(it.pans)) it.popts[0] = it.pans; it.popts = shuffle(it.popts);
+      if (pet) petSay(`A ${F.name}! Now, how old is this layer?`, 'happy', 3);
+    } else {
+      sfx('wrong'); const diff = FTESTS.find(([k]) => it.done.has(k) && G[k] !== F[k]);
+      it.fb = diff ? `✖ Not a ${G.name}. Your <b>${diff[2]}</b> observation doesn’t match: a ${G.name} would show “${G[diff[0]]}.”` : `✖ Not a ${G.name}. Make more observations, then follow the fossil key step by step.`;
+    }
+  }
+  else if (a === 'per' && it && it.stage === 'period') {
+    const F = SP[it.sid], lay = LAY[it.zone], ok = b === it.pans, fp = fossilPeriods(F).map(id => PER[id].name);
+    let msg = `<div class="fb ${ok ? 'good' : 'bad'} pop" role="status"><b>${ok ? '✔ Correct!' : '✖ Not quite.'}</b> The ${F.name} lived ${rangeTxt({start:F.range[0], end:F.range[1]})} (${fp.length > 1 ? 'during the ' + fp.join(', ') : 'only in the ' + fp[0]}). `;
+    if (F.index) { msg += `It lived for a short time, so it is an <b>index fossil</b>: Layer ${lay.L} is from the <b>${PER[lay.per].name}</b>.`;
+      if (ok) { const fresh = !colConf[it.zone]; colConf[it.zone] = {period:lay.per, by:F.id}; addXP(fresh ? 65 : 40); msg += fresh ? ` 🪨 <b>Layer ${lay.L} is now dated in your rock column!</b> +40 XP, +25 XP for a new layer.` : ' +40 XP.'; } }
+    else msg += it.pans === 'none' ? `Because it lived across several periods, it can’t date the layer by itself. <b>Find an index fossil in Layer ${lay.L}.</b>${ok ? ' +40 XP for careful reasoning!' : ''}` : `By itself it can’t date a layer, but Layer ${lay.L} was already dated by an index fossil: the <b>${PER[lay.per].name}</b>.${ok ? ' +40 XP' : ''}`;
+    if (ok && !F.index) addXP(40);
+    msg += ` (Identification: +${it.xp} XP${it.isNew ? ' · 🦴 New Fossil Dex entry!' : ''})</div>`;
+    autoColumn(); fResult = msg; sfx(ok ? 'right' : 'wrong'); fbag.splice(fIdx, 1); fIdx = 0; stats.fossilDated = (stats.fossilDated || 0) + (ok ? 1 : 0); checkMissions();
+  }
+  renderFossilLab(); const f = $('#fossillabBody [data-fl^="per"], #fossillabBody [data-fl^="obs"]'); f && f.focus({preventScroll:true});
+}
+function renderFossilDex(sel) {
+  let detail = '';
+  if (sel) { const F = SP[sel], got = fossilFound.has(sel), lays = LAYERS.filter(l => FOSSIL_ZONE[l.z].includes(sel)).map(l => 'Layer ' + l.L);
+    detail = got ? `<div class="detail"><img src="${spriteURL[F.id]}" alt="${F.name}"><div><h3>#${F.n} ${F.name} <span class="tag">${F.index ? '⭐ Index fossil' : 'Long-lived (not an index fossil)'}</span></h3><p>${F.info}</p>
+      <p><b>Lived:</b> ${rangeTxt({start:F.range[0], end:F.range[1]})} (${fossilPeriods(F).map(id => PER[id].name).join(', ')})<br><b>How it lived:</b> ${F.life}<br><b>Found at Fossil Bluffs in:</b> ${lays.join(', ')}</p></div></div>`
+      : `<div class="detail"><div class="blank">🦴</div><div><h3>#${F.n} Not found yet</h3><p>Hint: dig in ${lays.join(' or ')} at Level 2.</p></div></div>`; }
+  $('#fossildexBody').innerHTML = `<p class="big" style="margin-top:0">Fossils found: <b>${fossilFound.size} / ${FOSSILS.length}</b>. Select an entry to read it.</p>${detail}
+    <div class="grid">${FOSSILS.map(F => fossilFound.has(F.id) ? `<button class="card" data-fdex="${F.id}"><img src="${spriteURL[F.id]}" alt="">#${F.n} ${F.name}<br><span class="tag">${F.index ? '⭐ Index' : 'Long-lived'}</span></button>`
+      : `<button class="card locked" data-fdex="${F.id}" aria-label="Fossil ${F.n}, not found"><div class="blank">🦴</div>#${F.n} ???</button>`).join('')}</div>`;
+}
+// 🕰️ GEOLOGIC TIME GUIDE: the reference for this level (time scale, range chart, dating rules, plate motion, surface processes)
+function renderTimeGuide() {
+  const W = 860, x0 = 150, x1 = 840, PRE = 70;
+  // Precambrian squeezed into a small box on the left; the last 539 million years drawn to scale
+  const tx = mya => mya > 539 ? x0 + (4600 - mya) / (4600 - 539) * PRE : x0 + PRE + (539 - mya) / 539 * (x1 - x0 - PRE);
+  const lx = mya => x0 + (540 - Math.min(540, mya)) / 540 * (x1 - x0);   // range chart: linear, last 540 million years
+  const ticks = [0, 2.6, 23, 66, 145, 201, 252, 299, 359, 419, 444, 485, 539, 4600];
+  const scale = `<svg viewBox="0 0 ${W} 120" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="Geologic time scale from 4.6 billion years ago to today">
+    <g font-family="Trebuchet MS" font-size="11" text-anchor="middle">${PERIODS.map((p, i) => { const a = tx(p.start), b = tx(p.end); return `<rect x="${a}" y="40" width="${b - a}" height="34" fill="${['#c9b4d9', '#a3c9a8', '#8fbfb0', '#b6d6c0', '#d9c38a', '#7f8a7f', '#e39a7a', '#c9a0dc', '#9ec9e6', '#a9d48c', '#f2d38a', '#f6e3a0', '#e8e8e8'][i]}" stroke="#1c2541"/><text x="${(a + b) / 2}" y="${i % 2 ? 90 : 34}" font-weight="bold" font-size="${b - a < 45 ? 9 : 11}">${b - a < 45 ? p.name.slice(0, 4) + '.' : p.name}</text>`; }).join('')}
+    ${ticks.filter(t => [0, 66, 252, 539, 4600].includes(t)).map(t => `<text x="${tx(t)}" y="${86 + 18}" fill="#1c2541">${t >= 1000 ? '4,600' : t}</text>`).join('')}<text x="40" y="62" text-anchor="start" font-weight="bold">Periods →</text><text x="40" y="112" text-anchor="start">million years ago</text></g></svg>`;
+  const chart = `<svg viewBox="0 0 ${W} ${FOSSILS.length * 22 + 48}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="Range chart showing when each fossil lived">
+    <g font-family="Trebuchet MS" font-size="12">${PERIODS.filter(p => p.id !== 'prec').map((p, i) => `<line x1="${lx(p.start)}" x2="${lx(p.start)}" y1="10" y2="${FOSSILS.length * 22 + 14}" stroke="#c9ced6"/><text x="${(lx(p.start) + lx(p.end)) / 2}" y="${FOSSILS.length * 22 + (i % 2 ? 40 : 28)}" text-anchor="middle" font-size="10">${lx(p.end) - lx(p.start) < 50 ? p.name.slice(0, 4) + '.' : p.name}</text>`).join('')}
+    ${FOSSILS.map((F, i) => { const y = 14 + i * 22, a = lx(F.range[0]), b = Math.max(lx(F.range[1]), a + 6); return `<text x="4" y="${y + 12}" font-weight="bold">${F.name.split(' (')[0]}${F.index ? ' ⭐' : ''}</text><rect x="${a}" y="${y + 2}" width="${b - a}" height="14" rx="6" fill="${F.index ? '#e8711c' : '#3a86c8'}"/>`; }).join('')}</g></svg>`;
+  const pangaea = `<svg viewBox="0 0 640 210" width="100%" style="max-width:640px;display:block" role="img" aria-label="Map: South America and Africa today with the same fossils on both coasts, and 300 million years ago joined together so the fossil zones line up.">
+    <g font-family="Trebuchet MS" font-size="13" stroke="#1c2541" stroke-width="2"><rect x="0" y="0" width="310" height="210" fill="#9cc8ea"/><rect x="330" y="0" width="310" height="210" fill="#9cc8ea"/>
+    <path d="M40 40 L110 30 L140 70 L120 120 L95 190 L70 170 L55 110 Z" fill="#d9c38a"/><path d="M190 30 L280 40 L285 100 L250 170 L220 180 L205 110 L175 80 Z" fill="#d9c38a"/>
+    <path d="M118 70 L138 72 L122 118 L104 112 Z" fill="#e8711c" opacity=".8"/><path d="M178 80 L198 84 L206 112 L186 108 Z" fill="#e8711c" opacity=".8"/>
+    <path d="M400 40 L470 30 L500 70 L480 120 L455 190 L430 170 L415 110 Z" fill="#d9c38a"/><path d="M500 30 L590 40 L595 100 L560 170 L530 180 L515 110 L486 80 Z" fill="#d9c38a"/>
+    <path d="M478 70 L498 72 L484 116 L466 110 Z" fill="#e8711c" opacity=".8"/><path d="M488 80 L506 84 L514 112 L496 108 Z" fill="#e8711c" opacity=".8"/></g>
+    <g font-family="Trebuchet MS" font-size="14" font-weight="bold" fill="#1c2541"><text x="12" y="20">Today</text><text x="342" y="20">300 million years ago</text><text x="60" y="205" font-size="11">S. America</text><text x="215" y="205" font-size="11">Africa</text><text x="140" y="140" font-size="11">Atlantic Ocean</text><text x="400" y="205" font-size="11">Joined (Pangaea)</text></g></svg>`;
+  const ridge = `<svg viewBox="0 0 640 110" width="100%" style="max-width:640px;display:block" role="img" aria-label="Seafloor rock ages are youngest at the mid-ocean ridge and get older on both sides symmetrically.">
+    <g font-family="Trebuchet MS" font-size="12" text-anchor="middle">${[-3, -2, -1, 0, 1, 2, 3].map(k => `<rect x="${290 + k * 80 - 40}" y="20" width="80" height="50" fill="${['#e8711c', '#f2b48a', '#ffe0c0', '#fff', '#ffe0c0', '#f2b48a', '#e8711c'][k + 3]}" stroke="#1c2541"/><text x="${290 + k * 80}" y="50">${Math.abs(k) * 20} mya</text>`).join('')}
+    <text x="290" y="90" font-weight="bold">▲ mid-ocean ridge (new rock forms here)</text><text x="80" y="14">← plate moves</text><text x="510" y="14">plate moves →</text></g></svg>`;
+  $('#timeguideBody').innerHTML = `<h3>🕰️ Geologic time scale</h3><p>Earth is about <b>4.6 billion years</b> old. Scientists organize that history into eras and periods using rock layers and the fossils in them. (In the bar below, the Precambrian is squeezed into a small box so the other periods fit, but it really lasted about 88% of Earth’s history!)</p>${scale}
+  <div class="scroll"><table><tr><th>Period</th><th>Era</th><th>Time</th><th>What happened</th></tr>${PERIODS.slice().reverse().map(p => `<tr><td><b>${p.name}</b></td><td>${p.era}</td><td>${rangeTxt(p)}</td><td>${p.event}</td></tr>`).join('')}</table></div>
+  <h3>📏 How to read rock layers (relative dating)</h3><ul>
+   <li><b>Superposition:</b> in undisturbed layers, the oldest is at the bottom and the youngest is at the top.</li>
+   <li><b>Original horizontality:</b> layers are laid down flat. Tilted or folded layers were moved LATER.</li>
+   <li><b>Cross-cutting:</b> anything that cuts through layers (a dike, a fault) is YOUNGER than the layers it cuts.</li>
+   <li><b>Unconformity:</b> an old erosion surface. Rock (and time) is missing there.</li>
+   <li><b>Fossil succession and index fossils:</b> life changed over time in a known order. An <b>index fossil</b> lived for a short time over a wide area, so it pins a layer to one period. Long-lived fossils can’t.</li></ul>
+  <h3>📊 Fossil range chart</h3><p>Each bar shows when a fossil lived. <span style="color:#e8711c;font-weight:bold">Orange ⭐ = index fossil (short range).</span> <span style="color:#3a86c8;font-weight:bold">Blue = long-lived.</span></p>${chart}
+  <h3>🌍 Evidence that continents move (plate motion)</h3><p><b>Mesosaurus</b>, a small freshwater reptile that couldn’t cross an ocean, is found in South America AND Africa. <b>Glossopteris</b> leaves are found on five southern continents. The continents’ coastlines fit together like puzzle pieces, and the same rock layers and mountain belts line up across the ocean. All of this shows the continents were once joined in a supercontinent, <b>Pangaea</b>, and have slowly moved apart (a few centimeters per year).</p>${pangaea}
+  <p><b>Seafloor evidence:</b> new rock forms at mid-ocean ridges. Seafloor rock is youngest at the ridge and older farther away, the same on both sides, because the plates are moving apart.</p>${ridge}
+  <h3>⛰️ Processes that change Earth’s surface</h3><div class="scroll"><table><tr><th>Process</th><th>How fast?</th><th>How big an area?</th><th>Example at Fossil Bluffs</th></tr>
+   <tr><td><b>Weathering and erosion</b></td><td>Slow (thousands to millions of years)</td><td>Small to continent-wide</td><td>The river canyon; the erosion surface under Layer E</td></tr>
+   <tr><td><b>Deposition</b></td><td>Slow (mm per year)</td><td>Local to whole sea floors</td><td>Every layer, A to J</td></tr>
+   <tr><td><b>Uplift and mountain building</b></td><td>Very slow (millions of years)</td><td>Hundreds of kilometers</td><td>Sea-floor chalk (Layer D) is now high and dry; Layers F–K were tilted</td></tr>
+   <tr><td><b>Faults and earthquakes</b></td><td>Sudden (seconds), repeated over time</td><td>Local to regional</td><td>The fault that shifts Layers F–K</td></tr>
+   <tr><td><b>Volcanic activity</b></td><td>Fast (days to years)</td><td>Local to regional</td><td>The basalt dike</td></tr>
+   <tr><td><b>Asteroid impact</b></td><td>Instant</td><td>Global effects</td><td>The thin K–Pg clay (Layer C), found worldwide</td></tr></table></div>
+  ${fossilKeyHTML()}`;
+}
+
+/* ---------- 15o. FOSSIL FIELD EXAM (unlocks Level 3) ----------
+   Needs: a complete Fossil Dex and a fully dated rock column (or test mode).
+   5 parts, one per big idea. A wrong answer gives a hint and a NEW version (no repeats). */
+const FX_PARTS = ['🪨 Order the events (MS-ESS1-4)', '⭐ Index fossils (MS-ESS1-4)', '🌍 Plate motion (MS-ESS2-3)', '⛰️ Surface processes (MS-ESS2-2)', '✍️ Explain with evidence (MS-ESS1-4)'];
+const FX_BANK = [
+ [ // 1. sequence of events at Fossil Bluffs
+  {q:'Put the history of Fossil Bluffs in order, OLDEST first.', right:'Layers K to F deposited → layers tilted → dike cuts through them → erosion makes a flat surface → Layers E to A deposited → river cuts the canyon', wrong:['Layers E to A deposited → layers K to F deposited → erosion → dike → river cuts the canyon', 'Layers K to F deposited → erosion makes a flat surface → Layers E to A deposited → dike cuts through all layers → layers tilted', 'River cuts the canyon → layers K to A deposited → dike → layers tilted'], why:'Lower layers are oldest (superposition). The dike cuts F–K, so it is younger than them, but it stops at the erosion surface, so it is older than Layer E (cross-cutting). The canyon cuts the top layers, so it came last.'},
+  {q:'The fault shifts Layers F to K but does NOT shift Layer E. What does this tell you?', right:'The fault happened after Layer F was deposited but before Layer E was deposited.', wrong:['The fault is older than Layer K.', 'The fault happened after Layer A was deposited.', 'Faults and layers always form at the same time.'], why:'Cross-cutting: a fault is younger than the layers it breaks. Layer E was laid down later, on top, so it wasn’t broken.'},
+  {q:'Layers F to K are tilted, but Layers A to E are flat. Which explanation fits best?', right:'F to K were deposited flat, then tilted; after erosion, A to E were deposited flat on top.', wrong:['F to K were deposited tilted, and A to E were deposited flat.', 'All layers were tilted, then A to E became flat by themselves.', 'A to E are older than F to K.'], why:'Layers are deposited flat (original horizontality), so tilting happened later. The erosion surface between them is an unconformity.'}],
+ [ // 2. index fossil reasoning
+  {q:'A layer contains crinoid stems AND Mesosaurus. Which period is it from?', right:'Permian', wrong:['Ordovician', 'Carboniferous', 'Not enough evidence'], why:'Crinoids lived for hundreds of millions of years, but Mesosaurus is an index fossil that lived only in the early Permian.'},
+  {q:'A layer contains ammonites AND Cretoxyrhina shark teeth. Which period is it from?', right:'Cretaceous', wrong:['Jurassic', 'Devonian', 'Not enough evidence'], why:'Ammonites span many periods, but this shark is an index fossil that lived only in the Cretaceous.'},
+  {q:'A layer contains ONLY crinoid stems. What can you conclude?', right:'Not enough evidence: crinoids lived in many periods, so you need an index fossil.', wrong:['It must be Ordovician.', 'It must be Permian.', 'It must be the youngest layer.'], why:'An index fossil must have lived for a SHORT time. Long-lived fossils can’t pin down one period.'},
+  {q:'Why is a trilobite like Olenellus a better index fossil than a crinoid?', right:'It lived for a short time but was widespread, so it marks one time period.', wrong:['It is bigger than a crinoid.', 'It is still alive today.', 'It is found in only one place on Earth.'], why:'Good index fossils lived briefly but were common over a wide area.'}],
+ [ // 3. plate motion
+  {q:'Mesosaurus fossils (a freshwater reptile) are found in South America and in Africa, but not in between. What is the best explanation?', right:'The two continents were once joined, and have since drifted apart.', wrong:['Mesosaurus swam across the Atlantic Ocean.', 'Two different animals evolved exactly the same way.', 'Birds carried the fossils across the ocean.'], why:'A small freshwater reptile couldn’t cross an ocean. The continents were joined in Pangaea when it lived.'},
+  {q:'Glossopteris leaves are found in South America, Africa, India, Australia and even Antarctica. What does this suggest?', right:'These continents were once connected in one landmass with a similar climate.', wrong:['Antarctica has always been covered with ice.', 'Wind blew the leaves across oceans.', 'The plants grew underwater.'], why:'The same land plant on all five continents shows they were once joined (Gondwana, part of Pangaea).'},
+  {q:'Seafloor rock is youngest at the mid-ocean ridge and gets older the same way on both sides. What does this show?', right:'New seafloor forms at the ridge and the plates move apart.', wrong:['The ocean is shrinking at the ridge.', 'All seafloor is the same age.', 'Ridges are the oldest part of the ocean.'], why:'Matching age stripes on both sides show the seafloor spreading apart from the ridge.'},
+  {q:'The coastlines of South America and Africa fit together, and the same rock layers line up across them. What is this evidence of?', right:'Past plate motion: the continents were once joined.', wrong:['Erosion made the coasts look alike by chance.', 'The continents are still connected underwater.', 'Sea level was much higher.'], why:'Matching shapes AND matching rocks are evidence the continents split apart.'}],
+ [ // 4. surface processes, time and space scales
+  {q:'Which pair shows a SLOW process and a FAST process at Fossil Bluffs?', right:'Slow: the river carving the canyon. Fast: the asteroid impact that left the K–Pg clay.', wrong:['Slow: the asteroid impact. Fast: depositing all of the chalk.', 'Slow: an earthquake on the fault. Fast: the canyon.', 'Both the canyon and the chalk formed in one day.'], why:'Canyons are carved over millions of years; an asteroid impact happens in moments but changes the whole planet.'},
+  {q:'Layer D is chalk made of tiny sea shells, but today it is high above sea level. What explains this?', right:'The land was uplifted very slowly over millions of years.', wrong:['The sea level has always been this high.', 'The shells were carried up by wind.', 'Chalk forms on mountaintops.'], why:'Uplift raises old sea-floor rock over millions of years.'},
+  {q:'Layer G (coal) lies below Layer F (red beds). What does this show about how the environment changed?', right:'A swampy forest was replaced later by a hot, dry environment.', wrong:['A desert later became a swamp.', 'The environment never changed.', 'Coal and red beds form in the same place at the same time.'], why:'Coal forms from swamp plants; red beds form where iron rusts in a hot, dry climate. G is older (below), so the swamp came first.'},
+  {q:'The K–Pg clay (Layer C) is thin but is found all over the world. What does this tell you?', right:'A sudden event affected the whole planet.', wrong:['It formed slowly in one small lake.', 'It is the oldest layer on Earth.', 'It formed from a local river flood.'], why:'A thin worldwide layer points to a fast, global event: the asteroid impact 66 million years ago.'}]
+];
+const FX_WRITE = [
+ {q:'Explain how you know the basalt dike is YOUNGER than Layer F but OLDER than Layer E. Use evidence from the cliff.', need:[[/cut|cross/i, 'What does the dike do to Layers F–K?'], [/stop|does ?n.t (cut|reach|go)|not (cut|reach)|eros|unconform/i, 'What happens to the dike at Layer E (or the erosion surface)?'], [/young|after|later/i, 'What does cutting through a layer tell you about age?'], [/old|before|earlier/i, 'How does Layer E compare in age to the dike?']]},
+ {q:'Explain how scientists use rock layers and fossils to figure out that the chalk (Layer D) is older than the mudstone (Layer B).', need:[[/below|under|beneath|deeper|bottom|superposition/i, 'Where is Layer D compared with Layer B?'], [/fossil|ammonite|shark|horse|mammal/i, 'Which fossils are in each layer?'], [/old|young|before|after|earlier|later/i, 'What do position and fossils say about age?']]}
+];
+function fxNew() { const p = fx.part;
+  if (p < 4) { let pool = FX_BANK[p].filter(x => !fx.used.has(x.q)); if (!pool.length) pool = FX_BANK[p]; const q = pool[Math.floor(Math.random() * pool.length)]; fx.used.add(q.q); fx.v = {...q, opts:shuffle([q.right, ...q.wrong])}; }
+  else { let pool = FX_WRITE.filter(x => !fx.used.has(x.q)); if (!pool.length) pool = FX_WRITE; const q = pool[Math.floor(Math.random() * pool.length)]; fx.used.add(q.q); fx.v = {...q, text:''}; } }
+function fossilFinalHTML() {
+  if (fossilPassed) return `<div class="goalcard"><h3>🦴 Fossil Field Exam: passed!</h3><p>Level 3, <b>Crystal Ridge Mine</b>, is unlocked. Drive there anytime with your 🚙 jeep (press K).</p></div>`;
+  const ready = testMode || (fossilDexDone() && columnDone());
+  if (!ready) return `<div class="goalcard"><h3>🦴 Fossil Field Exam (locked)</h3><p>“Complete your 🦴 Fossil Dex (${fossilFound.size} / ${FOSSILS.length}) and date every fossil layer in your rock column (${DATED_LAYERS.filter(z => colConf[z]).length} / ${DATED_LAYERS.length}). Then pass my Fossil Field Exam to unlock Level 3: a gem mine!”</p></div>`;
+  if (!fx) return `<div class="goalcard"><h3>🦴 Fossil Field Exam</h3><p>“Five parts: order the events in the cliff, reason with index fossils, explain plate motion, compare fast and slow surface processes, and write an explanation with evidence. Use your 🕰️ time guide and rock column!”</p><p><button data-fx="start">🦴 Start the Fossil Field Exam</button></p></div>`;
+  const v = fx.v, n = fx.part;
+  let h = `<div class="goalcard"><h3>🦴 Fossil Field Exam: part ${n + 1} of 5</h3><div class="steps">${FX_PARTS.map((t, i) => `<span class="${i === n ? 'now' : ''}">${i < n ? '✔ ' : ''}${t}</span>`).join('')}</div><p class="big"><b>${v.q}</b></p>`;
+  if (n < 4) h += `<div class="choice" style="grid-template-columns:1fr">${v.opts.map((o, k) => `<button data-fx="ans:${k}">${esc(o)}</button>`).join('')}</div>`;
+  else h += `<textarea id="fxWrite" rows="5" maxlength="800" style="width:100%;font:inherit;font-size:19px;padding:8px;border:3px solid var(--ink);border-radius:10px;box-sizing:border-box">${esc(v.text || '')}</textarea><p><button data-fx="write">✔ Submit my explanation</button></p>`;
+  h += `<p><button data-open="timeguide">🕰️ Time guide</button> <button data-open="fossillab">🪨 Rock column</button></p>${fx.fb ? `<div class="fb ${fx.fb[0]} pop" role="status">${fx.fb[1]}</div>` : ''}</div>`;
+  return h;
+}
+function fxClick(val) {
+  const [a, b] = val.split(':');
+  if (a === 'start') { fx = {part:0, used:new Set(), fb:null}; fxNew(); }
+  else if (a === 'ans' && fx) { const ok = fx.v.opts[+b] === fx.v.right;
+    if (ok) { const why = fx.v.why; fx.part++; sfx('right'); if (fx.part > 4) { passFossilExam(); return; } fxNew(); fx.fb = ['good', `✔ Correct! ${why}`]; }
+    else { sfx('wrong'); const why = fx.v.why; fxNew(); fx.fb = ['bad', `✖ Not quite. Hint: ${why.split('.')[0]}. Here is a NEW question for this part.`]; } }
+  else if (a === 'write' && fx) { const t = $('#fxWrite').value.trim(); fx.v.text = t; const miss = fx.v.need.filter(([re]) => !re.test(t));
+    if (t.length >= 60 && !miss.length) { sfx('right'); fx.part++; passFossilExam(); return; }
+    sfx('wrong'); fx.fb = ['bad', t.length < 60 ? '✖ Write a little more: at least two sentences.' : '✖ Good start! Add more evidence. Think about: ' + miss.map(m => m[1]).join(' ')]; }
+  renderColleague(); const f = $('#colleagueBody [data-fx^="ans"], #fxWrite'); f && f.focus({preventScroll:true});
+}
+function passFossilExam() {
+  fossilPassed = true; gemsOpen = true; fx = null; addXP(300); sfx('find');
+  toast('🦴 You passed the Fossil Field Exam! +300 XP. Level 3, Crystal Ridge Mine, is unlocked. Drive there with your jeep (K)!', 8000);
+  if (pet) petSay('We read the rocks like real paleontologists! Off to the gem mine!', 'happy', 5);
+  renderColleague();
+}
+/* 🚙 JEEP: travel between any levels you have unlocked (free travel once opened) */
+const LEVELS_INFO = [['main', 1, 'Pebble Creek', 'rocks, minerals and the rock cycle'], ['fossil', 2, 'Fossil Bluffs', 'fossils and geologic time'], ['gem', 3, 'Crystal Ridge Mine', 'gems and precious metals']];
+const siteName = s => LEVELS_INFO.find(x => x[0] === s)[2], siteLvl = s => LEVELS_INFO.find(x => x[0] === s)[1];
+const levelOpen = s => s === 'main' || (s === 'fossil' && examPassed) || (s === 'gem' && gemsOpen);
+function renderJeep() {
+  $('#jeepBody').innerHTML = `<p style="margin-top:0">You’re at <b>Level ${siteLvl(SITE)}: ${siteName(SITE)}</b>. Drive to any level you’ve unlocked.</p><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
+   ${LEVELS_INFO.map(([s, n, name, about]) => `<div class="card" style="text-align:left"><h3 style="margin:0">Level ${n}: ${name}</h3><p style="margin:4px 0">${about}</p>${s === SITE ? '<b>📍 You are here</b>' : levelOpen(s) ? `<button data-go="${s}">🚙 Drive here</button>` : `🔒 ${s === 'fossil' ? 'Complete the Rock Dex and pass the Final Field Exam' : 'Complete the Fossil Dex, date the rock column and pass the Fossil Field Exam'}`}</div>`).join('')}</div>`;
 }
 
 /* ---------- 15j. ACHIEVEMENT TROPHIES + TROPHY ROOM + GEM DEX ------------
@@ -3093,8 +3805,12 @@ const TROPHIES = [
   {id:'assistant', tier:2, icon:'📋', name:'Field Assistant', need:'Complete 5 field assignments', prog:() => [stats.assigns || 0, 5]},
   {id:'vault', tier:3, icon:'🔐', name:'Vault Victor', need:'Win 5 Science vault prizes', prog:() => [VAULT.filter(v => vault[v.id].status === 'won').length, 5]},
   {id:'exam', tier:3, icon:'🎓', name:'Master Examiner', need:'Pass Dr. Rivera’s Final Field Exam', prog:() => [examPassed ? 1 : 0, 1]},
-  {id:'traveler', tier:1, icon:'🚙', name:'Gem Country Traveler', need:'Visit Crystal Ridge Mine', prog:() => [gemIntroSeen ? 1 : 0, 1]},
-  {id:'gemdex', tier:3, icon:'💎', name:'Gem Dex Complete', need:'Find all 6 Crystal Ridge gems', prog:() => [gemFound.size, GEMS.length]}
+  {id:'fossils', tier:3, icon:'🦴', name:'Fossil Dex Complete', need:'Find all 12 Level 2 fossils', prog:() => [fossilFound.size, FOSSILS.length]},
+  {id:'column', tier:2, icon:'🪨', name:'Time Detective', need:'Date every fossil layer in the rock column', prog:() => [DATED_LAYERS.filter(z => colConf[z]).length, DATED_LAYERS.length]},
+  {id:'fexam', tier:3, icon:'🕰️', name:'Paleontologist', need:'Pass the Fossil Field Exam', prog:() => [fossilPassed ? 1 : 0, 1]},
+  {id:'traveler', tier:1, icon:'🚙', name:'Gem Country Traveler', need:'Visit Level 3, Crystal Ridge Mine', prog:() => [gemIntroSeen ? 1 : 0, 1]},
+  {id:'refiner', tier:2, icon:'⚗️', name:'Master Refiner', need:'Refine 5 rough materials at the Level 3 refinery', prog:() => [stats.refined || 0, 5]},
+  {id:'gemdex', tier:3, icon:'💎', name:'Gem Dex Complete', need:'Find all 10 Crystal Ridge gems and precious minerals', prog:() => [gemFound.size, GEMS.length]}
 ];
 const TROPHY_XP = {1:50, 2:100, 3:200}, TIER_NAME = {1:'Bronze', 2:'Silver', 3:'Gold'}, TIER_COL = {1:['#c98a4b', '#8a5a2b'], 2:['#c9d0d9', '#8a93a3'], 3:['#ffcc33', '#c99a10']};
 const earned = new Set(), earnedAt = {}; let gemIntroSeen = false, trophySel = null;
@@ -3104,7 +3820,7 @@ const TROPHY_SKILL = {first:'Observing and testing a specimen to identify it.', 
   rocks:'Classifying rocks as igneous, sedimentary or metamorphic by how they formed.', dex:'Persistence and careful identification of every rock and mineral.',
   paths:'Modeling how rocks change through the rock cycle.', champ:'Planning multi-step paths through the rock cycle.', planner:'Finding the most efficient plan: thinking before acting.',
   thinker:'Explaining the processes behind each rock change.', assistant:'Choosing relevant evidence to support a claim.', vault:'Applying, analyzing and evaluating science ideas.',
-  exam:'Building arguments with claims, evidence and reasoning.', traveler:'Exploring a new geologic setting.', gemdex:'Identifying gems with advanced hardness tests and gem chemistry.'};
+  exam:'Building arguments with claims, evidence and reasoning.', fossils:'Identifying fossils with observations and a dichotomous key.', column:'Using index fossils and superposition to date rock layers.', fexam:'Explaining Earth’s history from rock layers, fossils and plate motion.', refiner:'Choosing processing methods based on mineral properties like density and hardness.', traveler:'Exploring a new geologic setting.', gemdex:'Identifying gems with advanced hardness tests and gem chemistry.'};
 function trophyCard(t) {
   const got = earned.has(t.id), [h, n] = t.prog(), when = earnedAt[t.id] ? new Date(earnedAt[t.id]).toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'}) : 'before this save file';
   return `<div class="museum pop" role="region" aria-label="How I earned it: ${t.name}"><img src="${tPic(t)}" alt="" style="width:120px;height:120px;${got ? '' : 'filter:grayscale(1);opacity:.45'}"><div>
@@ -3128,7 +3844,8 @@ function trophyPic(t, got) {
   c.restore(); return cv.toDataURL();
 }
 const tPicCache = {}; const tPic = t => tPicCache[t.id] || (tPicCache[t.id] = trophyPic(t));
-function renderLevels() {   // the 🏆 TROPHY ROOM: everything you've earned, in one place
+function renderLevels() { renderLevels0(); paintTreasure($('#levelsBody')); }
+function renderLevels0() {   // the 🏆 TROPHY ROOM: everything you've earned, in one place
   const L = levelOf(xp), next = LEVELS[L + 1], base = LEVELS[L][0], prog = next ? Math.round(100 * (xp - base) / (next[0] - base)) : 100;
   const chDone = Object.keys(chBest).length, stars = Object.values(chBest).reduce((a, b) => a + b, 0), vWon = VAULT.filter(v => vault[v.id].status === 'won');
   const lockStyle = 'filter:grayscale(1);opacity:.4';
@@ -3141,11 +3858,12 @@ function renderLevels() {   // the 🏆 TROPHY ROOM: everything you've earned, i
   <h3>🔐 Science vault prizes</h3><div class="shelfrow">${VAULT.map(v => `<div class="shelfitem"><img src="${vPrev(v)}" alt="" style="width:84px;height:84px;${vault[v.id].status === 'won' ? '' : lockStyle}"><b>${v.name}</b><small>${vault[v.id].status === 'won' ? '✔ Won' : vault[v.id].status === 'gone' ? '🔒 No longer available' : v.kind + ' · ' + VTIER[v.tier]}</small></div>`).join('')}</div>
   <p><button data-open="store">🔐 Go to the Science vault (Rock shop)</button></p>
   <h3>♻️ Rock cycle challenges</h3><div class="shelfrow">${CHALLENGES.map((c, i) => `<div class="shelfitem" style="min-width:150px"><b>${rname(c.from)} → ${rname(c.to)}</b><small>${chBest[i] ? '★'.repeat(chBest[i]) + '☆'.repeat(3 - chBest[i]) : 'Not done yet'}</small></div>`).join('')}</div>
+  ${gemsOpen ? treasureHTML().replace('<h3>💰 Your treasure</h3>', '<h3>💰 Treasure from the Level 3 refinery</h3>') : ''}
   <h3>🎯 Missions</h3><ol class="notes">${MISSIONS.map((m, i) => `<li>${i < mi ? '✔' : i === mi ? '▶' : '○'} ${m.t}</li>`).join('')}</ol>
   <h3>How to earn XP</h3><table><tr><th>Activity</th><th>XP</th></tr>${XP_RULES.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}<tr><td><b>🏆 Trophies</b></td><td>Bronze +50, silver +100, gold +200, once each.</td></tr></table>`;
 }
 // 💎 GEM DEX: opens when you reach Crystal Ridge Mine
-const GEM_FACT = {diamond:'Pure carbon (C). Atoms locked in a strong 3-D pattern make it the hardest natural material.', kimberlite:'The “delivery truck” for diamonds: fast-rising magma from the mantle.',
+const GEM_FACT = {gold:'Native element Au. So unreactive that it never rusts; so dense it sinks to the bottom of streams.', silver:'Native element Ag. Reacts with sulfur in air, so it tarnishes black.', platinum:'Native element Pt. Even rarer than gold; it does not tarnish.', malachite:'Copper carbonate, Cu₂CO₃(OH)₂. The carbonate is why it fizzes in acid.', diamond:'Pure carbon (C). Atoms locked in a strong 3-D pattern make it the hardest natural material.', kimberlite:'The “delivery truck” for diamonds: fast-rising magma from the mantle.',
   ruby:'Corundum (Al₂O₃) + a trace of chromium = red.', sapphire:'Corundum (Al₂O₃) + traces of iron and titanium = blue. Same mineral as ruby!', emerald:'Beryl (Be₃Al₂Si₆O₁₈) + a trace of chromium = green.', topaz:'Number 8 on the Mohs scale; one perfect cleavage, so gem cutters must be careful.'};
 function renderGemDex(sel) {
   let detail = '';
