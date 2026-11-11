@@ -114,6 +114,19 @@ th{background:var(--ink);color:var(--paper)}
 .swatch{width:36px;height:36px;border-radius:50%;padding:0;margin:2px;vertical-align:middle;box-shadow:0 2px 0 #000}
 .swatch.on{outline:4px solid var(--signal);outline-offset:2px}
 .avatarpick{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 14px;margin:8px auto;max-width:640px;text-align:left;font-size:18px}
+.savenote{max-width:760px;margin:14px auto 6px;text-align:left;background:#fff4cc;color:var(--ink);border:4px solid var(--signal);border-radius:16px;padding:12px 18px;font-size:18px}
+.shelfrow{display:flex;flex-wrap:wrap;gap:10px;padding:12px 10px 16px;background:linear-gradient(#fff 0,#fff calc(100% - 14px),#a06a35 calc(100% - 14px),#7a5233 100%);border:3px solid var(--ink);border-radius:14px}
+.shelfitem{display:flex;flex-direction:column;align-items:center;text-align:center;width:140px;font-size:15px}
+.shelfitem small{font-size:13px}
+#gemdex{background:radial-gradient(circle at 30% 10%,#3b2a5e,#1a1430 70%);color:#f2f7f5}
+#gemdex h2,#gemdex p{color:#f2f7f5}
+.gemcard{background:#2a2048!important;color:#f2f7f5!important;border-color:#ffcc33!important}
+.gemcard h3{color:#ffcc33}
+.shelfbtn{background:transparent;border:3px solid transparent;box-shadow:none;padding:4px;font-weight:normal;cursor:pointer}
+.shelfbtn:hover,.shelfbtn.on{background:#fff4cc;border-color:var(--signal)}
+.museum{display:flex;gap:16px;flex-wrap:wrap;background:#fffaf0;border:4px double var(--ink);border-radius:8px;padding:14px 18px;margin:8px 0 12px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.museum>div{flex:1;min-width:240px}
+.mlabel{margin:0;font-size:13px;letter-spacing:2px;font-weight:bold;color:var(--signal)}
 #toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);z-index:15;background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:16px;padding:10px 18px;font-size:20px;font-weight:bold;max-width:90vw;text-align:center;display:none;box-shadow:0 5px 0 rgba(0,0,0,.5)}
 #caption{position:fixed;left:14px;bottom:124px;z-index:8;background:rgba(0,0,0,.8);color:#fff;padding:6px 12px;border-radius:10px;font-size:18px;display:none}
 </style>
@@ -124,37 +137,46 @@ th{background:var(--ink);color:var(--paper)}
 <div id="hud">
   <div id="goals"><div id="mission"></div><div id="assignLine"></div></div>
   <div class="menus"><div class="mrow">
-  <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab" aria-label="Lab equipment menu" title="Lab equipment">🧪<span id="bagN" class="badge"></span>▾</button>
-    <div class="mlist" id="mLab" hidden><div class="mtitle">🧪 Lab equipment</div>
-      <button data-open="lab"><span>🔬 Test specimens</span><kbd>L</kbd></button>
-      <button data-open="chart"><span>📖 Reference chart</span></button>
+  <div class="menu"><button class="mbtn" data-menu="mLab" aria-expanded="false" aria-controls="mLab" aria-label="Lab menu" title="Lab">🔬▾</button>
+    <div class="mlist" id="mLab" hidden><div class="mtitle">🔬 Lab</div>
+      <button data-open="lab"><span>🧪 Test specimens <span id="bagN" class="badge"></span></span><kbd>L</kbd></button>
       <button data-open="notebook"><span>📓 Lab notebook</span><kbd>N</kbd></button>
+      <button data-open="chart"><span>📖 Reference chart</span></button>
+    </div></div>
+  <div class="menu"><button class="mbtn" data-menu="mRC" aria-expanded="false" aria-controls="mRC" aria-label="Rock cycle and camp menu" title="Rock cycle and camp">♻️▾</button>
+    <div class="mlist" id="mRC" hidden><div class="mtitle">♻️ Rock cycle and camp</div>
+      <button data-open="guide"><span>🗺️ Rock cycle guide</span><kbd>G</kbd></button>
       <button id="bMachine"><span>♻️ Rock cycle machine (at camp)</span><kbd>E</kbd></button>
       <button id="bDoc"><span>🧑‍🔬 Talk to Dr. Rivera (at camp)</span><kbd>E</kbd></button>
-      <button data-open="guide"><span>🗺️ Rock cycle guide</span><kbd>G</kbd></button>
-      <button data-open="how"><span>❓ How this model works</span><kbd>H</kbd></button>
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mCol" aria-expanded="false" aria-controls="mCol" aria-label="My collection menu" title="My collection">🎒▾</button>
     <div class="mlist" id="mCol" hidden><div class="mtitle">🎒 My collection</div>
       <button data-open="dex"><span>📚 Rock Dex</span><kbd>X</kbd></button>
+      <button data-open="gemdex" id="bGemDex" hidden><span>💎 Gem Dex</span><kbd>J</kbd></button>
       <button data-open="box"><span>📦 Collection box</span><kbd>C</kbd></button>
       <button data-open="pet"><span>🐾 Pet rock</span><kbd>P</kbd></button>
-      <button data-open="levels"><span>🏅 Levels and badges</span><kbd>V</kbd></button>
-      <button data-open="store"><span>🛍️ Rock shop</span></button>
+    </div></div>
+  <div class="menu"><button class="mbtn" data-menu="mAw" aria-expanded="false" aria-controls="mAw" aria-label="Trophies and shop menu" title="Trophies and shop">🏆▾</button>
+    <div class="mlist" id="mAw" hidden><div class="mtitle">🏆 Trophies and shop</div>
+      <button data-open="levels"><span>🏆 Trophy room</span><kbd>V</kbd></button>
+      <button data-open="store"><span>🛍️ Rock shop and Science vault</span></button>
       <button data-open="prize"><span>🎁 Prize box</span></button>
-      <button data-open="report"><span>📋 Rock Hound Report</span><kbd>Q</kbd></button>
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mCtl" aria-expanded="false" aria-controls="mCtl" aria-label="Controls menu" title="Controls">🎮▾</button>
     <div class="mlist" id="mCtl" hidden><div class="mtitle">🎮 Controls</div>
-      <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bBuild"><span>🧱 Build rock back</span><kbd>B</kbd></button>
+      <button id="bLadder"><span>🪜 Place a ladder</span><kbd>U</kbd></button>
       <button id="bRope"><span>🪢 Rope up to camp</span><kbd>R</kbd></button>
+      <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bSound"><span>🔇 Sound: off</span><kbd>M</kbd></button>
       <button id="bMotion"><span>🎞️ Motion: full</span></button>
+      <button data-open="keys"><span>⌨️ Keyboard help</span></button>
+    </div></div>
+  <div class="menu"><button class="mbtn" data-menu="mSave" aria-expanded="false" aria-controls="mSave" aria-label="Save and report menu" title="Save and report">💾▾</button>
+    <div class="mlist" id="mSave" hidden><div class="mtitle">💾 Save and report</div>
+      <button data-open="report"><span>📋 Rock Hound Report and exit ticket</span><kbd>Q</kbd></button>
       <button id="bSave"><span>💾 Download save file</span></button>
       <button class="loadBtn"><span>📂 Load a save file</span></button>
-      <button data-open="report"><span>📋 End session: Rock Hound Report</span><kbd>Q</kbd></button>
-      <button data-open="keys"><span>⌨️ Keyboard help</span></button>
     </div></div>
   </div></div>
 </div>
@@ -174,21 +196,30 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></span><span>Walk, and dig sideways into rock</span>
       <span><kbd>↓</kbd> or <kbd>S</kbd></span><span>Dig down</span>
       <span><kbd>↑</kbd> <kbd>W</kbd> <kbd>Space</kbd></span><span>Jump (or dig up if rock is above you)</span>
-      <span><kbd>L</kbd> <kbd>N</kbd> <kbd>H</kbd></span><span>Test specimens, Lab notebook, How it works</span>
-      <span><kbd>Q</kbd> / <kbd>V</kbd></span><span>Rock Hound Report (save your progress) / Levels and badges</span>
+      <span><kbd>L</kbd> <kbd>N</kbd> <kbd>H</kbd></span><span>Test specimens, Lab notebook, How this model works</span>
+      <span><kbd>Q</kbd> / <kbd>V</kbd> / <kbd>J</kbd></span><span>Rock Hound Report / Trophy room / Gem Dex</span>
       <span><kbd>E</kbd> / <kbd>G</kbd></span><span>Talk to Dr. Rivera or use the Rock Cycle Machine (at camp) / Rock cycle guide</span>
       <span><kbd>X</kbd> <kbd>C</kbd> <kbd>P</kbd></span><span>Rock Dex, Collection box, Pet rock</span>
       <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
+      <span><kbd>U</kbd></span><span>Place a ladder in a dug shaft, then climb with ↑ ↓ (dig sideways with ← →)</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
     </div><br>
     <button id="startBtn">⛏️ Start a new dig</button> <button class="loadBtn" style="font-size:22px;padding:10px 20px">📂 Continue from a save file</button>
-    <p style="font-size:16px">Sound starts off (press M). Nothing is stored in the browser or sent anywhere. To keep your progress, download a save file from the 📋 Rock Hound Report and load it next time.</p>
+    <div class="savenote" role="note">
+      <h3 style="margin:0 0 6px">💾 How to keep your progress</h3>
+      <ol style="margin:0;padding-left:24px">
+        <li><b>When you’re done:</b> open the 💾 menu (top right) and choose <b>Download save file</b>. Keep the file somewhere safe, like your Documents folder.</li>
+        <li><b>Next time:</b> click <b>📂 Continue from a save file</b> above and choose that file. You’ll be right where you left off.</li>
+      </ol>
+      <p style="margin:8px 0 0"><b>⚠️ Warning:</b> this game does NOT save automatically. If you close or reload the page without downloading a save file, <b>all of your progress will be erased</b>.</p>
+    </div>
+    <p style="font-size:16px">Sound starts off (press M). Nothing is stored in the browser or sent anywhere.</p>
   </div>
 </section>
 
 <section class="panel" id="lab" aria-label="Field lab"><button class="close" data-close>✖ Close (Esc)</button><h2>🧪 Field lab</h2><div id="labBody"></div></section>
 <section class="panel" id="machine" aria-label="Rock cycle machine"><button class="close" data-close>✖ Close (Esc)</button><h2>♻️ Rock cycle machine</h2><div id="machineBody"></div></section>
-<section class="panel" id="guide" aria-label="Rock cycle guide"><button class="close" data-close>✖ Close (Esc)</button><h2>🗺️ Rock cycle guide</h2>
+<section class="panel" id="guide" aria-label="Rock cycle guide"><button class="close" data-close>✖ Close (Esc)</button><button class="close" data-open="how">❓ How this model works</button><h2>🗺️ Rock cycle guide</h2>
 <p>Rocks are always slowly changing from one kind to another. Each arrow is a process. Any rock can take many paths, and the cycle has no start or finish.</p>
 <svg viewBox="0 0 640 360" width="100%" style="max-width:700px;display:block" role="img" aria-label="Rock cycle diagram with sedimentary, metamorphic and igneous rock, magma and sediment, connected by processes.">
  <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#1c2541"/></marker></defs>
@@ -224,15 +255,16 @@ th{background:var(--ink);color:var(--paper)}
 </div>
 <p><b>Tip:</b> every Rock Dex entry tells how that rock forms, and the evolution chart in the Dex remembers each change you’ve seen in the Rock Cycle Machine.</p>
 </section>
+<section class="panel" id="gemdex" aria-label="Gem Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>💎 Gem Dex: Crystal Ridge Mine</h2><div id="gemdexBody"></div></section>
 <section class="panel" id="colleague" aria-label="Talk to Dr. Rivera"><button class="close" data-close>✖ Close (Esc)</button><h2>🧑‍🔬 Dr. Rivera</h2><div id="colleagueBody"></div></section>
 <section class="panel" id="store" aria-label="Rock shop"><button class="close" data-close>✖ Close (Esc)</button><h2>🛍️ Rock shop</h2><div id="storeBody"></div></section>
 <section class="panel" id="prize" aria-label="Prize box"><button class="close" data-close>✖ Close (Esc)</button><h2>🎁 Prize box</h2><div id="prizeBody"></div></section>
 <section class="panel" id="avatar" aria-label="Choose your geologist"><button class="close" data-close>✖ Close (Esc)</button><h2>🧑 Choose your geologist</h2><div id="avatarBody"></div></section>
-<section class="panel" id="levels" aria-label="Levels and badges"><button class="close" data-close>✖ Close (Esc)</button><h2>🏅 Levels and badges</h2><div id="levelsBody"></div></section>
+<section class="panel" id="levels" aria-label="Trophy room"><button class="close" data-close>✖ Close (Esc)</button><h2>🏆 Trophy room</h2><div id="levelsBody"></div></section>
 <section class="panel" id="report" aria-label="Rock Hound Report"><button class="close noprint" data-close>✖ Close (Esc)</button><h2>📋 Rock Hound Report</h2><div id="reportBody"></div></section>
 <section class="panel" id="notebook" aria-label="Lab notebook"><button class="close" data-close>✖ Close (Esc)</button><h2>📓 Lab notebook</h2><div id="notebookBody"></div></section>
 <section class="panel" id="keys" aria-label="Keyboard help"><button class="close" data-close>✖ Close (Esc)</button><h2>⌨️ Keyboard help</h2><div id="keysBody"></div></section>
-<section class="panel" id="chart" aria-label="Reference chart"><button class="close" data-close>✖ Close (Esc)</button><h2>📖 Identification reference chart</h2><div id="chartBody"></div></section>
+<section class="panel" id="chart" aria-label="Reference chart"><button class="close" data-close>✖ Close (Esc)</button><button class="close" data-open="how">❓ How this model works</button><h2>📖 Identification reference chart</h2><div id="chartBody"></div></section>
 <section class="panel" id="dex" aria-label="Rock Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>📚 Rock Dex</h2><div id="dexBody"></div></section>
 <section class="panel" id="box" aria-label="Collection box"><button class="close" data-close>✖ Close (Esc)</button><h2>📦 Collection box</h2><div id="boxBody"></div></section>
 <section class="panel" id="pet" aria-label="Pet rock"><button class="close" data-close>✖ Close (Esc)</button><h2>🐾 Pet rock</h2><div id="petBody"></div></section>
@@ -474,7 +506,7 @@ const VC = COLS - 7; // center column of the old volcano
 let tile, back, spec, dmg;
 
 function genWorld() {
-  tile = []; back = []; spec = []; dmg = [];
+  tile = []; back = []; spec = []; dmg = []; ladders = new Set();
   for (let r = 0; r < ROWS; r++) {
     tile.push([]); spec.push([]); dmg.push([]);
     for (let c = 0; c < COLS; c++) {
@@ -518,7 +550,7 @@ const KC = 27; // kimberlite pipe center column
 const GEM_ZONE_SPECIES = {kimberlite:['diamond', 'kimberlite', 'garnet'], metamorphic:['ruby', 'sapphire', 'garnet', 'marble'], pegmatite:['emerald', 'topaz', 'quartz', 'feldspar', 'muscovite'], igneous:['granite', 'topaz']};
 const zoneList = z => (SITE === 'gem' ? GEM_ZONE_SPECIES : ZONE_SPECIES)[z];
 function genGemWorld() {
-  tile = []; spec = []; dmg = [];
+  tile = []; spec = []; dmg = []; ladders = new Set();
   for (let r = 0; r < ROWS; r++) { tile.push([]); spec.push([]); dmg.push([]);
     for (let c = 0; c < COLS; c++) { const fold = Math.round(Math.sin(c * .28) * 2.5); let t = AIR;
       if (r === SURF) t = GRASS; else if (r > SURF && r <= SURF + 2) t = LAT;
@@ -545,18 +577,19 @@ function applyWorldData(W) {
   if (!W || typeof W.tiles !== 'string' || W.tiles.length !== ROWS * COLS) return false;
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = parseInt(W.tiles[r * COLS + c], 36); tile[r][c] = TI[t] || t === AIR ? t : back[r][c]; spec[r][c] = null; dmg[r][c] = 0; }
   (W.spec || []).forEach(a => { if (Array.isArray(a) && tile[a[0]] && tile[a[0]][a[1]] !== undefined && isId(a[2])) spec[a[0]][a[1]] = a[2]; });
+  ladders = new Set((W.lad || []).filter(k => Number.isInteger(k) && k >= 0 && k < ROWS * COLS && tile[Math.floor(k / COLS)][k % COLS] === AIR));
   return true;
 }
-const worldData = () => ({tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y});
+const worldData = () => ({lad:[...ladders], tiles:tile.map(r => r.map(t => t.toString(36)).join('')).join(''), spec:spec.flatMap((row, r) => row.map((id, c) => id ? [r, c, id] : null).filter(Boolean)), px:player.x, py:player.y});
 function travel(to) {
   if (to === SITE || (to === 'gem' && !gemsOpen)) return;
-  worlds[SITE] = {tile, back, spec, dmg, px:player.x, py:player.y}; SITE = to;
-  if (worlds[to]) ({tile, back, spec, dmg} = worlds[to]);
+  worlds[SITE] = {tile, back, spec, dmg, ladders, px:player.x, py:player.y}; SITE = to; player.onLadder = false; player.climb = null;
+  if (worlds[to]) ({tile, back, spec, dmg, ladders} = worlds[to]);
   else { if (to === 'gem') genGemWorld(); else genWorld(); if (savedWorlds[to]) applyWorldData(savedWorlds[to]); }
   const l = safeLanding(); player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1; if (tile[SURF][SPAWN_C] === AIR) { player.x = l.x; player.y = l.y; }
   player.vx = player.vy = 0; rope = null; sensed.clear(); if (pet) { pet.x = player.x - 30; pet.y = player.y; }
   sfx('rope'); toast(to === 'gem' ? '🚙 Welcome to Crystal Ridge Mine! Look for the blue-green kimberlite pipe, the marble layers and the pink pegmatite veins.' : '🚙 Back at Pebble Creek camp.', 6000);
-  if (to === 'gem' && !visited.has('gemsite')) { visited.add('gemsite'); if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); }
+  if (to === 'gem' && !gemIntroSeen) { gemIntroSeen = true; if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('gemdex', false); toast('💎 Your Gem Dex is open! Find all 6 Crystal Ridge gems. Open it anytime from the 🎒 menu (or press J).', 6000); } }, 600); }
 }
 
 /* ---------- 3. GAME STATE ------------------------------------------ */
@@ -567,7 +600,7 @@ const notebook = []; // finished identifications: tests, guesses and XP
 const found = new Set(), counts = {}, idBy = {};
 let idTotal = 0, xp = 0, mi = 0;
 // XP levels (titles students work toward)
-const LEVELS = [[0, 'Rock Rookie'], [300, 'Pebble Pro'], [800, 'Crystal Collector'], [1500, 'Field Geologist'], [2500, 'Master Rock Hound']];
+const LEVELS = [[0, 'Rock Rookie'], [500, 'Pebble Pro'], [1500, 'Crystal Collector'], [3000, 'Field Geologist'], [5000, 'Rock Hound Expert'], [8000, 'Master Rock Hound']];
 function levelOf(x) { let i = 0; while (i + 1 < LEVELS.length && x >= LEVELS[i + 1][0]) i++; return i; }
 // Evidence bonus: fewer tests = more XP (1–2 tests: 60, then 10 less per extra test)
 function effBonus(n) { return n <= 2 ? 60 : Math.max(0, 60 - 10 * (n - 2)); }
@@ -946,7 +979,7 @@ function canPlace(r, c) {
   return !(x < p.x + p.w && x + T > p.x && y < p.y + p.h && y + T > p.y);
 }
 function place(r, c) {
-  tile[r][c] = back[r][c]; dmg[r][c] = 0; spec[r][c] = null; buildCool = .22;
+  ladders.delete(LK(r, c)); tile[r][c] = back[r][c]; dmg[r][c] = 0; spec[r][c] = null; buildCool = .22;
   sfx('build'); burst(c * T + T / 2, r * T + T / 2, [TI[tile[r][c]].c, '#fff'], 6);
 }
 function tryBuild(tell) {
@@ -976,7 +1009,7 @@ function ropeUp() {
   if (player.y + player.h <= SURF * T + 2 && player.onGround) { toast('You are already at the surface.'); return; }
   const land = safeLanding(), skyY = (SURF - 7) * T;
   rope = {t:0, x:player.x + player.w / 2, startY:player.y, topY:Math.min(land.y, SURF * T) - 2.2 * T, land, skyY, drop:reduceMotion ? .01 : .55, pull:reduceMotion ? .01 : 1.4, swing:reduceMotion ? .01 : .6};
-  player.vx = player.vy = 0; sfx('rope'); toast('🪢 Rope down! The camp crew is pulling you out.');
+  player.vx = player.vy = 0; player.onLadder = false; player.climb = null; sfx('rope'); toast('🪢 Rope down! The camp crew is pulling you out.');
 }
 function updateRope(dt) {
   const R = rope, p = player; R.t += dt;
@@ -1010,6 +1043,49 @@ function moveY(dy) {
   if (dy > 0) { const r = Math.floor((p.y + p.h) / T); for (let c = c0; c <= c1; c++) if (isSolid(r, c)) { if (tile[r] && tile[r][c] === MAGMA) touchMagma = true; p.y = r * T - p.h - .01; p.vy = 0; p.onGround = true; break; } }
   else if (dy < 0) { const r = Math.floor(p.y / T); for (let c = c0; c <= c1; c++) if (isSolid(r, c)) { p.y = (r + 1) * T + .01; p.vy = 0; break; } }
 }
+/* LADDER: placed in a dug shaft. It grows upward from where you stand until it
+   reaches rock or pokes out of the ground at the surface. Climb one block at a time;
+   while on it you can dig left or right without breaking it.                         */
+let ladders = new Set(); const ladTap = {u:0, d:0, l:0, r:0};
+const LK = (r, c) => r * COLS + c, hasLadder = (r, c) => ladders.has(LK(r, c));
+function placeLadder() {
+  if (current || rope) return;
+  const p = player, c = Math.floor((p.x + p.w / 2) / T), r0 = Math.floor((p.y + p.h - 1) / T);
+  if (p.y + p.h <= SURF * T + 2) { toast('🪜 Ladders are for getting out of a dug shaft. Use one when you’re underground.'); return; }
+  if (r0 - 1 < 0 || tile[r0 - 1][c] !== AIR) { toast('🪜 There’s rock right above you. Dig up first, or use the rope (R).'); return; }
+  let r = r0, n = 0;
+  while (r >= SURF - 1 && tile[r][c] === AIR) { ladders.add(LK(r, c)); n++; if (r === SURF - 1) break; r--; }
+  sfx('build'); toast(`🪜 Ladder placed: ${n} block${n === 1 ? '' : 's'} tall. Press ↑ to climb, one block at a time.`, 4000);
+  attachLadder();
+}
+function attachLadder() { const p = player, c = Math.floor((p.x + p.w / 2) / T), r = Math.floor((p.y + p.h - 1) / T);
+  p.onLadder = true; p.climb = null; p.vx = p.vy = 0; p.x = c * T + (T - p.w) / 2; p.y = r * T + T - p.h - .01; }
+function ladderUpdate(dt, dir, U, D) {
+  const p = player;
+  if (!dir && (ladTap.l || ladTap.r)) { dir = ladTap.r ? 1 : -1; ladTap.l = ladTap.r = 0; }
+  if (p.climb) { p.climb.t += dt / p.climb.d; const k = Math.min(1, p.climb.t); p.y = p.climb.from + (p.climb.to - p.climb.from) * k; if (k >= 1) p.climb = null; return; }
+  const c = Math.floor((p.x + p.w / 2) / T), r = Math.floor((p.y + p.h - 1) / T);
+  p.onGround = true; p.vx = 0; p.vy = 0;
+  if (dir) {   // dig sideways from the ladder, or step off if the side is open
+    const sc = c + dir;
+    if (sc >= 0 && sc < COLS && isSolid(r, sc)) { if (digCool <= 0) hit(r, sc); }
+    else if (sc >= 0 && sc < COLS) { p.onLadder = false; p.x = sc * T + (T - p.w) / 2; p.vx = 0; } // step fully onto the next block (so you don't drop back down the shaft)
+    return;
+  }
+  if (ladTap.u) { U = true; ladTap.u = 0; } if (ladTap.d) { D = true; ladTap.d = 0; }
+  const step = (to) => { p.climb = {from:p.y, to, t:0, d:reduceMotion ? .01 : .16}; };
+  if (U) { if (r - 1 >= 0 && hasLadder(r - 1, c) && tile[r - 1][c] === AIR) step(p.y - T); else if (r - 1 >= 0 && isSolid(r - 1, c) && digCool <= 0) hit(r - 1, c); }
+  else if (D) { if (hasLadder(r + 1, c)) step(p.y + T); else if (isSolid(r + 1, c)) { if (digCool <= 0) hit(r + 1, c); } else p.onLadder = false; }
+  if (!hasLadder(r, c)) p.onLadder = false;   // the ladder under you is gone (for example, you built rock there)
+}
+function drawLadders(x0, x1, y0, y1) {
+  g.lineCap = 'round';
+  for (const k of ladders) { const r = Math.floor(k / COLS), c = k % COLS; if (c < x0 - 1 || c > x1 + 1 || r < y0 - 1 || r > y1 + 1) continue;
+    const x = c * T, y = r * T; g.strokeStyle = '#7a5233'; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(x + 12, y); g.lineTo(x + 12, y + T); g.moveTo(x + T - 12, y); g.lineTo(x + T - 12, y + T); g.stroke();
+    g.strokeStyle = '#c9a26b'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { const ry = y + 8 + i * 16; g.beginPath(); g.moveTo(x + 12, ry); g.lineTo(x + T - 12, ry); g.stroke(); } }
+}
+
 function update(dt) {
   const p = player;
   const L = keys.arrowleft || keys.a, Rt = keys.arrowright || keys.d, U = keys.arrowup || keys.w || keys[' '], D = keys.arrowdown || keys.s;
@@ -1020,6 +1096,11 @@ function update(dt) {
   if (keys.b) tryBuild(false);
   nagT -= dt;
   buildCool -= dt; digCool -= dt; digAnim -= dt; hotCool -= dt; magmaTalkT -= dt;
+  // On a ladder: no gravity, climb one block at a time, dig sideways
+  if (p.onLadder) { ladderUpdate(dt, dir, U, D); if (p.onLadder) { p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy'; updatePet(dt); petSense(dt); zoneEnter(); return; } }
+  { const lc = Math.floor((p.x + p.w / 2) / T), lr = Math.floor((p.y + p.h - 1) / T);
+    if (U && hasLadder(lr, lc)) { attachLadder(); return; }
+    if (D && p.onGround && hasLadder(lr + 1, lc)) { attachLadder(); p.climb = {from:p.y, to:p.y + T, t:0, d:reduceMotion ? .01 : .16}; return; } }
   const cx = p.x + p.w / 2, cyMid = p.y + p.h / 2;
   if (digCool <= 0) {
     if (dir) { const c = Math.floor((dir > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor(cyMid / T); if (isSolid(r, c) && c >= 0 && c < COLS) hit(r, c); }
@@ -1617,7 +1698,7 @@ function renderDex(sel) {
   }
   $('#dexBody').innerHTML = `<p class="big">Discovered: <b>${found.size} / ${DEX.length}</b>. Select an entry to read it. Entries #25–30 can only be made with the ♻️ Rock Cycle Machine.</p>${detail}<div class="grid">${DEX.map(s => found.has(s.id)
     ? `<button class="card" data-dex="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${String(s.n).padStart(2, '0')} ${s.name}<br><span class="tag">${s.kind === 'mineral' ? 'Mineral' : s.grp[0].toUpperCase() + s.grp.slice(1)}${s.made ? ' ♻️' : ''}</span></button>`
-    : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>${gemsOpen ? `<h3>💎 Gem Dex: Crystal Ridge Mine (${gemFound.size} / ${GEMS.length})</h3><div class="grid">${GEMS.map(s => gemFound.has(s.id) ? `<button class="card" data-dex="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${s.n} ${s.name}<br><span class="tag">💎 Gem</span></button>` : `<button class="card locked" data-dex="${s.id}" aria-label="Gem entry ${s.n}, not discovered"><div class="blank">💎</div>#${s.n} ???</button>`).join('')}</div>` : ''}`;
+    : `<button class="card locked" data-dex="${s.id}" aria-label="Entry ${s.n}, not discovered"><div class="blank">?</div>#${String(s.n).padStart(2, '0')} ???</button>`).join('')}</div>${gemsOpen ? '<p><button data-open="gemdex">💎 Open the Gem Dex</button></p>' : ''}`;
 }
 function renderBox() {
   const have = DEX.concat(GEMS).filter(s => counts[s.id] > 0), total = have.reduce((n, s) => n + counts[s.id], 0);
@@ -1653,8 +1734,9 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#title .keys').innerHTML + '</div>';
 }
-const RENDER = {colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
+  if (id === 'gemdex' && !gemIntroSeen) { toast('💎 The Gem Dex opens when you reach Crystal Ridge Mine.'); return; }
   if (id === 'machine' && (rc.phase === 'done' || rc.phase === 'run')) rc = {phase:'pick'};
   if (id === 'machine' && ch && ch.phase === 'run') ch.phase = 'play';
   if (id === 'lab' && labResult && current !== 'lab') labResult = null;
@@ -1684,11 +1766,13 @@ addEventListener('keydown', e => {
   if (current === 'title') return;
   if (!current && !document.activeElement.closest('.mlist')) { if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault(); keys[k] = true; }
   if (e.repeat) return;
-  const map = {v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
+  const map = {j:'gemdex', v:'levels', q:'report', g:'guide', l:'lab', c:'box', x:'dex', p:'pet', h:'how', n:'notebook'};
   if (map[k]) { if (current === map[k]) closeTop(); else openPanel(map[k], false); }
   if (k === 'r') ropeUp();
   if (k === 'm') setSound(!soundOn);
   if (k === 'b' && !current) tryBuild(true);
+  if (k === 'u' && !current) placeLadder();
+  if (!current && player.onLadder) { if (k === 'arrowup' || k === 'w' || k === ' ') ladTap.u = 1; if (k === 'arrowdown' || k === 's') ladTap.d = 1; if (k === 'arrowleft' || k === 'a') ladTap.l = 1; if (k === 'arrowright' || k === 'd') ladTap.r = 1; }
   if (k === 'e' && !current) interact();
 });
 document.addEventListener('change', e => {
@@ -1719,6 +1803,8 @@ document.addEventListener('click', e => {
   if (b && b.dataset.vault) { vaultClick(b.dataset.vault); return; }
   if (b && b.dataset.doc) { docClick(b.dataset.doc); return; }
   if (b && b.dataset.exam) { examClick(b.dataset.exam); return; }
+  if (b && b.dataset.trophy) { trophySel = b.dataset.trophy === 'close' ? null : b.dataset.trophy; const top = $('#levels').scrollTop; renderLevels(); $('#levels').scrollTop = top; const f = $(trophySel ? '#levelsBody [data-trophy="close"]' : '#levelsBody .shelfbtn'); if (f) { f.focus({preventScroll:true}); if (trophySel) f.closest('.museum').scrollIntoView({block:'nearest'}); } return; }
+  if (b && b.dataset.gem) { renderGemDex(b.dataset.gem); $('#gemdex').scrollTop = 0; return; }
   if (b && b.dataset.av) { avClick(b.dataset.av); return; }
   if (b && b.dataset.menu) { const open = b.getAttribute('aria-expanded') !== 'true'; closeMenus(b.dataset.menu); b.setAttribute('aria-expanded', String(open)); $('#' + b.dataset.menu).hidden = !open; if (open) placeMenu(b, $('#' + b.dataset.menu)); if (open) $('#' + b.dataset.menu + ' button').focus(); return; }
   closeMenus();
@@ -1742,6 +1828,7 @@ document.addEventListener('click', e => {
   else if (b.id === 'bMotion') setMotion(!reduceMotion);
   else if (b.id === 'bRope') ropeUp();
   else if (b.id === 'bBuild') tryBuild(true);
+  else if (b.id === 'bLadder') placeLadder();
   else if (b.id === 'bMachine') tryMachine();
   else if (b.id === 'bDoc') { if (nearColleague()) openPanel('colleague', false); else toast('🧑‍🔬 Dr. Rivera is at camp, between the tent and the camp sign. Press R to rope up, walk to her, and press E.', 5000); }
 });
@@ -1937,6 +2024,7 @@ function draw() {
     if (t === AIR) { if (b !== AIR && b !== GRASS && !(b === BASA && r < SURF)) { g.fillStyle = BACKC[b]; g.fillRect(x, y, T, T); drawBackDetail(x, y, b, r); } continue; }
     drawTile(x, y, t, r, c);
   }
+  drawLadders(x0, x1, y0, y1);
   drawLayerLines(x0, x1);
   // Darkness grows with depth; the headlamp lights a circle around you
   const a = Math.max(0, Math.min(.6, ((player.y + player.h) / T - SURF) / 28));
@@ -1967,6 +2055,7 @@ function updateHUD() {
   $('#playerBox').innerHTML = `<img src="${badgeURL[levelOf(xp)] || ''}" alt=""><div><b>${LEVELS[levelOf(xp)][1]}</b> · ⭐ ${xp} XP<br>${tool.broken ? '💥 Tool broken!' : '🔨 ' + toolName()} · 📚 ${found.size}/${DEX.length}${gemsOpen ? ` · 💎 ${gemFound.size}/${GEMS.length}` : ''}</div>`;
   $('#mission').textContent = mi < MISSIONS.length ? `🎯 ${MISSIONS[mi].t}` : '🏆 All missions complete!';
   $('#assignLine').textContent = assign && assign.status === 'active' ? `📋 Assignment: ${assign.text}` : assign && assign.status === 'done' ? '📋 Assignment done: report to Dr. Rivera at camp!' : '';
+  $('#bGemDex').hidden = !gemIntroSeen; checkTrophies();
   hudPx = $('#hud').offsetHeight; const hh = hudPx + 'px'; if (document.documentElement.style.getPropertyValue('--hudH') !== hh) document.documentElement.style.setProperty('--hudH', hh); // keep windows below the top bar
   $('#bagN').textContent = bag.length ? `(${bag.length})` : '';
 }
@@ -2001,7 +2090,7 @@ function renderReport() {
   <p class="noprint"><button id="saveBtn">💾 Download save file</button> <button class="loadBtn">📂 Load a save file</button> <button id="pdfBtn" class="pdfBtn">📄 Download 1-page exit ticket (PDF)</button></p></div>
   ${editedFlag ? '<div class="fb bad" role="status">⚠️ This progress came from a save file that was changed outside the game.</div>' : ''}
   <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">
-    ${card(`<img src="${badgeURL[levelOf(xp)]}" alt="" style="width:44px;height:44px;vertical-align:middle"> Level`, `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}<br>🪙 ${coins()} Geo-Coins to spend<br><button data-open="levels" style="margin-top:6px">🏅 See all levels</button> <button data-open="store" style="margin-top:6px">🛍️ Rock shop</button>`)}
+    ${card(`<img src="${badgeURL[levelOf(xp)]}" alt="" style="width:44px;height:44px;vertical-align:middle"> Level`, `${lv[1]}`, `${xp} XP${next ? ` · ${next[0] - xp} XP to ${next[1]}` : ' · Top level!'}<br>🪙 ${coins()} Geo-Coins to spend<br><button data-open="levels" style="margin-top:6px">🏆 Trophy room</button> <button data-open="store" style="margin-top:6px">🛍️ Rock shop</button>`)}
     ${card('📚 Rock Dex', `${found.size} / ${DEX.length}`, `Minerals: ${DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length} · Rocks: ${DEX.filter(s => s.kind === 'rock' && found.has(s.id)).length}`)}
     ${card('🔬 Identifications', `${idTotal}`, `Right on the first guess: ${pct(stats.firstTry, idTotal)} · Average tests per ID: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '—'}`)}
     ${card('♻️ Rock cycle predictions', `${stats.predOk} / ${stats.preds} correct`, `Paths discovered: ${rcSeen.size}`)}
@@ -2010,6 +2099,7 @@ function renderReport() {
     ${card('🔬 Science vault', `${VAULT.filter(v => vault[v.id].status === 'won').length} / ${VAULT.length} prizes`, 'Won with science questions')}
     ${gemsOpen ? card('💎 Gem Dex', `${gemFound.size} / ${GEMS.length}`, 'Crystal Ridge Mine') : card('🎓 Final Field Exam', examPassed ? 'Passed' : 'Not yet', 'Complete the Rock Dex, then see Dr. Rivera')}
     ${card('📋 Field assignments', `${stats.assigns || 0} completed`, assign && assign.status === 'active' ? 'Current: ' + assign.text : 'Get one from Dr. Rivera at camp')}
+    ${card('🏆 Trophies', `${earned.size} / ${TROPHIES.length}`, '<button data-open="levels">🏆 Open the Trophy room</button>')}
     ${card('🎯 Missions', `${Math.min(mi, MISSIONS.length)} / ${MISSIONS.length}`, mi < MISSIONS.length ? 'Next: ' + MISSIONS[mi].t : 'All complete!')}
     ${card('🐾 Pet rock', pet ? esc(pet.name) : 'None yet', pet ? 'a ' + SP[pet.sid].name.toLowerCase() : 'Choose one in the Collection Box')}
   </div>
@@ -2026,11 +2116,11 @@ function snapshot() {
     shop:{spent:shopState.spent, owned:[...shopState.owned], hat:shopState.hat, glasses:shopState.glasses, display:[...shopState.display]},
     bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong})),
     notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
-    site:SITE, gemsOpen, examPassed, gemFound:[...gemFound],
-    world:worldData(), world2:(() => { const other = SITE === 'gem' ? 'main' : 'gem', w = worlds[other]; if (!w) return savedWorlds[other] || null; const keep = {tile, spec}; tile = w.tile; spec = w.spec; const d = worldData(); tile = keep.tile; spec = keep.spec; return d; })()
+    site:SITE, gemsOpen, examPassed, gemFound:[...gemFound], earned:[...earned], earnedAt, gemIntroSeen,
+    world:worldData(), world2:(() => { const other = SITE === 'gem' ? 'main' : 'gem', w = worlds[other]; if (!w) return savedWorlds[other] || null; const keep = {tile, spec, ladders}; tile = w.tile; spec = w.spec; ladders = w.ladders; const d = worldData(); tile = keep.tile; spec = keep.spec; ladders = keep.ladders; return d; })()
   };
 }
-function saveSig() { return String(xp) + '|' + SITE + gemFound.size + (examPassed ? 'E' : '') + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
+function saveSig() { return String(xp) + '|' + earned.size + '|' + SITE + gemFound.size + (examPassed ? 'E' : '') + '|' + (assign ? assign.type + assign.status : '') + '|' + tool.tier + (tool.broken ? 'b' : '') + '|' + VAULT.map(v => vault[v.id].tries + vault[v.id].status).join('') + '|' + shopState.spent + '|' + shopState.display.size + '|' + (shopState.hat || '') + (shopState.glasses || '') + avatar.body + avatar.skin + avatar.hair + '|' + found.size + '|' + idTotal + '|' + rcSeen.size + '|' + bag.length + '|' + Object.keys(chBest).length + '|' + stats.exps; }
 function downloadSave() {
   const payload = snapshot(), body = JSON.stringify(payload);
   const file = {game:'rock-hound', version:1, savedAt:new Date().toISOString(), check:hashStr(body + '|rock-hound'), payload};
@@ -2080,6 +2170,7 @@ function applySave(file) {
   assign = null; const AS = P.assign; if (AS && ATYPE[AS.type] && ['active', 'done'].includes(AS.status)) { assign = {type:AS.type, grp:GRP_NAME[AS.grp] ? AS.grp : undefined, status:AS.status, depth:num(AS.depth, 0, 99, 0), zone:ZONES[AS.zone] ? AS.zone : 'surface', sid:isId(AS.sid) ? AS.sid : undefined};
     assign.text = AS.type === 'rock' ? `Bring me ${GRP_NAME[assign.grp || 'igneous']} rock: identify one.` : ATYPE[AS.type].make().text; if (assign.type === 'rock' && !assign.grp) assign.grp = 'igneous'; if (assign.status === 'done' && !assign.sid) assign.status = 'active'; }
   pet = null; if (P.pet && isId(P.pet.sid)) { setPet(P.pet.sid); pet.name = String(P.pet.name || 'Pebbles').slice(0, 16); }
+  earned.clear(); (P.earned || []).forEach(id => { if (TROPHIES.some(t => t.id === id)) earned.add(id); }); for (const k in earnedAt) delete earnedAt[k]; for (const id of earned) { const d = P.earnedAt && P.earnedAt[id]; if (typeof d === 'string' && !isNaN(Date.parse(d))) earnedAt[id] = d; } gemIntroSeen = !!P.gemIntroSeen;
   examPassed = !!P.examPassed; gemsOpen = !!P.gemsOpen || examPassed; exam = null;
   gemFound.clear(); (P.gemFound || []).forEach(id => { if (isId(id) && SP[id].gem) gemFound.add(id); });
   SITE = P.site === 'gem' && gemsOpen ? 'gem' : 'main'; worlds.main = worlds.gem = null; for (const k in savedWorlds) delete savedWorlds[k];
@@ -2238,7 +2329,7 @@ function quizClick(v) {
    Original badge art, one per level, drawn with code.                 */
 const BADGE_STYLE = [
   {col:'#9aa3ad', dark:'#5b6474'}, {col:'#c98a4b', dark:'#8a5a2b'}, {col:'#8b5cc4', dark:'#5a3a8a'},
-  {col:'#3a86c8', dark:'#1f5c94'}, {col:'#ffcc33', dark:'#c99a10'}
+  {col:'#3a86c8', dark:'#1f5c94'}, {col:'#2a9d8f', dark:'#1b6b61'}, {col:'#ffcc33', dark:'#c99a10'}
 ];
 function drawBadge(c, lv, S, bg) {
   c.save(); if (bg) { c.fillStyle = bg; c.fillRect(0, 0, S, S); } c.scale(S / 100, S / 100); c.lineJoin = 'round';
@@ -2255,6 +2346,8 @@ function drawBadge(c, lv, S, bg) {
   else if (lv === 2) { crystal(c, 42, 60, 10, 20, -.35, 'rgba(240,236,250,.95)'); crystal(c, 58, 60, 9, 17, .4, 'rgba(240,236,250,.95)'); crystal(c, 50, 61, 12, 26, .02, 'rgba(250,248,255,.97)'); }
   else if (lv === 3) { c.save(); c.translate(50, 45); c.rotate(-.6); c.fillStyle = '#7a5233'; c.fillRect(-2.5, -4, 5, 26); c.strokeRect(-2.5, -4, 5, 26); c.fillStyle = '#c9d0d9'; c.fillRect(-12, -10, 24, 8); c.strokeRect(-12, -10, 24, 8); c.restore();
     c.fillStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.beginPath(); c.arc(56, 40, 8, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.moveTo(62, 46); c.lineTo(68, 53); c.stroke(); }
+  else if (lv === 4) { c.fillStyle = '#6f8a6a'; c.beginPath(); c.moveTo(30, 60); c.lineTo(44, 34); c.lineTo(52, 46); c.lineTo(58, 38); c.lineTo(70, 60); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(44, 34); c.lineTo(48, 42); c.lineTo(40, 42); c.closePath(); c.fill();
+    c.strokeStyle = '#1c2541'; c.beginPath(); c.moveTo(58, 38); c.lineTo(58, 22); c.stroke(); c.fillStyle = '#e8711c'; c.beginPath(); c.moveTo(58, 22); c.lineTo(68, 26); c.lineTo(58, 30); c.closePath(); c.fill(); c.stroke(); }
   else { c.fillStyle = '#fff4cc'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 9 : 21; c.lineTo(50 + Math.cos(a) * r, 46 + Math.sin(a) * r); } c.closePath(); c.fill(); c.stroke();
     c.fillStyle = '#a3243a'; c.beginPath(); c.moveTo(50, 39); c.lineTo(56, 45); c.lineTo(50, 53); c.lineTo(44, 45); c.closePath(); c.fill(); c.stroke(); shine(c, 48, 43, 2.5); }
   c.fillStyle = '#f2f7f5'; rr(c, 30, 68, 40, 12, 5); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.stroke();
@@ -2274,18 +2367,6 @@ const XP_RULES = [
   ['🔬 Science vault', 'The best prizes (toys, trophies and gem displays) can’t be bought. Reach a milestone, then answer a science question to win them.'],
   ['🪙 Geo-Coins', 'Every XP you earn also gives you 1 Geo-Coin to spend in the 🛍️ Rock shop. Spending never lowers your XP or level.']
 ];
-function renderLevels() {
-  const L = levelOf(xp), next = LEVELS[L + 1], base = LEVELS[L][0], prog = next ? Math.round(100 * (xp - base) / (next[0] - base)) : 100;
-  $('#levelsBody').innerHTML = `<div class="detail"><img src="${badgeURL[L]}" alt="${LEVELS[L][1]} badge" style="width:150px;height:150px"><div>
-    <h3>You are a ${LEVELS[L][1]}!</h3><p class="big" style="margin:4px 0">⭐ <b>${xp} XP</b></p>
-    ${next ? `<p style="margin:4px 0">${next[0] - xp} XP to reach <b>${next[1]}</b></p>
-      <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="Progress to next level" style="height:22px;border:3px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden"><div style="height:100%;width:${prog}%;background:var(--hat)"></div></div><p style="margin:4px 0">${prog}% of the way there</p>`
-      : '<p>You reached the top level. Amazing work!</p>'}</div></div>
-  <h3>All levels</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">${LEVELS.map(([need, name], i) => `<div class="card" style="${i > L ? 'background:#e3e7ea' : ''}">
-    <img src="${badgeURL[i]}" alt="" style="width:110px;height:110px;${i > L ? 'filter:grayscale(1);opacity:.45' : ''}"><b>Level ${i + 1}: ${name}</b><br>${need} XP needed<br>${i <= L ? '✔ Earned' : '🔒 ' + (need - xp) + ' XP to go'}</div>`).join('')}</div>
-  <h3>How to earn XP</h3><table><tr><th>Activity</th><th>XP</th></tr>${XP_RULES.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}</table>
-  <p><b>Tip:</b> careful scientists earn the most XP. Choose tests that rule things out, predict before you run the machine, and explain your thinking!</p>`;
-}
 
 /* ---------- 15e. ROCK SHOP, PRIZE BOX AND PET YARD -----------------
    Every XP you earn also gives 1 Geo-Coin. Spending coins never lowers XP or your level. */
@@ -2447,7 +2528,7 @@ const VAULT = [
   {id:'trophy_dig', tier:2, name:'Deep Digger trophy', kind:'Trophy', need:'Reach the igneous zone', prog:() => [visited.has('igneous') ? 1 : 0, 1]},
   {id:'geode', tier:3, name:'Amethyst geode display', kind:'Gem display', need:'Discover 12 Rock Dex entries', prog:() => [found.size, 12]},
   {id:'gemcase', tier:3, name:'Crystal collection case', kind:'Gem display', need:'Discover 8 different minerals', prog:() => [DEX.filter(s => s.kind === 'mineral' && found.has(s.id)).length, 8]},
-  {id:'mohs', tier:3, name:'Mohs scale gem tower', kind:'Gem display', need:'Reach Field Geologist (1,500 XP)', prog:() => [xp, 1500]}
+  {id:'mohs', tier:3, name:'Mohs scale gem tower', kind:'Gem display', need:'Reach Field Geologist (3,000 XP)', prog:() => [xp, 3000]}
 ];
 const VTIER = {1:'⭐⭐ Explain', 2:'⭐⭐⭐ Apply & analyze', 3:'⭐⭐⭐⭐ Evaluate & design'};
 const VID = {}; VAULT.forEach(v => VID[v.id] = v);
@@ -2531,6 +2612,7 @@ function drawVault(c, id, x, G, s) {
 const SHELF = {magnifier:[48, 0], yoyo:[80, 0], skate:[112, 0], trophy_min:[150, 0], trophy_cycle:[184, 0], trophy_dig:[218, 0], geode:[78, 1], gemcase:[132, 1], mohs:[186, 1]};
 function shelfItems() { return VAULT.filter(v => vault[v.id].status === 'won' && shopState.display.has(v.id) && !(pet && pet.play === v.id)); } // a toy being played with leaves the shelf
 function drawShelf() {
+  return false; // prizes are shown in the 🏆 Trophy room instead of the overworld
   const items = shelfItems(); if (!items.length) return false;
   const G = SURF * T, y1 = G - 74, y2 = G - 122;
   g.fillStyle = '#7a5233'; g.strokeStyle = '#1c2541'; g.lineWidth = 2;
@@ -2547,7 +2629,7 @@ const vPrevCache = {}; const vPrev = v => vPrevCache[v.id] || (vPrevCache[v.id] 
 function vaultCard(v) {
   const st = vault[v.id], [have, need] = v.prog(), met = have >= need, left = MAX_TRIES - st.tries;
   let action;
-  if (st.status === 'won') action = `<b>✔ Won!</b><br>${shopState.display.has(v.id) ? `<button data-vault="hide:${v.id}" class="on">🏆 On the shelf (put away)</button>` : `<button data-vault="show:${v.id}">🏆 Put on the shelf</button>`}`;
+  if (st.status === 'won') action = `<b>✔ Won!</b><br><button data-open="levels">🏆 See it in the Trophy room</button>`;
   else if (st.status === 'gone') action = '<b>🔒 No longer available</b><br><small>All 5 tries were used.</small>';
   else if (!met) action = `<b>Milestone:</b> ${v.need}<br>Progress: ${Math.min(have, need)} / ${need}`;
   else if (st.evAt !== null && evidence <= st.evAt) action = `<b>🔍 Gather new evidence to retry</b><br><small>Run a new lab test, find or identify a specimen, or discover a new rock change.</small>`;
@@ -2561,7 +2643,7 @@ function vaultHTML() {
     let fb = '';
     if (A.answered !== null) { const ok = A.answered === q.ans;
       fb = `<div class="fb ${ok ? 'good' : 'bad'} pop" role="status"><b>${ok ? `✔ Correct! You won the ${v.name}!` : '✖ Not this time.'}</b> ${ok ? '' : `The best answer was <b>${esc(q.opts[q.ans])}</b>. `}${esc(q.why)}
-        ${ok ? '<br>🏆 It’s on the Science shelf behind your pet’s yard.' : st.status === 'gone' ? '<br><b>That was your 5th try, so this prize is no longer available.</b> Other prizes are still waiting!' : `<br>Tries left: <b>${MAX_TRIES - st.tries}</b>. To try again, gather new evidence first (run a new lab test, find or identify a specimen, or discover a new rock change). You’ll get a different question.`}</div>
+        ${ok ? '<br>🏆 It’s in your Trophy room now.' : st.status === 'gone' ? '<br><b>That was your 5th try, so this prize is no longer available.</b> Other prizes are still waiting!' : `<br>Tries left: <b>${MAX_TRIES - st.tries}</b>. To try again, gather new evidence first (run a new lab test, find or identify a specimen, or discover a new rock change). You’ll get a different question.`}</div>
         <p><button data-vault="back">⬅ Back to the Science vault</button></p>`; }
     return `<div class="goalcard"><h3>🔬 Science challenge: ${v.name}</h3><p style="margin-top:0"><span class="tag">${VTIER[v.tier]}</span> Try ${st.tries + (A.answered === null ? 1 : 0)} of ${MAX_TRIES}. Think carefully: a wrong answer means you must gather new evidence before trying again.</p>
       <p class="big"><b>${esc(q.q)}</b></p><div class="choice" style="grid-template-columns:1fr">${opts}</div>${fb}</div>`;
@@ -2900,6 +2982,87 @@ function interact() {
   toast('Walk up to Dr. Rivera or the Rock Cycle Machine at camp, then press E. (Press R to rope up to camp.)');
 }
 
+/* ---------- 15j. ACHIEVEMENT TROPHIES + TROPHY ROOM + GEM DEX ------------
+   Trophies are earned for finishing big goals. Each gives bonus XP once.   */
+const TROPHIES = [
+  {id:'first', tier:1, icon:'🔬', name:'First Find', need:'Identify your first specimen', prog:() => [idTotal, 1]},
+  {id:'sharp', tier:2, icon:'🎯', name:'Sharp Scientist', need:'Identify 10 specimens on the first guess', prog:() => [stats.firstTry, 10]},
+  {id:'deep', tier:1, icon:'⛏️', name:'Deep Digger', need:'Reach the igneous zone at Pebble Creek', prog:() => [visited.has('igneous') ? 1 : 0, 1]},
+  {id:'minerals', tier:2, icon:'💠', name:'Mineral Expert', need:'Discover all 12 minerals', prog:() => [SPECIES.filter(s => s.kind === 'mineral' && found.has(s.id)).length, 12]},
+  {id:'rocks', tier:2, icon:'🪨', name:'Rock Expert', need:'Discover all 18 rocks (including ones you make)', prog:() => [DEX.filter(s => s.kind === 'rock' && found.has(s.id)).length, 18]},
+  {id:'dex', tier:3, icon:'📚', name:'Rock Dex Complete', need:'Discover all 30 Rock Dex entries', prog:() => [found.size, DEX.length]},
+  {id:'paths', tier:1, icon:'♻️', name:'Rock Cycle Explorer', need:'Discover 10 rock cycle paths', prog:() => [rcSeen.size, 10]},
+  {id:'champ', tier:3, icon:'🏆', name:'Challenge Champion', need:'Complete all rock cycle challenges', prog:() => [Object.keys(chBest).length, CHALLENGES.length]},
+  {id:'planner', tier:2, icon:'⭐', name:'Perfect Planner', need:'Earn 3 stars on 8 challenges', prog:() => [Object.values(chBest).filter(v => v === 3).length, 8]},
+  {id:'thinker', tier:2, icon:'🧠', name:'Deep Thinker', need:'Answer 10 science checks correctly', prog:() => [stats.expOk, 10]},
+  {id:'assistant', tier:2, icon:'📋', name:'Field Assistant', need:'Complete 5 field assignments', prog:() => [stats.assigns || 0, 5]},
+  {id:'vault', tier:3, icon:'🔐', name:'Vault Victor', need:'Win 5 Science vault prizes', prog:() => [VAULT.filter(v => vault[v.id].status === 'won').length, 5]},
+  {id:'exam', tier:3, icon:'🎓', name:'Master Examiner', need:'Pass Dr. Rivera’s Final Field Exam', prog:() => [examPassed ? 1 : 0, 1]},
+  {id:'traveler', tier:1, icon:'🚙', name:'Gem Country Traveler', need:'Visit Crystal Ridge Mine', prog:() => [gemIntroSeen ? 1 : 0, 1]},
+  {id:'gemdex', tier:3, icon:'💎', name:'Gem Dex Complete', need:'Find all 6 Crystal Ridge gems', prog:() => [gemFound.size, GEMS.length]}
+];
+const TROPHY_XP = {1:50, 2:100, 3:200}, TIER_NAME = {1:'Bronze', 2:'Silver', 3:'Gold'}, TIER_COL = {1:['#c98a4b', '#8a5a2b'], 2:['#c9d0d9', '#8a93a3'], 3:['#ffcc33', '#c99a10']};
+const earned = new Set(), earnedAt = {}; let gemIntroSeen = false, trophySel = null;
+// The science skill each trophy shows (printed on its "How I earned it" card)
+const TROPHY_SKILL = {first:'Observing and testing a specimen to identify it.', sharp:'Using evidence before guessing: choosing tests that rule things out.',
+  deep:'Connecting depth to rock type: slow-cooled igneous rock forms deep underground.', minerals:'Telling minerals apart by streak, hardness, luster and cleavage.',
+  rocks:'Classifying rocks as igneous, sedimentary or metamorphic by how they formed.', dex:'Persistence and careful identification of every rock and mineral.',
+  paths:'Modeling how rocks change through the rock cycle.', champ:'Planning multi-step paths through the rock cycle.', planner:'Finding the most efficient plan: thinking before acting.',
+  thinker:'Explaining the processes behind each rock change.', assistant:'Choosing relevant evidence to support a claim.', vault:'Applying, analyzing and evaluating science ideas.',
+  exam:'Building arguments with claims, evidence and reasoning.', traveler:'Exploring a new geologic setting.', gemdex:'Identifying gems with advanced hardness tests and gem chemistry.'};
+function trophyCard(t) {
+  const got = earned.has(t.id), [h, n] = t.prog(), when = earnedAt[t.id] ? new Date(earnedAt[t.id]).toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'}) : 'before this save file';
+  return `<div class="museum pop" role="region" aria-label="How I earned it: ${t.name}"><img src="${tPic(t)}" alt="" style="width:120px;height:120px;${got ? '' : 'filter:grayscale(1);opacity:.45'}"><div>
+    <p class="mlabel">${got ? 'HOW I EARNED IT' : 'NOT EARNED YET'}</p><h3 style="margin:2px 0">${t.icon} ${t.name}</h3><p style="margin:2px 0"><b>${TIER_NAME[t.tier]} trophy</b> · +${TROPHY_XP[t.tier]} XP</p>
+    <p style="margin:6px 0"><b>${got ? 'Earned by:' : 'To earn it:'}</b> ${t.need}.${got ? '' : ` Progress: <b>${Math.min(h, n)} / ${n}</b>.`}</p>
+    ${got ? `<p style="margin:6px 0"><b>Date earned:</b> ${when}</p>` : ''}
+    <p style="margin:6px 0"><b>Science skill${got ? ' I showed' : ' it shows'}:</b> ${TROPHY_SKILL[t.id]}</p>
+    <button data-trophy="close">✖ Close card</button></div></div>`;
+}
+function checkTrophies() {
+  for (const t of TROPHIES) { if (earned.has(t.id)) continue; const [h, n] = t.prog(); if (h >= n) { earned.add(t.id); earnedAt[t.id] = new Date().toISOString(); addXP(TROPHY_XP[t.tier]); sfx('find');
+    toast(`🏆 New trophy: ${t.name} (${TIER_NAME[t.tier]})! +${TROPHY_XP[t.tier]} XP. See it in the 🏆 Trophy room.`, 5500); return; } }
+}
+function trophyPic(t, got) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 120; const c = cv.getContext('2d'), [col, dark] = TIER_COL[t.tier];
+  c.save(); c.scale(1.2, 1.2); c.translate(50, 92); c.strokeStyle = '#1c2541'; c.lineWidth = 2; c.lineJoin = 'round';
+  c.fillStyle = '#4a3424'; rr(c, -22, -8, 44, 8, 2); c.fill(); c.stroke(); c.fillStyle = dark; rr(c, -14, -16, 28, 8, 2); c.fill(); c.stroke(); c.fillRect(-4, -28, 8, 12); c.strokeRect(-4, -28, 8, 12);
+  c.fillStyle = col; c.beginPath(); c.moveTo(-22, -70); c.lineTo(22, -70); c.quadraticCurveTo(20, -32, 0, -28); c.quadraticCurveTo(-20, -32, -22, -70); c.fill(); c.stroke();
+  c.lineWidth = 3; c.beginPath(); c.arc(-22, -58, 9, Math.PI * .5, Math.PI * 1.5); c.stroke(); c.beginPath(); c.arc(22, -58, 9, -Math.PI * .5, Math.PI * .5); c.stroke();
+  c.font = '22px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t.icon, 0, -50); shine(c, -11, -60, 4);
+  c.restore(); return cv.toDataURL();
+}
+const tPicCache = {}; const tPic = t => tPicCache[t.id] || (tPicCache[t.id] = trophyPic(t));
+function renderLevels() {   // the 🏆 TROPHY ROOM: everything you've earned, in one place
+  const L = levelOf(xp), next = LEVELS[L + 1], base = LEVELS[L][0], prog = next ? Math.round(100 * (xp - base) / (next[0] - base)) : 100;
+  const chDone = Object.keys(chBest).length, stars = Object.values(chBest).reduce((a, b) => a + b, 0), vWon = VAULT.filter(v => vault[v.id].status === 'won');
+  const lockStyle = 'filter:grayscale(1);opacity:.4';
+  $('#levelsBody').innerHTML = `<div class="detail"><img src="${badgeURL[L]}" alt="${LEVELS[L][1]} badge" style="width:140px;height:140px"><div>
+    <h3>Rank: ${LEVELS[L][1]} (Level ${L + 1} of ${LEVELS.length})</h3><p class="big" style="margin:4px 0">⭐ <b>${xp} XP</b> · 🏆 <b>${earned.size} / ${TROPHIES.length}</b> trophies · 🔐 <b>${vWon.length} / ${VAULT.length}</b> vault prizes · ♻️ <b>${chDone} / ${CHALLENGES.length}</b> challenges (${stars} ★)</p>
+    ${next ? `<p style="margin:4px 0">${next[0] - xp} XP to reach <b>${next[1]}</b></p><div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${prog}" aria-label="Progress to next rank" style="height:20px;border:3px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden"><div style="height:100%;width:${prog}%;background:var(--hat)"></div></div>` : '<p>You reached the top rank. Amazing work!</p>'}</div></div>
+  <h3>🏅 Rank badges</h3><div class="shelfrow">${LEVELS.map(([need, name], i) => `<div class="shelfitem"><img src="${badgeURL[i]}" alt="" style="width:84px;height:84px;${i > L ? lockStyle : ''}"><b>${name}</b><small>${need.toLocaleString()} XP ${i <= L ? '✔' : '🔒'}</small></div>`).join('')}</div>
+  <h3 id="trophyHead">🏆 Achievement trophies</h3><p style="margin:0 0 6px">Bronze +50 XP · Silver +100 XP · Gold +200 XP, earned once. <b>Select a trophy</b> to see its “How I earned it” card.</p>${trophySel ? trophyCard(TROPHIES.find(t => t.id === trophySel)) : ''}<div class="shelfrow">${TROPHIES.map(t => { const [h, n] = t.prog(), got = earned.has(t.id);
+    return `<button class="shelfitem shelfbtn ${trophySel === t.id ? 'on' : ''}" data-trophy="${t.id}" aria-label="${t.name}: ${got ? 'earned' : 'not earned yet'}. Open the How I earned it card."><img src="${tPic(t)}" alt="" style="width:84px;height:84px;${got ? '' : lockStyle}"><b>${t.name}</b><small>${TIER_NAME[t.tier]} · ${got ? '✔ Earned' : `${Math.min(h, n)} / ${n}`}</small></button>`; }).join('')}</div>
+  <h3>🔐 Science vault prizes</h3><div class="shelfrow">${VAULT.map(v => `<div class="shelfitem"><img src="${vPrev(v)}" alt="" style="width:84px;height:84px;${vault[v.id].status === 'won' ? '' : lockStyle}"><b>${v.name}</b><small>${vault[v.id].status === 'won' ? '✔ Won' : vault[v.id].status === 'gone' ? '🔒 No longer available' : v.kind + ' · ' + VTIER[v.tier]}</small></div>`).join('')}</div>
+  <p><button data-open="store">🔐 Go to the Science vault (Rock shop)</button></p>
+  <h3>♻️ Rock cycle challenges</h3><div class="shelfrow">${CHALLENGES.map((c, i) => `<div class="shelfitem" style="min-width:150px"><b>${rname(c.from)} → ${rname(c.to)}</b><small>${chBest[i] ? '★'.repeat(chBest[i]) + '☆'.repeat(3 - chBest[i]) : 'Not done yet'}</small></div>`).join('')}</div>
+  <h3>🎯 Missions</h3><ol class="notes">${MISSIONS.map((m, i) => `<li>${i < mi ? '✔' : i === mi ? '▶' : '○'} ${m.t}</li>`).join('')}</ol>
+  <h3>How to earn XP</h3><table><tr><th>Activity</th><th>XP</th></tr>${XP_RULES.map(([a, b]) => `<tr><td><b>${a}</b></td><td>${b}</td></tr>`).join('')}<tr><td><b>🏆 Trophies</b></td><td>Bronze +50, silver +100, gold +200, once each.</td></tr></table>`;
+}
+// 💎 GEM DEX: opens when you reach Crystal Ridge Mine
+const GEM_FACT = {diamond:'Pure carbon (C). Atoms locked in a strong 3-D pattern make it the hardest natural material.', kimberlite:'The “delivery truck” for diamonds: fast-rising magma from the mantle.',
+  ruby:'Corundum (Al₂O₃) + a trace of chromium = red.', sapphire:'Corundum (Al₂O₃) + traces of iron and titanium = blue. Same mineral as ruby!', emerald:'Beryl (Be₃Al₂Si₆O₁₈) + a trace of chromium = green.', topaz:'Number 8 on the Mohs scale; one perfect cleavage, so gem cutters must be careful.'};
+function renderGemDex(sel) {
+  let detail = '';
+  if (sel) { const s = SP[sel], got = gemFound.has(sel);
+    detail = got ? `<div class="detail gemcard"><img src="${spriteURL[s.id]}" alt="${s.name}"><div><h3>#${s.n} ${s.name} <span class="tag">${s.rtype}</span></h3><p><b>How it forms:</b> ${s.info}<br><b>Gem chemistry:</b> ${GEM_FACT[s.id]}</p>${propsHTML(s)}<p>In your collection: ${counts[s.id] || 0}</p></div></div>`
+      : `<div class="detail gemcard"><div class="blank" style="color:#ffcc33;border-color:#ffcc33">💎</div><div><h3>#${s.n} Not found yet</h3><p>Hint: search the <b>${whereFound(sel)}</b>.</p></div></div>`; }
+  $('#gemdexBody').innerHTML = `<p class="big" style="margin-top:0">Gems found: <b>${gemFound.size} / ${GEMS.length}</b>. ${gemFound.size >= GEMS.length ? '🏆 Complete!' : 'Select a gem to read it.'}</p>
+    <p style="margin-top:0">Tip: at the mine, the 💎 quartz point (7) and 🔺 corundum point (9) tests help tell very hard minerals apart.</p>${detail}
+    <div class="grid">${GEMS.map(s => gemFound.has(s.id) ? `<button class="card gemcard" data-gem="${s.id}"><img src="${spriteURL[s.id]}" alt="">#${s.n} ${s.name}</button>`
+      : `<button class="card gemcard locked" data-gem="${s.id}" aria-label="Gem ${s.n}, not found"><div class="blank" style="color:#ffcc33;border-color:#ffcc33">💎</div>#${s.n} ???</button>`).join('')}</div>`;
+}
+
 /* ---------- 15c. ONE-PAGE PDF EXIT TICKET --------------------------
    Built right here in JavaScript (no libraries, no internet).
    Uses the standard PDF fonts Helvetica and Helvetica-Bold.          */
@@ -2932,7 +3095,7 @@ function makeExitTicketPDF() {
     ['Specimens identified', `${idTotal} (first-guess: ${pct(stats.firstTry, idTotal)}; avg tests: ${idTotal ? (stats.testsUsed / idTotal).toFixed(1) : '-'})`],
     ['Rock cycle predictions', `${stats.predOk} of ${stats.preds} correct; ${rcSeen.size} path${rcSeen.size === 1 ? '' : 's'} found`],
     ['Rock cycle challenges', `${Object.keys(chBest).length} of ${CHALLENGES.length} done; ${chStars} of ${CHALLENGES.length * 3} stars`],
-    ['Science checks', `${stats.expOk} of ${stats.exps} correct`], ['Missions', `${Math.min(mi, MISSIONS.length)} of ${MISSIONS.length} complete`],
+    ['Science checks', `${stats.expOk} of ${stats.exps} correct`], ['Trophies and missions', `${earned.size} of ${TROPHIES.length} trophies; ${Math.min(mi, MISSIONS.length)} of ${MISSIONS.length} missions`],
     ['Pet rock', pet ? `${pet.name} (${SP[pet.sid].name})` : 'none yet']];
   rect(M, y - 4 * 30 - 10, W - 2 * M, 4 * 30 + 24, [0.95, 0.97, 0.96], [0.11, 0.15, 0.25]);
   rows.forEach(([k, v], i) => { const cx = M + 12 + (i % 2) * ((W - 2 * M) / 2), cy = y - 8 - Math.floor(i / 2) * 30; text(k, cx, cy, 9, true, '0.35 0.4 0.47'); text(v.slice(0, 48), cx, cy - 13, 11, false); });
