@@ -277,6 +277,7 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>X</kbd> <kbd>C</kbd> <kbd>P</kbd></span><span>Rock Dex, Collection box, Pet rock</span>
       <span><kbd>B</kbd></span><span>Rebuild rock in front of you (in the air: under your feet)</span>
       <span><kbd>U</kbd> / <kbd>Y</kbd></span><span>Place a ladder in a dug shaft (climb ↑ ↓, dig ← → ↑) / take a ladder down</span>
+      <span><kbd>O</kbd></span><span>Drill a core sample (Level 3)</span>
       <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
       <span><kbd>F</kbd> / <kbd>Z</kbd> / <kbd>I</kbd></span><span>Fossil lab / Fossil Dex / Geologic time guide (Level 2)</span>
       <span>📱 / 🖱️</span><span>Tap or click a block next to you to dig it; tap an open space to walk or climb there</span>
@@ -330,6 +331,7 @@ th{background:var(--ink);color:var(--paper)}
 <section class="panel" id="fossildex" aria-label="Fossil Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>🦴 Fossil Dex: Level 2, Fossil Bluffs</h2><div id="fossildexBody"></div></section>
 <section class="panel" id="timeguide" aria-label="Geologic time guide"><button class="close" data-close>✖ Close (Esc)</button><h2>🕰️ Geologic time guide</h2><div id="timeguideBody"></div></section>
 <section class="panel" id="jeep" aria-label="Drive the jeep"><button class="close" data-close>✖ Close (Esc)</button><h2>🚙 Field jeep: choose a level</h2><div id="jeepBody"></div></section>
+<section class="panel" id="core" aria-label="Core samples"><button class="close" data-close>✖ Close (Esc)</button><h2>🧪 Core samples and prospecting map</h2><div id="coreBody"></div></section>
 <section class="panel" id="refguide" aria-label="Refining guide"><button class="close" data-close>✖ Close (Esc)</button><h2>📘 Refining guide</h2><div id="refguideBody"></div></section>
 <section class="panel" id="bag" aria-label="Tool bag"><button class="close" data-close>✖ Close (Esc)</button><h2>🎒 Tool bag</h2><div id="bagBody"></div></section>
 <section class="panel" id="gemdex" aria-label="Gem Dex"><button class="close" data-close>✖ Close (Esc)</button><h2>💎 Gem Dex: Level 3, Crystal Ridge Mine</h2><div id="gemdexBody"></div></section>
@@ -395,7 +397,7 @@ th{background:var(--ink);color:var(--paper)}
 <li>♻️ What melted rock becomes also depends on its chemistry. The machine uses two simple rules: dark, iron-rich basalt melts into dark rock (basalt or gabbro), and every other rock melts into light-colored magma (granite or obsidian). Light-colored lava often cools into rhyolite, a fine-grained rock not in our Rock Dex.</li>
 <li>💎 Crystal Ridge Mine is simplified: real kimberlite pipes bring diamonds up from more than 150 km deep, far deeper than the game shows. Rubies and sapphires (both corundum) grow in marble, and emeralds and topaz grow in pegmatites.</li>
 <li>🦴 Level 2 (Fossil Bluffs) is modeled on Indiana: flat Ice Age glacial till over Paleozoic sea and swamp rocks. Real layers are much thicker, and each block stands for about 100 m. Indiana’s bedrock is only gently tilted and has no basalt dike; the game adds a dike and a fault to practice the cross-cutting rule. The fossils follow the Indiana Geological &amp; Water Survey 3-D fossil print lesson. Time ranges are simplified to the genus or group level; for the game, some long-lived groups are treated as index fossils for one period.</li>
-<li>📏 Density assay: SG = weight in air ÷ (weight in air − weight in water). The game models each ore sample as metal mixed with quartz (SG 2.65), so SG of the mix = 1 ÷ (fraction of metal ÷ metal SG + fraction of quartz ÷ 2.65). Real assays also use chemical tests.</li>
+<li>🧪 Core samples: real cores are drilled with hollow, diamond-tipped drill bits and can go hundreds of meters deep. In the game, a core shows 24 blocks straight down, and quality is shown with stars. Real geologists also test cores chemically in a lab (an assay) to measure exactly how much metal they hold.</li>
 <li>⚗️ The Level 3 refinery is simplified. Real ore usually holds only a few grams of gold per TON of rock, so the game’s purity numbers are much higher than real ore. Processing really does depend on mineral properties: dense metals are concentrated by gravity, some metal minerals by froth flotation, copper carbonate by acid leaching, and gems are cut only by abrasives harder than they are.</li>
 <li>🔨 Tools wear out after a hidden number of hits, like real tools. Trading for a new one at camp is a game rule that gives you a thinking break.</li>
 <li>🧱 Rebuilding puts back the rock that was originally in that spot so you can climb out or reach new places. In real life, dug-out rock can’t be put back the way it was!</li>
@@ -736,12 +738,12 @@ const trailCol = () => SITE === 'gem' ? KC : SITE === 'fossil' ? 30 : VC - 9;
 /* LEVEL 2 GROUND: natural-looking variation. Smooth "noise" makes wavy layer boundaries,
    pockets of marble, a buried stream channel full of gravel (placer), white quartz veins,
    a rusty gossan cap, pegmatite dikes rising from a granite bulge, and a ragged kimberlite pipe. */
-function makeNoise() { const N = 32, gtab = []; for (let i = 0; i < N * N; i++) gtab.push(Math.random());
+function makeNoise(seed) { const N = 32, gtab = [], RR = seed === undefined ? Math.random : rng(seed); for (let i = 0; i < N * N; i++) gtab.push(RR());
   const at = (x, y) => gtab[((y % N + N) % N) * N + ((x % N + N) % N)], sm = t => t * t * (3 - 2 * t);
   return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), fx = sm(x - xi), fy = sm(y - yi); const a = at(xi, yi) + (at(xi + 1, yi) - at(xi, yi)) * fx, b = at(xi, yi + 1) + (at(xi + 1, yi + 1) - at(xi, yi + 1)) * fx; return a + (b - a) * fy; }; }
-let richNoise = makeNoise();
+let richSeed = null, richNoise = makeNoise(1);
 function genGemWorld() {
-  tile = []; spec = []; dmg = []; ladders = new Set(); richNoise = makeNoise();
+  tile = []; spec = []; dmg = []; ladders = new Set(); if (richSeed === null) richSeed = Math.floor(Math.random() * 1e9); richNoise = makeNoise(richSeed);   // the same rich patches every visit
   const n1 = makeNoise(), n2 = makeNoise(), n3 = makeNoise();
   const soil = c => 1 + Math.round(n1(c * .25, 3) * 2);                                       // laterite soil 1–3 blocks thick
   const gTop = c => SURF + 24 + Math.round(n1(c * .15, 9) * 6) - Math.round(9 * Math.exp(-(((c - 38) / 5) ** 2))); // granite top with a bulge
@@ -783,13 +785,14 @@ function genGemWorld() {
    - diamonds deeper in the pipe are better; malachite is richest near the surface in the gossan */
 const GRADES = [['Low', 20, 38], ['Medium', 40, 62], ['High', 65, 90]];
 function gradeAt(r, c, id, zone) {
-  let score = richNoise(c * .35, r * .35) * .65 + Math.random() * .15;
+  const hsh = ((r * 92821 + c * 68917 + richSeed) % 1000 + 1000) % 1000 / 1000;
+  let score = richNoise(c * .35, r * .35) * .65 + hsh * .15;
   if (zone === 'placer' && (id === 'gold' || id === 'platinum')) score += .2;
   if (zone === 'vein') { const center = back[r][c - 1] === QVEIN && back[r][c + 1] === QVEIN || back[r - 1] && back[r - 1][c] === QVEIN && back[r + 1] && back[r + 1][c] === QVEIN; score += center ? .25 : .05; }
   if (id === 'diamond' || id === 'kimberlite') score += (r - SURF) / ROWS * .45;
   if (zone === 'gossan') score += (SURF + 7 - r) * .03;
   const gi = score < .45 ? 0 : score < .72 ? 1 : 2, [name, lo, hi] = GRADES[gi];
-  return {g:name, gi, pct:Math.round(lo + Math.random() * (hi - lo))};
+  return {g:name, gi, pct:Math.round(lo + hsh * (hi - lo))};
 }
 
 /* LEVEL 2 GROUND, modeled on Indiana’s rocks and built by real processes:
@@ -834,7 +837,7 @@ function travel(to) {
   restoreCampGround();
   const l = safeLanding(); player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1; if (tile[SURF][SPAWN_C] === AIR) { player.x = l.x; player.y = l.y; }
   player.vx = player.vy = 0; rope = null; sensed.clear(); if (pet) { pet.x = player.x - 30; pet.y = player.y; }
-  sfx('rope'); toast({gem:'🚙 Welcome to Level 3, Crystal Ridge Mine! Look for the blue-green kimberlite pipe, the marble pockets and the pink pegmatite veins.', fossil:'🚙 Welcome to Level 2, Fossil Bluffs! Dig into the cliff’s layers, find fossils, and use them to date each layer.'}[to] || '🚙 Back at Level 1, Pebble Creek.', 6000);
+  sfx('rope'); toast({gem:'🚙 Welcome to Level 3, Crystal Ridge Mine! Valuable minerals are spread unevenly here. Drill 🧪 core samples (press O) to find the rich spots before you dig.', fossil:'🚙 Welcome to Level 2, Fossil Bluffs! Dig into the cliff’s layers, find fossils, and use them to date each layer.'}[to] || '🚙 Back at Level 1, Pebble Creek.', 6000);
   if (to === 'fossil' && !fossilIntroSeen) { fossilIntroSeen = true; if (pet) petSay('Fossils! Each layer is a page in Earth’s history book.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('timeguide', false); toast('🕰️ This is your Geologic time guide. Open it anytime (press I). Your 🦴 Fossil Dex is in the 🎒 menu (press Z).', 7000); } }, 600); }
   if (to === 'gem' && !gemIntroSeen) { gemIntroSeen = true; if (pet) petSay('Whoa, real gem country! Diamonds come from deep in the kimberlite pipe.', 'wow', 5); setTimeout(() => { if (!current) { openPanel('gemdex', false); toast('💎 Your Gem Dex is open! Find all 10 Crystal Ridge gems and precious minerals. Open it anytime from the 🎒 menu (or press J).', 6000); } }, 600); }
 }
@@ -1639,7 +1642,7 @@ function identify() {
     const gain = xpFor(sp), lvBefore = levelOf(xp);
     xp += gain.xp; idTotal++; idBy[sp.zone] = (idBy[sp.zone] || 0) + 1;
     const fset = a.gem ? gemFound : found, isNew = !fset.has(a.id); fset.add(a.id); counts[a.id] = (counts[a.id] || 0) + 1;
-    if (sp.grade && procKind(a.id)) addRaw(a.id, sp.grade, sp.zone); // rough material for the Level 3 refinery
+    if (sp.grade && procKind(a.id)) { addRaw(a.id, sp.grade, sp.zone); if (sp.grade.gi === 2) { stats.highFound = 1; checkChallenges(); } } // rough material for the Level 3 refinery
     notebook.push({uid:sp.uid, sid:a.id, zone:sp.zone, depth:sp.depth, tests:[...sp.done], wrong:sp.wrong.slice(), xp:gain.xp, lines:gain.lines});
     stats.guesses++; stats.testsUsed += sp.done.size; if (sp.tries === 1) stats.firstTry++; gainEvidence();
     labResult = {uid:sp.uid, sid:a.id, xp:gain.xp, lines:gain.lines, isNew, grade:sp.grade && procKind(a.id) ? sp.grade : null, zone:sp.zone};
@@ -2013,7 +2016,7 @@ function renderLab() {
     el.innerHTML = `<div class="result"><div class="detail good pop" role="status"><img src="${spriteURL[a.id]}" alt="${a.name}"><div>
       <h3>✔ Specimen #${labResult.uid} is ${a.name}!</h3><p>${a.kind === 'mineral' ? 'A mineral.' : 'A ' + a.rtype.toLowerCase() + ' rock.'} ${a.info}</p>
       <p><b>+${labResult.xp} XP</b><br>${labResult.lines.join('<br>')}</p>
-      <p>${labResult.isNew ? '📚 New Dex entry! ' : ''}📦 Added to your Collection Box. 📓 Your tests are saved in the Lab notebook.</p>${labResult.grade ? `<p class="fb good" style="margin:6px 0">⚗️ <b>Rough material saved for the refinery</b> (from the ${ZONES[labResult.zone].short}). Its purity depends on where you found it. Assay it at the refinery to find out!</p>` : ''}</div></div>
+      <p>${labResult.isNew ? '📚 New Dex entry! ' : ''}📦 Added to your Collection Box. 📓 Your tests are saved in the Lab notebook.</p>${labResult.grade ? `<p class="fb good" style="margin:6px 0">⚗️ <b>Rough material saved for the refinery</b> (from the ${ZONES[labResult.zone].short}). Its quality depends on where you found it. Check it at the refinery!</p>` : ''}</div></div>
       ${nxt ? `<button id="labNext">🔬 Test specimen #${nxt.uid} next</button> ` : ''}<button data-open="notebook">📓 Open lab notebook</button> <button data-close>⛏️ Back to digging</button></div>`;
     return;
   }
@@ -2100,7 +2103,7 @@ function renderNotebook() {
 function renderKeys() {
   $('#keysBody').innerHTML = '<div class="keys" style="color:#f2f7f5">' + $('#keysModal .keys').innerHTML + '</div>';
 }
-const RENDER = {fossillab:() => { fResult = null; renderFossilLab(); }, fossildex:() => renderFossilDex(), timeguide:renderTimeGuide, jeep:renderJeep, refguide:renderRefGuide, refinery:() => { refState = null; renderRefinery(); }, bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
+const RENDER = {core:renderCore, fossillab:() => { fResult = null; renderFossilLab(); }, fossildex:() => renderFossilDex(), timeguide:renderTimeGuide, jeep:renderJeep, refguide:renderRefGuide, refinery:() => { refState = null; renderRefinery(); }, bag:renderBag, gemdex:() => renderGemDex(), colleague:renderColleague, store:renderStore, prize:renderPrize, avatar:renderAvatar, levels:renderLevels, report:renderReport, guide:() => {}, machine:renderMachine, notebook:renderNotebook, keys:renderKeys, lab:renderLab, chart:renderChart, dex:() => renderDex(), box:renderBox, pet:renderPet};
 function openPanel(id, keep) {
   if (id === 'fossildex' && !fossilIntroSeen) { toast('🦴 The Fossil Dex opens when you reach Level 2 (Fossil Bluffs).'); return; }
   if (id === 'gemdex' && !gemIntroSeen) { toast('💎 The Gem Dex opens when you reach Crystal Ridge Mine.'); return; }
@@ -2142,6 +2145,7 @@ addEventListener('keydown', e => {
   if (k === 'b' && !current) tryBuild(true);
   if (k === 'u' && !current) placeLadder();
   if (k === 'y' && !current) takeDownLadder();
+  if (k === 'o' && !current) drillCore();
   if (k === 'k' && !current) driveJeep();
   if (!current && player.onLadder) { if (k === 'arrowup' || k === 'w' || k === ' ') ladTap.u = 1; if (k === 'arrowdown' || k === 's') ladTap.d = 1; if (k === 'arrowleft' || k === 'a') ladTap.l = 1; if (k === 'arrowright' || k === 'd') ladTap.r = 1; }
   if (k === 'e' && !current) interact();
@@ -2573,7 +2577,7 @@ function snapshot() {
     shop:{spent:shopState.spent, owned:[...shopState.owned], hat:shopState.hat, glasses:shopState.glasses, display:[...shopState.display]},
     bag:bag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries, wrong:b.wrong, grade:b.grade, site:b.site})),
     notebook:notebook.map(e => ({uid:e.uid, sid:e.sid, zone:e.zone, depth:e.depth, tests:e.tests, wrong:e.wrong, xp:e.xp, lines:e.lines})),
-    raw:raw.slice(), treasure, rec, assayStats, site:SITE, gemsOpen, examPassed, fossilPassed, sketchBest, fossilIntroSeen, fossilFound:[...fossilFound], colConf, fbag:fbag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries})), gemFound:[...gemFound], earned:[...earned], earnedAt, gemIntroSeen,
+    raw:raw.slice(), treasure, rec, assayStats, richSeed, cores:cores.map(k => ({c:k.c, r0:k.r0, cells:k.cells.map(x => [x.r, x.t, x.gi, x.spec ? 1 : 0])})), chalDone, site:SITE, gemsOpen, examPassed, fossilPassed, puzzles:pzState, fossilIntroSeen, fossilFound:[...fossilFound], colConf, fbag:fbag.map(b => ({uid:b.uid, sid:b.sid, zone:b.zone, depth:b.depth, done:[...b.done], tries:b.tries})), gemFound:[...gemFound], earned:[...earned], earnedAt, gemIntroSeen,
     world:worldData(), worlds2:Object.fromEntries(['main', 'fossil', 'gem'].filter(o => o !== SITE).map(o => { const w = worlds[o]; if (!w) return [o, savedWorlds[o] || null]; const keep = {tile, spec, ladders}; tile = w.tile; spec = w.spec; ladders = w.ladders; const d = worldData(); tile = keep.tile; spec = keep.spec; ladders = keep.ladders; return [o, d]; }))
   };
 }
@@ -2631,9 +2635,12 @@ function applySave(file) {
   raw.length = 0; (P.raw || []).forEach(it => { if (it && isId(it.id) && procKind(it.id)) { const gi = num(it.gi, 0, 2, 0); raw.push({id:it.id, gi, g:GRADES[gi][0], pct:num(it.pct, 1, 99, 30), zone:ZONES[it.zone] ? it.zone : 'kimberlite'}); } });
   const TR = P.treasure || {}; for (const k of ['gold', 'silver', 'platinum', 'copper']) treasure[k] = num(TR[k], 0, 1e7, 0); treasure.gems = (TR.gems || []).filter(gm => gm && GEMCUT[gm.id]).map(gm => ({id:gm.id, ct:num(gm.ct, 0, 99, 1), q:String(gm.q || 'Eye-clean').slice(0, 30)}));
   const RC = P.rec || {}; REC_IDS.forEach(id => { const o = RC[id] || {}; rec[id] = {best:num(o.best, 0, 100, 0), n:num(o.n, 0, 1e6, 0), made:num(o.made, 0, 1e7, 0), goals:[0, 1, 2].map(i => !!(o.goals && o.goals[i]))}; });
+  richSeed = Number.isInteger(P.richSeed) ? P.richSeed : richSeed; if (richSeed !== null) richNoise = makeNoise(richSeed); cores.length = 0; lastCore = null;
+  (P.cores || []).forEach(k => { if (k && Number.isInteger(k.c) && Array.isArray(k.cells)) cores.push({c:k.c, r0:num(k.r0, 0, ROWS, SURF + 1), cells:k.cells.filter(Array.isArray).slice(0, 30).map(([r, t, gi, sp]) => ({r:num(r, 0, ROWS - 1, 0), t:num(t, 0, 40, 0), z:zoneOfType(num(t, 0, 40, 0)), gi:num(gi, -1, 2, -1), spec:!!sp}))}); }); lastCore = cores[cores.length - 1] || null;
+  for (const k in chalDone) delete chalDone[k]; for (const k in (P.chalDone || {})) if (REF_CHAL.some(ch => ch.id === k)) chalDone[k] = true;
   assayStats.n = num(P.assayStats && P.assayStats.n, 0, 1e6, 0); assayStats.ok = Math.min(assayStats.n, num(P.assayStats && P.assayStats.ok, 0, 1e6, 0));
   examPassed = !!P.examPassed; fossilPassed = !!P.fossilPassed; gemsOpen = fossilPassed; exam = null; fx = null;
-  fossilIntroSeen = !!P.fossilIntroSeen; sketchBest = P.sketchBest === null || P.sketchBest === undefined ? null : num(P.sketchBest, 0, 99, 0); sk = {done:[], mistakes:0, fb:null}; fossilFound.clear(); (P.fossilFound || []).forEach(id => { if (SP[id] && SP[id].kind === 'fossil') fossilFound.add(id); });
+  fossilIntroSeen = !!P.fossilIntroSeen; for (const k in pzState) delete pzState[k]; for (const k in (P.puzzles || {})) { const o = P.puzzles[k]; if (PUZZLES.some(x => String(x.id) === k) && o) pzState[k] = {tries:num(o.tries, 0, 999, 0), solved:!!o.solved}; } pzOrder = []; pzFb = null; fossilFound.clear(); (P.fossilFound || []).forEach(id => { if (SP[id] && SP[id].kind === 'fossil') fossilFound.add(id); });
   for (const k in colConf) delete colConf[k]; for (const z in (P.colConf || {})) { const o = P.colConf[z]; if (LAY[z] && o && o.period === LAY[z].per) colConf[z] = {period:o.period, by:String(o.by || '').slice(0, 120)}; }
   fbag.length = 0; (P.fbag || []).forEach(b => { if (b && SP[b.sid] && SP[b.sid].kind === 'fossil' && LAY[b.zone]) fbag.push({uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done:new Set((b.done || []).filter(k => FTESTS.some(t => t[0] === k))), tries:num(b.tries, 0, 99, 0), stage:'id'}); }); fIdx = 0; fResult = null;
   gemFound.clear(); (P.gemFound || []).forEach(id => { if (isId(id) && SP[id].gem) gemFound.add(id); });
@@ -2830,8 +2837,8 @@ const XP_RULES = [
   ['🧠 Explain your path', '+20 XP for a correct science check after a challenge (+5 on replays).'],
   ['📋 Field Guide Quiz', 'Correct answers: ⭐ Remember +10, ⭐⭐ Explain +15, ⭐⭐⭐ Apply & analyze +20 (first quiz of each session).'],
   ['📋 Field assignments', '+50 XP when you finish Dr. Rivera’s assignment and choose the right evidence on your first try (+25 on a later try).'],
-  ['✏️ Cliff sketch (Level 2)', '+80 XP with no mistakes, +50 with 1–2, +30 with more (first time); +10 for replays.'],
-  ['⚗️ Level 3 refinery', '+30 XP for the right process, +15 XP for an accurate assay estimate, and +25 / +50 / +75 XP for bronze, silver and gold refining goals on each material.'],
+  ['✏️ Relative time puzzles (Level 2)', '+40 XP for solving a puzzle on the first try, +25 if it takes more tries (once per puzzle).'],
+  ['⚗️ Level 3 refinery', '+30 XP for the right machine setting, +10 XP for matching a sample to the right quality picture, and +20 to +60 XP for each refinery challenge.'],
   ['🔬 Science vault', 'The best prizes (toys, trophies and gem displays) can’t be bought. Reach a milestone, then answer a science question to win them.'],
   ['🪙 Geo-Coins', 'Every XP you earn also gives you 1 Geo-Coin to spend in the 🛍️ Rock shop. Spending never lowers your XP or level.']
 ];
@@ -3486,6 +3493,7 @@ function renderBag() {
   $('#bagBody').innerHTML = `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">
     ${item(tool.unbreakable ? '🪓' : '🔨', toolName(), tool.unbreakable ? '<b>Unbreakable!</b> Your reward for completing the Rock Dex and passing the Final Field Exam.' : tool.broken ? '<b>Broken.</b> Talk to Dr. Rivera at camp to earn a new one.' : 'Wears out with use. When it breaks, Dr. Rivera trades you a new one for some rock cycle thinking.', '')}
     ${item('🪜', 'Ladder', 'Place it in a dug shaft; it grows up to the rock above or the surface. Climb one block at a time with ↑ ↓. Dig sideways with ← →, or dig UP with ↑ when rock is above you (the ladder grows into the new space). Walk into a ladder from a tunnel and you’ll grab it instead of falling.', '<button data-bag="ladder">🪜 Place a ladder (U)</button> <button data-bag="unladder">🧹 Take down a ladder (Y)</button>')}
+    ${gemsOpen ? item('🧪', 'Core drill (Level 3)', 'Drill a core sample straight down to see the rock and its quality before you dig. Every core goes on your prospecting map.', '<button data-bag="core">🧪 Drill a core here (O)</button> <button data-bag="coremap">🗺️ View cores and map</button>') : ''}
     ${item('🪢', 'Rope', 'The camp crew pulls you all the way out to solid ground.', '<button data-bag="rope">🪢 Rope up to camp (R)</button>')}
     ${item('🧱', 'Rebuild', 'Put back the rock that was dug out of a space.', '<button data-bag="build">🧱 Build rock back (B)</button>')}
     ${examPassed ? item('🚙', 'Field jeep', `Drive to any level you’ve unlocked, anytime. You’re at <b>Level ${siteLvl(SITE)}: ${siteName(SITE)}</b>.`, `<button data-bag="jeep">🚙 Choose a level (K)</button>`)
@@ -3494,6 +3502,8 @@ function renderBag() {
 }
 function bagClick(v) {
   if (v === 'jeep') { driveJeep(); return; }
+  if (v === 'core') { closeTop(); drillCore(); return; }
+  if (v === 'coremap') { closeTop(); openPanel('core', false); return; }
   closeTop();
   if (v === 'ladder') placeLadder(); else if (v === 'unladder') takeDownLadder(); else if (v === 'rope') ropeUp(); else if (v === 'build') tryBuild(true);
 }
@@ -3507,11 +3517,11 @@ const raw = [], treasure = {gold:0, silver:0, platinum:0, copper:0, gems:[]}; le
 const METAL = {gold:{metal:'gold', name:'gold', method:'gravity', col:['#e6b422', '#fff2a8']}, platinum:{metal:'platinum', name:'platinum', method:'gravity', col:['#a9b0b8', '#f4f6f8']},
   silver:{metal:'silver', name:'silver', method:'flotation', col:['#c9ced6', '#ffffff']}, malachite:{metal:'copper', name:'copper', method:'leach', col:['#c8692e', '#f2b48a']}};
 const GEMCUT = {diamond:'#e6f3fb', ruby:'#c1121f', sapphire:'#1f4fbf', emerald:'#1f9d55', topaz:'#e8a33c'};
-const METHODS = [['gravity', '💧 Gravity separation', 'Shake the crushed ore with water; the heaviest grains sink and are collected.'],
-  ['flotation', '🫧 Froth flotation', 'Stir crushed ore in water with soapy chemicals; air bubbles carry certain metal minerals to the top.'],
-  ['leach', '🧪 Acid leaching', 'Soak crushed ore in dilute acid so the metal dissolves into the liquid, then recover it.']];
-const ABRASIVES = [['diamond', '💎 Diamond grit', 10], ['corundum', '🔺 Corundum grit', 9], ['quartz', '🏖️ Quartz sand', 7], ['steel', '🔩 Steel file', 6.5]];
-const SORTS = [['xray', '🔦 Crush, then X-ray sort (diamonds glow) and grease tables (diamonds stick)'], ['furnace', '🔥 Melt the kimberlite in a furnace'], ['magnet', '🧲 Pull the diamonds out with a magnet'], ['water', '💧 Dissolve the kimberlite in water']];
+const METHODS = [['gravity', '💧 Shake table', 'Shakes the crushed rock with water. The heaviest bits sink to the bottom.'],
+  ['flotation', '🫧 Bubble tank', 'Stirs crushed rock in soapy water. Bubbles grab silvery metal grains and float them up.'],
+  ['leach', '🧪 Acid bath', 'Soaks crushed rock in weak acid. The acid dissolves the copper mineral out of the rock.']];
+const ABRASIVES = [['diamond', '💎 Diamond wheel', 10], ['corundum', '🔺 Corundum wheel', 9], ['quartz', '🏖️ Quartz sand wheel', 7], ['steel', '🔩 Steel wheel', 6.5]];
+const SORTS = [['xray', '🔦 X-ray sorter: crush the rock, then pick out the pieces that glow under X-rays'], ['furnace', '🔥 Melt the kimberlite in a furnace'], ['magnet', '🧲 Pull the diamonds out with a magnet'], ['water', '💧 Dissolve the kimberlite in water']];
 const procKind = id => METAL[id] ? 'ore' : GEMCUT[id] ? 'gem' : id === 'kimberlite' ? 'kimb' : null;
 function addRaw(id, grade, zone) { if (procKind(id)) raw.push({id, g:grade.g, gi:grade.gi, pct:grade.pct, zone}); }
 function drawFossilStation() {   // ART: a canopy tent with a prep table, brushes and a bone
@@ -3549,150 +3559,171 @@ function paintTreasure(root) {
       for (let i = 0; i < bars; i++) drawBar(c, 22 + i * 22, 40 - (i % 2) * 6, 1, col); for (let i = 0; i < nug; i++) drawNugget(c, 12 + i * 11, 53, 1.4, col); if (!bars && !nug) { c.fillStyle = '#9aa3ad'; c.font = '13px Verdana'; c.textAlign = 'center'; c.fillText('none yet', 55, 34); } }
     else { const gm = treasure.gems[+cv.dataset.gemcut]; const n = Math.max(1, Math.min(4, Math.round(gm.ct))); for (let i = 0; i < n; i++) drawCutGem(c, 22 + i * 24, 30, Math.min(1.6, 1 + gm.ct / 10), GEMCUT[gm.id]); } });
 }
-/* ASSAY: measure a rough sample BEFORE refining, then compare your estimate with the result.
-   Ores: density. Weigh the sample in air and in water: SG = weight in air ÷ (weight in air − weight in water).
-   A sample is metal mixed with quartz (SG 2.65), so a higher SG means more metal.
-   Gems: count inclusions with a 10× loupe. Kimberlite: count indicator minerals.   */
-const QUARTZ_SG = 2.65;
-const sgMix = (metalSG, p) => 1 / (p / metalSG + (1 - p) / QUARTZ_SG);   // density of a metal + quartz mixture (p = fraction of metal by mass)
-const BANDS = [[20, 40], [40, 60], [60, 80], [80, 100]];
-const bandOf = pct => Math.max(0, Math.min(3, Math.floor((pct - 20) / 20)));
-function assayData(it) {
-  const k = procKind(it.id);
-  if (k === 'ore') { const sg = sgMix(SP[it.id].sg, it.pct / 100), water = Math.round((200 - 200 / sg) * 10) / 10; return {air:200, water, sg:Math.round(sg * 100) / 100}; }
-  if (k === 'gem') return {inc:[[5, 8], [2, 4], [0, 1]][it.gi].reduce((a, b) => a + Math.floor(Math.random() * (b - a + 1)), 0)};
-  return {ind:[[0, 3], [4, 7], [8, 12]][it.gi].reduce((a, b) => a + Math.floor(Math.random() * (b - a + 1)), 0)};
+/* LEVEL 3 BIG IDEAS (7th grade):
+   1. Natural materials are NOT all the same quality, and they are spread unevenly (rich patches).
+   2. Geologists use tests, like CORE SAMPLES, to find the rich spots before they dig.
+   3. Rough material must be PROCESSED after it is mined, and better raw material gives more product.
+   Quality is shown with simple pictures and stars instead of math.                               */
+const QSTARS = gi => '⭐'.repeat(gi + 1) + '☆'.repeat(2 - gi), QWORD = ['Low', 'Medium', 'High'];
+const QDESC = {ore:['a few metal specks', 'some metal specks', 'lots of metal specks'], gem:['cloudy, with many tiny flaws', 'mostly clear, a few flaws', 'clear, almost no flaws'], kimb:['few red garnet grains (diamond clues)', 'some red garnet grains', 'many red garnet grains']};
+const assayStats = {n:0, ok:0};     // quality checks: how many you matched correctly
+// 🔍 CLOSE-UP DRAWING of a sample at a quality level (used for the sample and the 3 reference pictures)
+function drawCloseup(cv, id, gi, seed) {
+  const c = cv.getContext('2d'), W = cv.width, H = cv.height, R = rng(seed), k = procKind(id); c.clearRect(0, 0, W, H);
+  const blob = (cx, cy, rx, ry) => { const p = new Path2D(); for (let i = 0; i <= 14; i++) { const a = i / 14 * Math.PI * 2, j = .85 + R() * .25; p[i ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j); } p.closePath(); return p; };
+  if (k === 'gem') { const col = GEMCUT[id], p = blob(W / 2, H / 2, W * .36, H * .32); c.globalAlpha = [.6, .8, .95][gi]; c.fillStyle = col; c.fill(p); c.globalAlpha = 1; c.strokeStyle = '#1c2541'; c.lineWidth = 2; c.stroke(p);
+    c.save(); c.clip(p); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(W * .4, H * .38, W * .1, H * .06, -.5, 0, 7); c.fill();
+    const flaws = [14, 5, 1][gi]; for (let i = 0; i < flaws; i++) { c.fillStyle = 'rgba(40,40,40,.55)'; c.beginPath(); c.arc(W * (.25 + R() * .5), H * (.3 + R() * .4), 1.5 + R() * 2.5, 0, 7); c.fill(); }
+    if (gi === 0) { c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(0, 0, W, H); } c.restore(); return; }
+  const base = k === 'kimb' ? '#4e6e66' : id === 'malachite' ? '#7a6a58' : '#e3e6ea', p = blob(W / 2, H / 2, W * .4, H * .34);
+  c.fillStyle = base; c.fill(p); c.strokeStyle = '#1c2541'; c.lineWidth = 2; c.stroke(p); c.save(); c.clip(p);
+  if (k === 'kimb') { const n = [3, 8, 16][gi]; for (let i = 0; i < n; i++) { c.fillStyle = '#c1121f'; c.beginPath(); c.arc(W * (.15 + R() * .7), H * (.2 + R() * .6), 2 + R() * 2, 0, 7); c.fill(); } if (gi === 2) { c.fillStyle = '#fff'; c.beginPath(); c.arc(W * .6, H * .45, 3.5, 0, 7); c.fill(); } }
+  else if (id === 'malachite') { const n = [2, 5, 9][gi]; for (let i = 0; i < n; i++) { const x = W * (.2 + R() * .6), y = H * (.25 + R() * .5); for (let r = 9; r > 1; r -= 3) { c.strokeStyle = r % 2 ? '#0f6b3c' : '#4cc485'; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); } } }
+  else { const col = METAL[id].col, n = [5, 14, 32][gi]; for (let i = 0; i < n; i++) { c.fillStyle = col[0]; c.strokeStyle = 'rgba(60,40,10,.6)'; c.lineWidth = .8; c.beginPath(); c.ellipse(W * (.15 + R() * .7), H * (.2 + R() * .6), 2 + R() * 3, 1.5 + R() * 2, R() * 3, 0, 7); c.fill(); c.stroke(); } }
+  c.restore();
 }
-// RECORDS AND GOALS for each material
+// 🧪 CORE SAMPLES: drill straight down and see the rock and its quality, without digging it all out
+const cores = []; let lastCore = null;
+const CORE_TYPICAL = {placer:'gold', vein:'gold', gossan:'malachite', kimberlite:'diamond', pegmatite:'emerald', metamorphic:'ruby'};
+function coreCellGrade(r, c) { const z = zoneOfType(back[r][c]), id = CORE_TYPICAL[z]; return id ? gradeAt(r, c, id, z).gi : -1; }
+function drillCore() {
+  if (SITE !== 'gem') { toast('🧪 The core drill is for Level 3 (Crystal Ridge Mine), where valuable minerals are spread unevenly.'); return; }
+  if (current || rope) return;
+  const c = Math.floor((player.x + player.w / 2) / T), r0 = Math.max(SURF + 1, Math.floor((player.y + player.h) / T)), cells = [];
+  for (let r = r0; r < Math.min(ROWS, r0 + 24); r++) cells.push({r, t:back[r][c], z:zoneOfType(back[r][c]), gi:coreCellGrade(r, c), spec:!!spec[r][c]});
+  const old = cores.findIndex(k => k.c === c && k.r0 === r0); if (old >= 0) cores.splice(old, 1);
+  lastCore = {c, r0, cells}; cores.push(lastCore); stats.cores = (stats.cores || 0) + 1; sfx('test'); checkChallenges();
+  openPanel('core', false);
+}
+function renderCore() {
+  const k = lastCore; let h = '';
+  h += `<p style="margin-top:0">A <b>core sample</b> is a long tube of rock drilled straight down. Geologists drill cores to see what’s underground and <b>where the best (richest) material is</b>, before they dig. Valuable minerals are <b>not spread evenly</b>: some spots are rich and some are poor.</p>`;
+  if (!k) h += '<p class="big">No core yet. Stand where you want to test and press <b>O</b> (or use the 🎒 Tool bag) at Level 3.</p>';
+  else { const best = k.cells.reduce((b, x) => x.gi > (b ? b.gi : -1) ? x : b, null);
+    h += `<div class="lab" style="grid-template-columns:150px 1fr"><div><canvas id="coreCv" width="140" height="${k.cells.length * 22 + 30}" aria-label="Your core sample, top to bottom"></canvas></div><div>
+      <h3 style="margin-top:0">Core #${cores.length} from ${((k.r0 - SURF) * .1).toFixed(1)} km down to ${((k.r0 + k.cells.length - SURF) * .1).toFixed(1)} km</h3>
+      <p><b>How to read it:</b> each piece of the core is one block. The <b>stars</b> show the quality of the valuable mineral in that spot: ${QSTARS(0)} low, ${QSTARS(1)} medium, ${QSTARS(2)} high. A gray piece has no valuable minerals. ✨ means a sample you could dig out.</p>
+      ${best && best.gi >= 0 ? `<div class="fb good">Best spot in this core: <b>${((best.r - SURF) * .1).toFixed(1)} km down</b>, in the ${ZONES[best.z].short}: <b>${QSTARS(best.gi)} ${QWORD[best.gi]} quality</b>.${best.spec ? ' There’s a sample right there to dig! ✨' : ''}</div>` : '<div class="fb bad">No valuable minerals in this core. Try drilling somewhere else.</div>'}
+      <p>${k.cells.filter(x => x.spec).length} sample${k.cells.filter(x => x.spec).length === 1 ? '' : 's'} spotted in this core.</p></div></div>`; }
+  h += `<h3>🗺️ Prospecting map (${cores.length} core${cores.length === 1 ? '' : 's'})</h3><p style="margin:0 0 6px">Every core you drill is added to the map. Darker purple = higher quality. Look for the rich patches!</p><canvas id="mapCv" width="${COLS * 10}" height="${(ROWS - SURF) * 10}" style="max-width:100%;border:3px solid var(--ink);border-radius:8px" aria-label="Map of all your core samples"></canvas>
+    <p><small>Key: faint colors = rock layers, not tested yet · <span style="background:#d9d2e9;padding:0 6px">low</span> <span style="background:#8e7cc3;padding:0 6px;color:#fff">medium</span> <span style="background:#3c2a78;padding:0 6px;color:#fff">high</span> · gray = no valuable minerals · 📍 camp</small></p>`;
+  $('#coreBody').innerHTML = h;
+  if (k) { const cv = $('#coreCv'), c = cv.getContext('2d'); c.font = 'bold 12px Verdana'; c.textBaseline = 'middle';
+    k.cells.forEach((x, i) => { const y = 10 + i * 22; c.fillStyle = TI[x.t] ? TI[x.t].c : '#888'; rr(c, 10, y, 50, 20, 4); c.fill(); c.strokeStyle = '#1c2541'; c.lineWidth = 1.5; c.stroke();
+      if (x.gi >= 0) { const R = rng(x.r * 99 + k.c); c.fillStyle = '#ffcc33'; for (let j = 0; j < [2, 5, 10][x.gi]; j++) { c.beginPath(); c.arc(14 + R() * 42, y + 3 + R() * 14, 1.6, 0, 7); c.fill(); } c.fillStyle = '#1c2541'; c.textAlign = 'left'; c.fillText(QSTARS(x.gi), 66, y + 10); }
+      else { c.fillStyle = 'rgba(80,80,80,.45)'; rr(c, 10, y, 50, 20, 4); c.fill(); }
+      if (x.spec) { c.textAlign = 'left'; c.fillText('✨', 118, y + 10); } }); }
+  const mc = $('#mapCv').getContext('2d'); mc.fillStyle = '#f2f7f5'; mc.fillRect(0, 0, COLS * 10, (ROWS - SURF) * 10);
+  mc.globalAlpha = .28; for (let r = SURF; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const t = back[r][c]; if (t && TI[t]) { mc.fillStyle = TI[t].c; mc.fillRect(c * 10, (r - SURF) * 10, 10, 10); } } mc.globalAlpha = 1;   // faint rock layers for reference
+  for (const core of cores) for (const x of core.cells) { mc.fillStyle = x.gi < 0 ? '#9aa3ad' : ['#d9d2e9', '#8e7cc3', '#3c2a78'][x.gi]; mc.fillRect(core.c * 10, (x.r - SURF) * 10, 10, 10); }
+  mc.fillStyle = '#1c2541'; mc.font = '14px sans-serif'; mc.fillText('📍', 7 * 10, 14);
+}
+// CHALLENGES: quality and amount of final product
+const REF_CHAL = [
+ {id:'first', t:'First product: process any rough material in the refinery', xp:20, prog:() => [Math.min(1, stats.refined || 0), 1]},
+ {id:'cores', t:'Core explorer: drill 5 core samples at Level 3', xp:30, prog:() => [Math.min(5, stats.cores || 0), 5]},
+ {id:'rich', t:'Rich find: dig up a sample of High quality ⭐⭐⭐', xp:40, prog:() => [stats.highFound ? 1 : 0, 1]},
+ {id:'check', t:'Sharp eyes: match 5 samples to the right quality picture', xp:40, prog:() => [Math.min(5, assayStats.ok), 5]},
+ {id:'compare', t:'Quality matters: process a Low ⭐ AND a High ⭐⭐⭐ sample of the same metal, and compare', xp:40, prog:() => [Object.values(stats.procGrades || {}).some(s => s.includes(0) && s.includes(2)) ? 1 : 0, 1]},
+ {id:'gold100', t:'Gold rush: make 100 g of gold in total', xp:50, prog:() => [Math.min(100, treasure.gold), 100]},
+ {id:'bar', t:'One-sample bar: make at least 100 g of a metal from ONE sample', xp:60, prog:() => [stats.bestBatch >= 100 ? 1 : 0, 1]},
+ {id:'gem3', t:'Gem cutter: cut a gem of 3 carats or more', xp:50, prog:() => [treasure.gems.some(gm => gm.ct >= 3) ? 1 : 0, 1]}
+];
+const chalDone = {};
+function checkChallenges() { for (const ch of REF_CHAL) { const [h, n] = ch.prog(); if (h >= n && !chalDone[ch.id]) { chalDone[ch.id] = true; addXP(ch.xp); toast(`🎯 Refinery challenge complete: ${ch.t.split(':')[0]}! +${ch.xp} XP`, 4500); } } }
+function recordsHTML() {
+  return `<h3>🎯 Refinery challenges (${REF_CHAL.filter(ch => chalDone[ch.id]).length} / ${REF_CHAL.length})</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr))">${REF_CHAL.map(ch => { const [h, n] = ch.prog(), done = chalDone[ch.id];
+    return `<div class="card" style="text-align:left${done ? ';background:#fff4cc' : ''}"><b>${done ? '✔ ' : ''}${ch.t}</b><div class="bar" style="margin:6px 0"><i style="width:${Math.min(100, h / n * 100)}%"></i></div><small>${h} / ${n} · +${ch.xp} XP</small></div>`; }).join('')}</div>
+    <p><small>💡 Tips: drill cores to find rich patches, dig where the stars are highest, and use the machine setting that fits each material (see the 📘 Refining guide).</small></p>`;
+}
+// keep simple records (best quality per material) for the Trophy room and save files
 const REC_IDS = ['gold', 'silver', 'platinum', 'malachite', 'diamond', 'ruby', 'sapphire', 'emerald', 'topaz', 'kimberlite'];
 const rec = {}; REC_IDS.forEach(id => rec[id] = {best:0, n:0, made:0, goals:[false, false, false]});
-const assayStats = {n:0, ok:0};
-const GOAL_XP = [25, 50, 75];
-const goalText = id => procKind(id) === 'gem' ? ['Cut your first one', 'Cut an eye-clean stone (Medium grade or better) with the right abrasive', 'Cut a FLAWLESS stone (High grade) with the right abrasive']
-  : procKind(id) === 'kimb' ? ['Process your first sample', 'Recover a diamond from Medium-grade kimberlite', 'Recover 2 or more diamonds from one sample']
-  : ['Refine your first sample', 'Refine a sample that is 40%+ pure with the right method', 'Refine a sample that is 65%+ pure with the right method'];
-const FIND_TIP = {gold:'Look at the bottom of the buried stream gravels (placer) and in the CENTER of white quartz veins.', silver:'Look in white quartz veins; the center of a vein is richer than its edge.',
-  platinum:'Look in the buried stream gravels (placer); heavy grains settle there.', malachite:'Look in the rusty gossan near the surface; the closer to the surface, the richer.',
-  diamond:'Dig DEEP in the kimberlite pipe, or refine kimberlite to recover rough diamonds.', ruby:'Look in marble pockets in the metamorphic rock, and in stream gravels.', sapphire:'Look in marble pockets in the metamorphic rock, and in stream gravels.',
-  emerald:'Look in the pink pegmatite dikes.', topaz:'Look in the pink pegmatite dikes and granite.', kimberlite:'Deeper kimberlite holds more diamonds.'};
-const MAKE_TIP = {ore:'Choose the concentrating method that matches the mineral’s properties (95% recovered instead of 30%).', gem:'Use an abrasive HARDER than the gem; a Medium or High grade rough gives a bigger, clearer stone.', kimb:'Use X-ray sorting and grease tables; high-grade kimberlite gives more diamonds.'};
-function recordRefine(it, ok, made, extra) {
-  const r = rec[it.id]; if (!r) return []; r.n++; r.made += made; r.best = Math.max(r.best, it.pct);
-  const k = procKind(it.id), hit = [true, k === 'kimb' ? ok && it.gi >= 1 && extra >= 1 : ok && it.pct >= 40, k === 'kimb' ? ok && extra >= 2 : ok && it.pct >= 65], got = [];
-  hit.forEach((h, i) => { if (h && !r.goals[i]) { r.goals[i] = true; got.push(i); addXP(GOAL_XP[i]); } });
-  return got;
-}
-function recordsHTML() {
-  const unit = id => procKind(id) === 'gem' ? 'carats' : procKind(id) === 'kimb' ? 'diamonds' : 'g';
-  return `<h3>📈 Records and goals</h3><p style="margin:0 0 6px">Assay accuracy: <b>${assayStats.ok} / ${assayStats.n}</b> estimates correct. Goals: 🥉 +25 XP · 🥈 +50 XP · 🥇 +75 XP (once each).</p>
-  <div class="scroll"><table><tr><th>Material</th><th>Best purity</th><th>Refined</th><th>Made</th><th>Goals</th><th>Next goal and tips</th></tr>${REC_IDS.map(id => { const r = rec[id], k = procKind(id), next = r.goals.findIndex(g2 => !g2);
-    return `<tr><td><b>${SP[id].name}</b></td><td>${r.n ? r.best + '%' : '—'}</td><td>${r.n}</td><td>${Math.round(r.made * 10) / 10} ${unit(id)}</td><td style="font-size:20px;white-space:nowrap">${r.goals.map((g2, i) => g2 ? ['🥉', '🥈', '🥇'][i] : '▫️').join(' ')}</td>
-      <td>${next < 0 ? '🏆 All goals met!' : `<b>${['🥉', '🥈', '🥇'][next]} ${goalText(id)[next]}</b>`}<br><small>🔎 Better raw material: ${FIND_TIP[id]}<br>⚗️ More product: ${MAKE_TIP[k]}</small></td></tr>`; }).join('')}</table></div>`;
-}
+function recordRefine(it, ok, made) { const r = rec[it.id]; if (!r) return; r.n++; r.made += made; r.best = Math.max(r.best, it.pct); }
 function renderRefinery() {
-  const el = $('#refineryBody');
-  const guideBtn = '<button data-open="refguide">📘 Open the Refining guide</button>';
+  const el = $('#refineryBody'), guideBtn = '<button data-open="refguide">📘 Refining guide</button>';
   if (SITE !== 'gem') { el.innerHTML = `<p class="big">The Gem & Ore Refinery is at the Level 3 camp (Crystal Ridge Mine). ${guideBtn}</p>` + treasureHTML() + recordsHTML(); paintTreasure(el); return; }
-  let h = `<p style="margin-top:0">Every sample goes through 3 steps: <b>1. Assay</b> (measure it and estimate its purity), <b>2. Choose a process</b>, <b>3. Compare</b> your estimate with the result. ${guideBtn}</p>`;
+  let h = `<p style="margin-top:0">Mined material is <b>rough</b>: the valuable part is mixed with ordinary rock. The refinery <b>processes</b> it into a finished product. Steps: <b>1. Check its quality</b> · <b>2. Choose the machine setting</b> · <b>3. See your product</b>. ${guideBtn}</p>`;
   if (refState) {
-    const it = refState.it, s = SP[it.id], k = procKind(it.id), A = refState.assay;
-    h += `<div class="detail"><img src="${spriteURL[s.id]}" alt="" style="width:110px;height:110px"><div><h3>${s.name} (rough sample)</h3><p style="margin:2px 0">Found in the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}. Purity: <b>${refState.done ? it.pct + '% (' + it.g + ' grade)' : 'unknown until you measure it'}</b></p>`;
-    h += stepsBar(['Assay', 'Process', 'Compare'], refState.done ? 2 : refState.est === null ? 0 : 1);
+    const it = refState.it, s = SP[it.id], k = procKind(it.id);
+    h += `<div class="detail"><img src="${spriteURL[s.id]}" alt="" style="width:100px;height:100px"><div><h3>${s.name} (rough sample)</h3><p style="margin:2px 0">Found in the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}.${refState.est !== null ? ` Quality: <b>${QSTARS(it.gi)} ${QWORD[it.gi]}</b>` : ''}</p>`;
+    h += stepsBar(['Check quality', 'Machine setting', 'Product'], refState.done ? 2 : refState.est === null ? 0 : 1);
     if (refState.est === null) {
-      if (k === 'ore') h += `<p class="big"><b>Step 1, density assay:</b> weigh the ${SP[it.id].name.toLowerCase()} sample in air and then hanging in water.</p>
-        <table style="max-width:520px"><tr><th>Weight in air</th><th>Weight in water</th><th>Specific gravity (SG)</th></tr><tr><td>${A.air} g</td><td>${A.water} g</td><td>${refState.showSG ? `<b>${A.air} ÷ (${A.air} − ${A.water}) = ${A.sg}</b>` : `<button data-ref="sg">🧮 Calculate SG</button>`}</td></tr></table>
-        <p>Find this SG in the 📘 Refining guide’s <b>${METAL[it.id].name}</b> density table. <b>Estimate the purity:</b></p><div class="choice">${BANDS.map(([lo, hi], i) => `<button data-ref="est:${i}">${lo}–${hi}% ${METAL[it.id].name}</button>`).join('')}</div>`;
-      else if (k === 'gem') h += `<p class="big"><b>Step 1, loupe inspection:</b> with a 10× magnifying loupe you count <b>${A.inc} inclusion${A.inc === 1 ? '' : 's'}</b> (tiny trapped crystals, bubbles or cracks).</p>
-        <p>Use the 📘 Refining guide’s clarity table. <b>Estimate the gem’s grade:</b></p><div class="choice">${['Low (included)', 'Medium (eye-clean)', 'High (flawless)'].map((n, i) => `<button data-ref="est:${i}">${n}</button>`).join('')}</div>`;
-      else h += `<p class="big"><b>Step 1, indicator count:</b> in a 1 kg sample you count <b>${A.ind}</b> indicator minerals (red garnets and black chromite grains that travel with diamonds).</p>
-        <p>Use the 📘 Refining guide’s indicator table. <b>Estimate how diamond-rich it is:</b></p><div class="choice">${['Low', 'Medium', 'High'].map((n, i) => `<button data-ref="est:${i}">${n}</button>`).join('')}</div>`;
+      h += `<p class="big"><b>Step 1: Look closely.</b> Which reference picture does YOUR sample look most like?</p>
+        <div class="lab" style="grid-template-columns:180px 1fr;align-items:start"><div style="text-align:center"><canvas id="qcMine" width="160" height="120"></canvas><br><b>Your sample</b></div>
+        <div class="choice" style="grid-template-columns:repeat(3,1fr)">${[0, 1, 2].map(gi => `<button data-ref="est:${gi}" style="text-align:center"><canvas class="qcRef" data-gi="${gi}" width="120" height="90"></canvas><br>${QSTARS(gi)} <b>${QWORD[gi]}</b><br><small>${QDESC[k][gi]}</small></button>`).join('')}</div></div>`;
     } else if (!refState.done) {
-      h += `<p style="margin:4px 0">Your estimate: <b>${k === 'ore' ? BANDS[refState.est].join('–') + '%' : ['Low', 'Medium', 'High'][refState.est]}</b> (you’ll see the real result after processing).</p>`;
-      if (k === 'ore') h += `<p class="big"><b>Step 2: crushing is automatic. Which method will CONCENTRATE the ${METAL[it.id].name} best?</b> Hint: think about the mineral’s density and what your fizz test showed.</p><div class="choice" style="grid-template-columns:1fr">${METHODS.map(([id, n, d]) => `<button data-ref="m:${id}">${n}<br><small>${d}</small></button>`).join('')}</div>`;
-      else if (k === 'gem') h += `<p class="big"><b>Step 2: which abrasive can cut and polish ${s.name} (Mohs hardness ${s.hd})?</b></p><div class="choice" style="grid-template-columns:1fr 1fr">${ABRASIVES.map(([id, n, hh]) => `<button data-ref="a:${id}">${n} (hardness ${hh})</button>`).join('')}</div>`;
-      else h += `<p class="big"><b>Step 2: how do miners get diamonds out of kimberlite?</b></p><div class="choice" style="grid-template-columns:1fr">${SORTS.map(([id, n]) => `<button data-ref="s:${id}">${n}</button>`).join('')}</div>`;
-    }
-    if (!refState.done) h += `<p><button data-ref="cancel">↩ Choose a different sample</button></p>`;
-    else h += `<canvas id="refCv" width="640" height="200" aria-label="Refinery animation"></canvas><div class="fb ${refState.ok ? 'good' : 'bad'} pop" role="status">${refState.msg}</div><p><button data-ref="cancel">⚗️ Refine another sample</button></p>`;
+      h += `<div class="fb ${refState.est === it.gi ? 'good' : 'bad'}">${refState.est === it.gi ? '✔ Good eye! +10 XP.' : `✖ Look again: your sample has ${QDESC[k][it.gi]}.`} It is <b>${QWORD[it.gi]} quality</b>.${refState.cored ? ' Your core sample predicted this spot, too!' : ''}</div>`;
+      if (k === 'ore') h += `<p class="big"><b>Step 2: Choose the machine setting.</b> Think about what makes this mineral special. (Is it very heavy? Does it fizz in acid?)</p><div class="choice" style="grid-template-columns:1fr">${METHODS.map(([id, n, d]) => `<button data-ref="m:${id}">${n}<br><small>${d}</small></button>`).join('')}</div>`;
+      else if (k === 'gem') h += `<p class="big"><b>Step 2: Choose the cutting wheel.</b> ${s.name} has hardness ${s.hd}. Remember: only something HARDER can scratch (cut) it.</p><div class="choice" style="grid-template-columns:1fr 1fr">${ABRASIVES.map(([id, n, hh]) => `<button data-ref="a:${id}">${n} (hardness ${hh})</button>`).join('')}</div>`;
+      else h += `<p class="big"><b>Step 2: How should the machine get the diamonds out?</b></p><div class="choice" style="grid-template-columns:1fr">${SORTS.map(([id, n]) => `<button data-ref="s:${id}">${n}</button>`).join('')}</div>`;
+      h += `<p><button data-ref="cancel">↩ Choose a different sample</button></p>`;
+    } else h += `<canvas id="refCv" width="640" height="200" aria-label="Refinery animation"></canvas><div class="fb ${refState.ok ? 'good' : 'bad'} pop" role="status">${refState.msg}</div><p><button data-ref="cancel">⚗️ Process another sample</button></p>`;
+    if (refState.est === null) h += `<p><button data-ref="cancel">↩ Choose a different sample</button></p>`;
     h += '</div></div>';
   } else {
-    h += `<h3>🪨 Rough materials to refine (${raw.length})</h3>${raw.length ? `<div class="grid">${raw.map((it, i) => `<div class="card"><img src="${spriteURL[it.id]}" alt="" style="width:80px;height:80px"><b>${SP[it.id].name}</b><br><span class="tag">Purity: ? (assay it)</span><br><small>from the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}</small><br><button data-ref="pick:${i}">⚗️ Assay and refine</button></div>`).join('')}</div>`
-      : '<p>None yet. Identify rough gems, gold, silver, platinum, malachite or kimberlite found at Level 3. Each one you identify goes here.</p>'}`;
+    h += `<h3>🪨 Rough materials to process (${raw.length})</h3>${raw.length ? `<div class="grid">${raw.map((it, i) => `<div class="card"><img src="${spriteURL[it.id]}" alt="" style="width:80px;height:80px"><b>${SP[it.id].name}</b><br><small>from the ${ZONES[it.zone] ? ZONES[it.zone].short : 'mine'}</small><br><button data-ref="pick:${i}">⚗️ Process</button></div>`).join('')}</div>`
+      : '<p>None yet. Identify rough gems, gold, silver, platinum, malachite or kimberlite found at Level 3. Each one you identify goes here. Tip: drill a 🧪 core sample (press O) to find the richest spots first!</p>'}`;
   }
   el.innerHTML = h + treasureHTML() + recordsHTML(); paintTreasure(el);
+  if (refState && refState.est === null) { drawCloseup($('#qcMine'), refState.it.id, refState.it.gi, refState.seed); el.querySelectorAll('.qcRef').forEach(cv => drawCloseup(cv, refState.it.id, +cv.dataset.gi, 7 + +cv.dataset.gi)); }
   if (refState && refState.done) drawRefCv(1);
 }
 function refClick(v) {
   const [a, b] = v.split(':');
-  if (a === 'pick') { const it = raw[+b]; if (it) refState = {it, done:false, est:null, showSG:false, assay:assayData(it)}; }
+  if (a === 'pick') { const it = raw[+b]; if (it) refState = {it, done:false, est:null, seed:Math.floor(Math.random() * 1e6), cored:cores.some(k => k.cells.some(x => x.gi === it.gi))}; }
   else if (a === 'cancel') refState = null;
-  else if (a === 'sg' && refState) refState.showSG = true;
-  else if (a === 'est' && refState && refState.est === null) { refState.est = +b; sfx('test'); }
+  else if (a === 'est' && refState && refState.est === null) { refState.est = +b; assayStats.n++; if (+b === refState.it.gi) { assayStats.ok++; addXP(10); sfx('right'); } else sfx('wrong'); checkChallenges(); }
   else if (refState && !refState.done && refState.est !== null) {
-    const it = refState.it, s = SP[it.id], k = procKind(it.id); let ok = false, msg = '', made = 0, extra = 0;
+    const it = refState.it, s = SP[it.id], k = procKind(it.id); let ok = false, msg = '', made = 0;
     if (a === 'm' && k === 'ore') { const M = METAL[it.id]; ok = b === M.method; const grams = gramsOf(it, ok ? .95 : .3); treasure[M.metal] += grams; made = grams;
-      const why = {gravity:`${s.name} is extremely dense (SG about ${s.sg}), so its grains sink while lighter rock washes away.`, flotation:'Silver minerals cling to air bubbles in froth flotation, while waste rock sinks.', leach:'Malachite is a carbonate: dilute acid dissolves it (fizzing out CO₂), leaving the copper in the liquid to be recovered.'}[M.method];
-      msg = `${ok ? '✔ Great choice!' : '✖ That method recovers only a little of this ore.'} ${why}<br>Then the concentrate was <b>smelted</b> (melted so the metal separates from waste called slag) and cast.<br><b>You made ${grams} g of ${M.name}</b> from a 200 g sample that was ${it.pct}% ${M.name} (${ok ? '95%' : 'only 30%'} recovered).`; }
+      const bars = Math.floor(grams / 100), nug = Math.floor(grams % 100 / 10), low = gramsOf({pct:GRADES[0][1] + 8}, .95), high = gramsOf({pct:GRADES[2][1] + 12}, .95);
+      const why = {gravity:`${s.name} is extremely heavy, so its grains sink to the bottom of the shake table while lighter rock washes away.`, flotation:'Silver grains stick to bubbles and float up, while plain rock sinks.', leach:'Malachite fizzes in acid: the acid dissolves it and pulls the copper out of the rock.'}[M.method];
+      msg = `${ok ? '✔ Great choice!' : '✖ That setting didn’t fit this material, so most of the metal was lost.'} ${why}<br>Then the metal was <b>melted</b> and poured into molds.<br><b>You made ${grams} g of ${M.name}: ${bars} bar${bars === 1 ? '' : 's'} and ${nug} nugget${nug === 1 ? '' : 's'}.</b><br>📊 With the right setting, a ${QSTARS(0)} sample makes about <b>${low} g</b> and a ${QSTARS(2)} sample about <b>${high} g</b>. Better raw material → more product!`;
+      stats.procGrades = stats.procGrades || {}; (stats.procGrades[M.metal] = stats.procGrades[M.metal] || []).push(it.gi); stats.bestBatch = Math.max(stats.bestBatch || 0, grams); }
     else if (a === 'a' && k === 'gem') { const hh = ABRASIVES.find(x => x[0] === b)[2]; ok = hh > s.H;
-      const rough = [2, 4, 7][it.gi] + Math.round(it.pct / 40), ct = Math.round(rough * (ok ? .45 : .1) * 10) / 10, q = ['Included (cloudy)', 'Eye-clean', 'Flawless'][it.gi]; made = ct;
+      const rough = [2, 4, 7][it.gi] + Math.round(it.pct / 40), ct = Math.round(rough * (ok ? .45 : .1) * 10) / 10, q = ['Cloudy', 'Eye-clean', 'Flawless'][it.gi]; made = ct;
       treasure.gems.push({id:it.id, ct, q: ok ? q : 'Chipped'});
-      msg = `${ok ? '✔ Correct!' : '✖ That abrasive is not harder than the gem, so it barely cut it and chipped the stone.'} An abrasive must be HARDER than the gem to cut it (Mohs scale). ${s.name} is ${s.hd}${it.id === 'diamond' ? ', so only diamond can cut diamond' : ''}.<br><b>You cut a ${ct}-carat ${ok ? q.toLowerCase() : 'chipped'} ${s.name.toLowerCase()}</b> from a ${rough}-carat rough stone. (Cutting usually keeps less than half of the rough.)`; }
-    else if (a === 's' && k === 'kimb') { ok = b === 'xray'; const n = ok ? [0, 1, 2][it.gi] + (Math.random() < it.pct / 100 ? 1 : 0) : 0; made = n; extra = n;
-      for (let i = 0; i < n; i++) raw.push({id:'diamond', g:GRADES[Math.min(2, it.gi)][0], gi:Math.min(2, it.gi), pct:Math.max(20, it.pct - 10 + Math.round(Math.random() * 10)), zone:'kimberlite'});
-      msg = ok ? `✔ Correct! Diamonds glow under X-rays and stick to grease while other minerals slide off. <b>You recovered ${n} rough diamond${n === 1 ? '' : 's'}</b>${n ? ' (now in your rough materials, ready to cut)' : ''}. Richer, deeper kimberlite gives more.`
+      msg = `${ok ? '✔ Correct!' : '✖ That wheel is not harder than the gem, so it barely cut it and chipped the stone.'} A cutting wheel must be HARDER than the gem. ${s.name} is ${s.hd}${it.id === 'diamond' ? ', so only diamond can cut diamond' : ''}.<br><b>You cut a ${ct}-carat ${ok ? q.toLowerCase() : 'chipped'} ${s.name.toLowerCase()}</b> from a ${rough}-carat rough stone. Higher-quality rough gives a bigger, clearer gem.`; }
+    else if (a === 's' && k === 'kimb') { ok = b === 'xray'; const n = ok ? [0, 1, 2][it.gi] + (it.gi === 2 ? 1 : 0) : 0; made = n;
+      for (let i = 0; i < n; i++) raw.push({id:'diamond', g:GRADES[Math.min(2, it.gi)][0], gi:Math.min(2, it.gi), pct:Math.max(20, it.pct - 10), zone:'kimberlite'});
+      msg = ok ? `✔ Correct! Diamonds glow under X-rays and stick to grease. <b>You recovered ${n} rough diamond${n === 1 ? '' : 's'}</b>${n ? ' (now in your rough materials, ready to cut)' : ''}. Higher-quality kimberlite holds more diamonds.`
         : `✖ ${b === 'furnace' ? 'Diamonds are carbon: in a hot furnace with air they BURN!' : b === 'magnet' ? 'Diamonds are not magnetic.' : 'Kimberlite does not dissolve in water.'} No diamonds were recovered.`; }
     else return;
-    // STEP 3: compare the assay estimate with the real purity
-    const truth = k === 'ore' ? bandOf(it.pct) : it.gi, estOk = refState.est === truth; assayStats.n++; if (estOk) { assayStats.ok++; addXP(15); }
-    const estTxt = k === 'ore' ? BANDS[refState.est].join('–') + '%' : ['Low', 'Medium', 'High'][refState.est], realTxt = k === 'ore' ? `${it.pct}% (${BANDS[truth].join('–')}% band)` : `${it.g} (${it.pct}%)`;
-    msg += `<br><br><b>📏 Assay check:</b> you estimated <b>${estTxt}</b>; the real purity was <b>${realTxt}</b>. ${estOk ? '✔ Accurate assay! +15 XP' : '✖ Not quite. Compare your measurement with the guide’s table again next time.'}`;
-    const goals = recordRefine(it, ok, made, extra);
-    if (goals.length) msg += `<br><b>🎯 Goal${goals.length > 1 ? 's' : ''} reached:</b> ${goals.map(i => `${['🥉', '🥈', '🥇'][i]} ${goalText(it.id)[i]} (+${GOAL_XP[i]} XP)`).join(', ')}`;
-    raw.splice(raw.indexOf(it), 1); refState.done = true; refState.ok = ok; refState.msg = msg + (ok ? '<br><b>+30 XP</b> for the right process.' : ''); refinedCount++;
-    if (ok) addXP(30); sfx(ok ? 'right' : 'wrong'); stats.refined = (stats.refined || 0) + 1;
+    recordRefine(it, ok, made); raw.splice(raw.indexOf(it), 1); refState.done = true; refState.ok = ok; refState.msg = msg + (ok ? '<br><b>+30 XP</b> for the right setting.' : ''); refinedCount++;
+    if (ok) addXP(30); sfx(ok ? 'right' : 'wrong'); stats.refined = (stats.refined || 0) + 1; checkChallenges();
     renderRefinery(); animateRef(); return;
   }
   renderRefinery(); const f = $('#refineryBody [data-ref^="est"], #refineryBody [data-ref^="m:"], #refineryBody [data-ref^="a:"], #refineryBody [data-ref^="s:"], #refineryBody [data-ref]'); f && f.focus({preventScroll:true});
 }
-// 📘 REFINING GUIDE: the reference students use to assay and choose processes
+// 📘 REFINING GUIDE (7th-grade version): one idea per tab
 function renderRefGuide() {
-  const metals = ['gold', 'silver', 'platinum', 'malachite'], P = [20, 40, 60, 80, 100];
-  tabify($('#refguideBody'), `<p>Use this guide like the identification chart: measure your sample, look up what the measurement means, then match the material’s properties to the best process.</p>
-  <svg viewBox="0 0 760 150" width="100%" style="max-width:820px;display:block" role="img" aria-label="Refining flow: rough sample, assay, then for ores crush, concentrate, smelt and cast; for gems saw, grind facets and polish.">
-   <defs><marker id="ar3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#1c2541"/></marker></defs>
-   <g font-family="Trebuchet MS" font-size="15" font-weight="bold" text-anchor="middle" fill="#1c2541" stroke-width="2.5">
-    ${[[10, 'Rough sample', '#e3c9a3'], [140, '1. Assay', '#ffcc33']].map(([x, t, c]) => `<rect x="${x}" y="55" width="115" height="38" rx="10" fill="${c}" stroke="#1c2541"/><text x="${x + 57}" y="79">${t}</text>`).join('')}
-    ${[[290, 'Crush'], [410, 'Concentrate'], [530, 'Smelt'], [650, 'Cast bars']].map(([x, t]) => `<rect x="${x}" y="12" width="105" height="34" rx="10" fill="#9cc8ea" stroke="#1c2541"/><text x="${x + 52}" y="34">${t}</text>`).join('')}
-    ${[[290, 'Saw'], [410, 'Grind facets'], [530, 'Polish'], [650, 'Cut gem']].map(([x, t]) => `<rect x="${x}" y="104" width="105" height="34" rx="10" fill="#e6d4f7" stroke="#1c2541"/><text x="${x + 52}" y="126">${t}</text>`).join('')}
-    <g stroke="#1c2541" fill="none" marker-end="url(#ar3)"><path d="M125 74 L136 74"/><path d="M255 70 Q270 30 286 29"/><path d="M255 78 Q270 120 286 121"/><path d="M395 29 L406 29"/><path d="M515 29 L526 29"/><path d="M635 29 L646 29"/><path d="M395 121 L406 121"/><path d="M515 121 L526 121"/><path d="M635 121 L646 121"/></g>
-    <text x="350" y="70" font-size="13" font-weight="normal">ORES</text><text x="350" y="92" font-size="13" font-weight="normal">GEMS</text></g></svg>
-  <h3>📏 Ore density</h3>
-  <p><b>Specific gravity (SG) = weight in air ÷ (weight in air − weight in water).</b> Each sample is metal mixed with quartz (SG 2.65). More metal → higher SG. Find the two rows your SG falls between.</p>
-  <div class="scroll"><table><tr><th>Purity (metal by mass)</th>${metals.map(id => `<th>${METAL[id].name[0].toUpperCase() + METAL[id].name.slice(1)} ore (${SP[id].name}, SG ${SP[id].sg})</th>`).join('')}</tr>
-   ${P.map(p => `<tr><td><b>${p}%</b></td>${metals.map(id => `<td>SG ${sgMix(SP[id].sg, p / 100).toFixed(2)}</td>`).join('')}</tr>`).join('')}</table></div>
-  <h3>🔍 Gem and kimberlite assay</h3>
-  <div class="scroll"><table><tr><th>Gem inclusions seen with a 10× loupe</th><th>Grade</th><th></th><th>Indicator minerals in 1 kg of kimberlite</th><th>Diamond richness</th></tr>
-   <tr><td>0–1</td><td>High (flawless)</td><td></td><td>8 or more</td><td>High</td></tr><tr><td>2–4</td><td>Medium (eye-clean)</td><td></td><td>4–7</td><td>Medium</td></tr><tr><td>5 or more</td><td>Low (included)</td><td></td><td>0–3</td><td>Low</td></tr></table></div>
-  <h3>⚗️ Ore methods</h3>
-  <div class="scroll"><table><tr><th>Method</th><th>How it works</th><th>Works best when the mineral…</th><th>Clue from your lab tests</th></tr>
-   <tr><td><b>💧 Gravity separation</b></td><td>Shake crushed ore with water; the heaviest grains sink.</td><td>is an extremely dense native metal (SG of 15 or more)</td><td>💧 Heft: “very heavy for its size”</td></tr>
-   <tr><td><b>🫧 Froth flotation</b></td><td>Air bubbles in soapy water carry certain metal minerals to the top.</td><td>is a heavy metal mineral, but with SG under 15, that clings to air bubbles</td><td>✨ Metallic luster; check its SG in your notes</td></tr>
-   <tr><td><b>🧪 Acid leaching</b></td><td>Dilute acid dissolves the metal out of the ore.</td><td>is a carbonate or oxide ore that dissolves in acid (copper ores)</td><td>🧪 Fizz test: it FIZZES</td></tr></table></div>
-  <p>After concentrating, <b>smelting</b> melts the concentrate so the metal separates from the waste (slag), and it is cast into bars (100 g) and nuggets (10 g).</p>
-  <h3>💎 Cutting gems</h3>
-  <p><b>Rule: an abrasive cuts a gem only if the abrasive is HARDER than the gem</b> (Mohs scale). Equal hardness barely scratches.</p>
-  <div class="scroll"><table><tr><th>Abrasive</th><th>Hardness</th><th></th><th>Gem</th><th>Hardness</th></tr>
-   ${[0, 1, 2, 3, 4].map(i => `<tr><td>${ABRASIVES[i] ? ABRASIVES[i][1] : ''}</td><td>${ABRASIVES[i] ? ABRASIVES[i][2] : ''}</td><td></td><td>${['Diamond', 'Ruby', 'Sapphire', 'Topaz', 'Emerald'][i]}</td><td>${['10', '9', '9', '8', '7.5–8'][i]}</td></tr>`).join('')}</table></div>
-  <h3>🔦 Diamonds from kimberlite</h3>
-  <p>Crush the kimberlite, then use <b>X-ray sorting</b> (diamonds glow) and <b>grease tables</b> (diamonds stick to grease; wet minerals slide off). Never heat it in air: diamond is carbon and can burn.</p>
-  <h3>🔎 Better product</h3>
-  <ul>
-   <li><b>Find richer raw material.</b> Where you dig decides purity. Heavy gold and platinum settle at the bottom of old stream gravels; the center of a quartz vein is richer than its edge; deeper kimberlite holds more and better diamonds; malachite is richest near the surface of the gossan.</li>
-   <li><b>Rich spots come in patches.</b> When you find a high-grade sample, dig nearby: the ground nearby is often rich too.</li>
-   <li><b>Choose the right process.</b> The right method keeps about 95% of the metal; a wrong one keeps only 30%.</li>
-   <li><b>Assay first.</b> Knowing your purity tells you which samples are worth refining, and accurate estimates earn XP.</li>
-  </ul>
+  const ex = (id, gi, cap) => `<div style="text-align:center"><canvas class="rgq" data-id="${id}" data-gi="${gi}" width="120" height="90"></canvas><br>${cap}</div>`;
+  tabify($('#refguideBody'), `<h3>🔁 Mine → Process → Product</h3><p>What comes out of the ground is <b>rough</b>: the valuable part is mixed with ordinary rock, or (for gems) is a dull, rough crystal. It must be <b>processed</b> before it is useful.</p>
+   <svg viewBox="0 0 760 120" width="100%" style="max-width:820px;display:block" role="img" aria-label="Mine, then check quality, then process, then finished product"><g font-family="Trebuchet MS" font-size="16" font-weight="bold" text-anchor="middle" fill="#1c2541" stroke-width="2.5">
+    ${[[10, '⛏️ Mine it', '#e3c9a3'], [200, '🔍 Check quality', '#ffcc33'], [390, '⚙️ Process it', '#9cc8ea'], [580, '🏅 Product', '#a9d48c']].map(([x, t, c]) => `<rect x="${x}" y="30" width="170" height="50" rx="12" fill="${c}" stroke="#1c2541"/><text x="${x + 85}" y="61">${t}</text>`).join('')}
+    <g stroke="#1c2541" stroke-width="3">${[180, 370, 560].map(x => `<path d="M${x} 55 h18"/><path d="M${x + 12} 49 l7 6 l-7 6" fill="none"/>`).join('')}</g></g></svg>
+   <p>Processing usually means: <b>crush</b> the rock into small pieces → <b>separate</b> the valuable part from the plain rock → <b>melt and pour</b> metal into bars, or <b>cut and polish</b> gems.</p>
+  <h3>⭐ Quality</h3><p>Not all natural materials are the same. Some samples are full of the valuable mineral; others have only a little. Look closely and compare with these pictures:</p>
+   <p><b>Gold ore</b> (more gold specks = higher quality)</p><div class="grid" style="grid-template-columns:repeat(3,140px)">${[0, 1, 2].map(gi => ex('gold', gi, QSTARS(gi) + ' ' + QWORD[gi])).join('')}</div>
+   <p><b>Rough gem</b> (clearer, fewer flaws = higher quality)</p><div class="grid" style="grid-template-columns:repeat(3,140px)">${[0, 1, 2].map(gi => ex('ruby', gi, QSTARS(gi) + ' ' + QWORD[gi])).join('')}</div>
+   <p><b>Kimberlite</b> (more red garnet grains = more diamonds nearby)</p><div class="grid" style="grid-template-columns:repeat(3,140px)">${[0, 1, 2].map(gi => ex('kimberlite', gi, QSTARS(gi) + ' ' + QWORD[gi])).join('')}</div>
+   <p><b>Higher quality → more product.</b> With the right machine setting, a ${QSTARS(2)} gold sample makes about three times as much gold as a ${QSTARS(0)} sample.</p>
+  <h3>🧪 Core samples</h3><p>Valuable minerals are spread <b>unevenly</b>: rich patches here, poor rock there. Mining companies don’t dig everywhere. First they drill <b>core samples</b>: long, thin tubes of rock pulled straight up from underground. A core shows which rocks are down there and how rich they are.</p>
+   <ul><li>At Level 3, stand where you want to test and press <b>O</b> (or 🎒 Tool bag → Core drill).</li><li>Read the core: more ⭐ = better quality. ✨ = a sample you can dig out.</li><li>Every core goes on your 🗺️ <b>prospecting map</b>. The dark purple patches are the rich spots: dig there!</li></ul>
+   <p><b>Where rich material forms here:</b> heavy gold and platinum settle in the old stream gravels; the middle of a white quartz vein is richer than its edges; deeper kimberlite holds better diamonds; green malachite is richest near the top of the rusty gossan.</p>
+  <h3>⚙️ Machine settings</h3><p>Each material needs a different setting, based on what makes it special:</p>
+   <div class="scroll"><table><tr><th>Setting</th><th>How it works</th><th>Use it for…</th><th>Clue from your lab tests</th></tr>
+   <tr><td><b>💧 Shake table</b></td><td>Shakes crushed rock with water; the heaviest bits sink.</td><td>VERY heavy metals</td><td>🏋️ Heft: “extremely heavy”</td></tr>
+   <tr><td><b>🫧 Bubble tank</b></td><td>Bubbles grab silvery metal grains and float them to the top.</td><td>Silver</td><td>✨ Metallic and silvery, heavy but not the heaviest</td></tr>
+   <tr><td><b>🧪 Acid bath</b></td><td>Acid dissolves the copper mineral out of the rock.</td><td>Green copper rock</td><td>🫧 Fizz test: it fizzes!</td></tr>
+   <tr><td><b>🔦 X-ray sorter</b></td><td>Crushed kimberlite passes under X-rays; diamonds glow and get picked out.</td><td>Kimberlite</td><td>Blue-green rock from the pipe</td></tr></table></div>
+  <h3>💎 Cutting gems</h3><p>A cutting wheel can only cut a gem if the wheel is <b>harder</b> than the gem (Mohs scale).</p>
+   <div class="scroll"><table><tr><th>Cutting wheel</th><th>Hardness</th><th></th><th>Gem</th><th>Hardness</th></tr>${[0, 1, 2, 3, 4].map(i => `<tr><td>${ABRASIVES[i] ? ABRASIVES[i][1] : ''}</td><td>${ABRASIVES[i] ? ABRASIVES[i][2] : ''}</td><td></td><td>${['Diamond', 'Ruby', 'Sapphire', 'Topaz', 'Emerald'][i]}</td><td>${['10', '9', '9', '8', '7.5–8'][i]}</td></tr>`).join('')}</table></div>
+   <p>Cutting always grinds some of the rough stone away, so a cut gem is smaller than the rough one.</p>
+  <h3>🔎 More product</h3><ul><li><b>Find better raw material:</b> drill cores and dig in the rich (dark purple) patches.</li><li><b>Use the right machine setting:</b> the right setting keeps almost all of the metal; a wrong one loses most of it.</li><li><b>Rich spots come in patches:</b> after a high-quality find, dig nearby.</li></ul>
   <p><button data-open="refinery">⚗️ Go to the refinery</button></p>`, 'refguide');
+  $('#refguideBody').querySelectorAll('canvas.rgq').forEach(cv => drawCloseup(cv, cv.dataset.id, +cv.dataset.gi, 3 + +cv.dataset.gi));
 }
 function animateRef() { if (reduceMotion) { drawRefCv(1); return; } const t0 = performance.now(); const st = n => { const t = Math.min(1, (n - t0) / 2200); if (current !== 'refinery' || !$('#refCv')) return; drawRefCv(t); if (t < 1) requestAnimationFrame(st); }; requestAnimationFrame(st); sfx('machine'); }
 function drawRefCv(t) {
@@ -3794,54 +3825,98 @@ function symmetryHTML() {
    ${ic('<path d="M15 70 Q30 20 50 40 T80 25" fill="none" stroke-width="5"/><circle cx="62" cy="65" r="10"/>', 'None', 'Some fossils, like plant pieces, bones and teeth, aren’t sorted by symmetry in the key. Use their other features.', names(f => /^None/.test(f.sym)))}
   </div>`;
 }
-/* ✏️ CLIFF SKETCH CHALLENGE: rebuild the cliff’s history one event at a time.
-   Each event can only happen after the events it depends on (relative dating rules). */
-const SKETCH = [
-  {id:'dep1', t:'Deposit Layers F to B on the granite', need:[], why:'Layers are laid down flat, oldest at the bottom (superposition).'},
-  {id:'tilt', t:'Tilt Layers B to G', need:['dep1'], why:'Layers start out flat, so tilting must happen AFTER they are deposited (original horizontality).'},
-  {id:'fault', t:'Fault breaks Layers B to G', need:['tilt'], why:'The fault is a straight crack through the TILTED layers, so the tilting came first (cross-cutting).'},
-  {id:'dike', t:'Basalt dike cuts Layers B to G', need:['tilt'], why:'The dike is straight up and down, cutting the tilted layers, so it came after tilting (cross-cutting).'},
-  {id:'erode', t:'Erosion wears the top down flat', need:['tilt', 'fault', 'dike'], why:'The erosion surface cuts off the tilted layers, the fault AND the dike, so it came after all of them (unconformity).'},
-  {id:'dep2', t:'Ice Age glaciers deposit Layer A', need:['erode'], why:'The flat glacial till (Layer A) sits on top of the erosion surface, so it came after it (superposition).'},
-  {id:'canyon', t:'River carves the canyon', need:['dep2'], why:'The canyon cuts through the top layers, so it is the youngest event (cross-cutting).'}
+/* ✏️ RELATIVE TIME PUZZLES (from the Indiana Geological & Water Survey lesson “Which Came First?”).
+   Students study a cross-section and put every lettered unit in order, YOUNGEST first.
+   Answers follow the lesson’s answer key. */
+const PZ_PATTERNS = (p) => `<defs>
+  <pattern id="${p}sand" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#f7eea0"/><circle cx="3" cy="3" r=".9" fill="#5a5030"/><circle cx="9" cy="8" r=".9" fill="#5a5030"/></pattern>
+  <pattern id="${p}cong" width="18" height="16" patternUnits="userSpaceOnUse"><rect width="18" height="16" fill="#f7eea0"/><circle cx="5" cy="5" r="2.4" fill="none" stroke="#5a5030"/><circle cx="13" cy="11" r="1" fill="#5a5030"/><circle cx="14" cy="3" r=".8" fill="#5a5030"/></pattern>
+  <pattern id="${p}lime" width="30" height="14" patternUnits="userSpaceOnUse"><rect width="30" height="14" fill="#6fa8dc"/><path d="M0 0H30M0 7H30M10 0V7M25 7V14" stroke="#1c2541" stroke-width="1"/></pattern>
+  <pattern id="${p}limefrag" width="30" height="24" patternUnits="userSpaceOnUse"><rect width="30" height="24" fill="#6fa8dc"/><path d="M4 4L10 3L8 9Z M18 14L25 15L20 20Z" fill="none" stroke="#1c2541"/><circle cx="20" cy="5" r=".9" fill="#1c2541"/></pattern>
+  <pattern id="${p}shale" width="24" height="10" patternUnits="userSpaceOnUse"><rect width="24" height="10" fill="#d4d4d4"/><path d="M2 5H12M16 0H22" stroke="#444" stroke-width="1"/></pattern>
+  <pattern id="${p}ign" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#8b74b9"/><path d="M3 3l3 2M11 4l-2 3M5 11l3-2M12 12l2 2" stroke="#2a1f45" stroke-width="1"/></pattern>
+  <pattern id="${p}ignfrag" width="30" height="24" patternUnits="userSpaceOnUse"><rect width="30" height="24" fill="#8b74b9"/><path d="M4 4L11 3L8 10Z M18 14L26 15L21 21Z" fill="none" stroke="#2a1f45"/></pattern>
+  <pattern id="${p}cross" width="20" height="16" patternUnits="userSpaceOnUse"><rect width="20" height="16" fill="#f7eea0"/><path d="M5 5H9M7 3V7M15 11H19M17 9V13" stroke="#444"/></pattern>
+  <pattern id="${p}hatch" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#f7eea0"/><path d="M0 10L10 0" stroke="#444"/></pattern>
+  <pattern id="${p}gravel" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#cfcfcf"/><circle cx="3" cy="4" r="1" fill="#555"/><circle cx="9" cy="9" r="1.2" fill="#555"/></pattern>
+  <pattern id="${p}meta" width="20" height="12" patternUnits="userSpaceOnUse"><rect width="20" height="12" fill="#6fa8dc"/><path d="M0 6 Q5 0 10 6 T20 6" fill="none" stroke="#1c2541"/></pattern>
+ </defs>`;
+const lab = (x, y, t, s = 26) => `<text x="${x}" y="${y}" font-size="${s}" font-weight="bold" font-family="Arial, sans-serif" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke" text-anchor="middle">${t}</text>`;
+const PUZZLES = [
+ {id:1, title:'Stacked layers', rule:'Superposition', ans:'ABCD', svg:p => `<rect x="0" y="0" width="480" height="70" fill="#cfe9f7"/><path d="M0 70 L480 70 L480 90 L0 90Z" fill="#5c8d3f"/><path d="M40 82 Q200 60 300 80 T470 74" stroke="#2aa3e0" stroke-width="7" fill="none"/>
+   <rect y="90" width="480" height="68" fill="url(#${p}shale)"/><rect y="158" width="480" height="68" fill="url(#${p}sand)"/><rect y="226" width="480" height="68" fill="url(#${p}lime)"/><rect y="294" width="480" height="66" fill="url(#${p}ign)"/>
+   <path d="M0 158H480M0 226H480M0 294H480" stroke="#111" stroke-width="2"/>${lab(240, 133, 'A')}${lab(240, 201, 'B')}${lab(240, 269, 'C')}${lab(240, 337, 'D')}`,
+  why:{A:'A is on top, so it was deposited last.', B:'B lies under A and over C.', C:'C lies under B, so it is older than B.', D:'D is at the bottom: it was deposited first (superposition).'}},
+ {id:2, title:'An intrusion', rule:'Cross-cutting relationships', ans:'AEDCB', svg:p => `<rect y="0" width="480" height="70" fill="url(#${p}sand)"/><rect y="70" width="480" height="100" fill="url(#${p}lime)"/><rect y="170" width="480" height="100" fill="url(#${p}shale)"/><rect y="270" width="480" height="90" fill="url(#${p}sand)"/>
+   <path d="M0 70H480M0 170H480M0 270H480" stroke="#111" stroke-width="2"/><path d="M150 360 C160 250 170 120 190 60 C200 30 250 30 262 60 C275 150 285 260 300 360Z" fill="url(#${p}ign)" stroke="#111" stroke-width="2.5"/>
+   ${lab(330, 45, 'E')}${lab(360, 128, 'D')}${lab(360, 228, 'C')}${lab(225, 250, 'A')}${lab(360, 320, 'B')}`,
+  why:{A:'Intrusion A cuts across every other layer, so it is the youngest (cross-cutting).', E:'E is the top layer: the youngest of the layers that A cuts.', D:'D lies under E.', C:'C lies under D.', B:'B is the bottom layer, so it is the oldest.'}},
+ {id:3, title:'Folded layers and a valley', rule:'Original horizontality and lateral continuity', ans:'AFECDB', svg:p => {
+   const band = (o0, o1, f) => `<path d="M0 ${o0} L240 ${o0 + 110} L480 ${o0} L480 ${o1} L240 ${o1 + 110} L0 ${o1}Z" fill="url(#${p}${f})" stroke="#111" stroke-width="2"/>`;
+   return `<rect width="480" height="360" fill="url(#${p}ign)"/>${band(170, 250, 'sand')}${band(110, 170, 'shale')}${band(60, 110, 'sand')}
+   <path d="M0 0H480V60L380 100 C340 150 330 200 300 240 L190 240 C160 200 140 140 110 100 L0 60Z" fill="#cfe9f7"/>
+   <path d="M0 60 L110 102 M370 102 L480 60" stroke="#5c8d3f" stroke-width="5"/><path d="M185 240 C200 280 280 280 300 240Z" fill="url(#${p}gravel)" stroke="#111" stroke-width="2"/><path d="M160 238 H330" stroke="#5c8d3f" stroke-width="5"/>
+   <path d="M175 160 L135 120" stroke="#111" stroke-width="3" marker-end="url(#${p}ar)"/><defs><marker id="${p}ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z"/></marker></defs>
+   ${lab(30, 92, 'E')}${lab(450, 92, 'E')}${lab(40, 160, 'C')}${lab(440, 160, 'C')}${lab(60, 245, 'D')}${lab(420, 245, 'D')}${lab(240, 262, 'A')}${lab(240, 335, 'B')}${lab(192, 170, 'F')}`; },
+  why:{A:'A is loose gravel filling the bottom of the valley, so it came after the valley was eroded.', F:'F is the erosion that carved the valley through Layers E, C and D, so it is younger than them.', E:'E is the top layer of the folded rocks.', C:'C lies under E.', D:'D lies under C.', B:'B is at the bottom of the fold: the oldest. All the folded layers were flat and continuous before they were folded and eroded.'}},
+ {id:4, title:'A fault and a dike', rule:'Cross-cutting relationships', ans:'EDABC', svg:p => `<rect width="480" height="110" fill="#cfe9f7"/><path d="M0 110H480" stroke="#5c8d3f" stroke-width="10"/>
+   <clipPath id="${p}L"><path d="M0 115 L170 115 L330 360 L0 360Z"/></clipPath><clipPath id="${p}R"><path d="M170 115 L480 115 L480 360 L330 360Z"/></clipPath>
+   <g clip-path="url(#${p}L)"><rect y="115" width="480" height="85" fill="url(#${p}sand)"/><rect y="200" width="480" height="130" fill="url(#${p}lime)"/><rect y="330" width="480" height="30" fill="url(#${p}shale)"/><path d="M0 200H480M0 330H480" stroke="#111" stroke-width="2"/>
+     <path d="M40 360 L60 360 L215 210 L195 195Z" fill="url(#${p}ign)" stroke="#111" stroke-width="2"/></g>
+   <g clip-path="url(#${p}R)"><rect y="115" width="480" height="150" fill="url(#${p}sand)"/><rect y="265" width="480" height="95" fill="url(#${p}lime)"/><path d="M0 265H480" stroke="#111" stroke-width="2"/>
+     <path d="M230 290 L245 305 L420 170 Q430 150 405 155Z" fill="url(#${p}ign)" stroke="#111" stroke-width="2"/></g>
+   <path d="M170 115 L330 360" stroke="#111" stroke-width="3.5"/>${lab(30, 160, 'A')}${lab(380, 150, 'A')}${lab(30, 240, 'B')}${lab(410, 320, 'B')}${lab(30, 352, 'C', 22)}${lab(120, 300, 'D')}${lab(370, 215, 'D')}${lab(195, 175, 'E')}`,
+  why:{E:'Fault E breaks and shifts every other unit, even dike D, so it is the youngest.', D:'Dike D cuts through Layers A, B and C, so it is younger than them, but it was broken by fault E.', A:'A is the top layer.', B:'B lies under A.', C:'C is the bottom layer, so it is the oldest.'}},
+ {id:5, title:'An unconformity', rule:'Unconformities and cross-cutting', ans:'JIHACBGFED', svg:p => `<rect y="0" width="480" height="40" fill="url(#${p}cong)"/><rect y="40" width="480" height="45" fill="url(#${p}lime)"/><rect y="85" width="480" height="115" fill="url(#${p}limefrag)"/>
+   <rect y="200" width="480" height="45" fill="url(#${p}sand)"/><rect y="245" width="480" height="55" fill="url(#${p}cross)"/><rect y="300" width="480" height="55" fill="url(#${p}shale)"/><rect y="355" width="480" height="5" fill="url(#${p}ignfrag)"/>
+   <rect y="300" width="480" height="60" fill="url(#${p}shale)"/><rect y="320" width="480" height="40" fill="url(#${p}ignfrag)"/>
+   <path d="M0 40H480M0 85H480M0 245H480M0 300H480M0 320H480" stroke="#111" stroke-width="2"/>
+   <path d="M0 185 Q40 185 60 160 Q90 150 110 185 L260 182 Q290 170 300 180 Q330 190 360 175 Q400 160 440 182 L480 178 L480 200 L0 200Z" fill="#a5774a" stroke="#111" stroke-width="2"/>
+   <path d="M175 360 C185 300 200 250 210 182 L245 182 C238 220 232 250 250 230 C258 210 262 195 268 180 L292 182 C280 240 260 290 250 360Z" fill="url(#${p}ign)" stroke="#111" stroke-width="2.5"/>
+   <path d="M0 185 Q40 185 60 160 Q90 150 110 185 L260 182 Q290 170 300 180 Q330 190 360 175 Q400 160 440 182 L480 178" fill="none" stroke="#111" stroke-width="3.5"/>
+   ${lab(410, 30, 'J', 22)}${lab(410, 72, 'I', 22)}${lab(410, 135, 'H')}${lab(85, 182, 'B', 22)}${lab(410, 232, 'G', 22)}${lab(410, 283, 'F', 22)}${lab(410, 316, 'E', 18)}${lab(410, 350, 'D', 22)}${lab(230, 300, 'C')}
+   <path d="M5 176 L28 176" stroke="#111" stroke-width="3"/>${lab(18, 168, 'A', 18)}`,
+  why:{J:'J is the top layer.', I:'I lies under J.', H:'H was deposited on the erosion surface A, filling the low spots.', A:'A is the erosion surface (an unconformity). It cuts off the top of intrusion C and Layer B, so it is younger than them.', C:'Intrusion C cuts through Layers D to B, so it is younger than them, but erosion surface A cuts off its top.', B:'B is the layer just below the erosion surface; it was partly worn away.', G:'G lies under B.', F:'F lies under G.', E:'E lies under F.', D:'D is the bottom layer, so it is the oldest.'}},
+ {id:6, title:'Two faults', rule:'Faults, unconformities and superposition', ans:'JABCIHGDEF', svg:p => {
+   const J = 'M20 360 L175 0', H = 'M215 198 L370 360';
+   return `<clipPath id="${p}L"><path d="M0 0 L175 0 L20 360 L0 360Z"/></clipPath><clipPath id="${p}M"><path d="M175 0 L480 0 L480 196 L222 196 L370 360 L20 360Z"/></clipPath><clipPath id="${p}R"><path d="M222 196 L480 196 L480 360 L370 360Z"/></clipPath>
+   <g clip-path="url(#${p}L)"><rect y="0" width="200" height="40" fill="url(#${p}ignfrag)"/><rect y="40" width="200" height="110" fill="url(#${p}shale)"/><rect y="150" width="200" height="95" fill="url(#${p}sand)"/><rect y="245" width="200" height="25" fill="url(#${p}lime)"/><rect y="270" width="200" height="90" fill="url(#${p}cross)"/><path d="M0 40H200M0 150H200M0 245H200M0 270H200" stroke="#111" stroke-width="2"/></g>
+   <g clip-path="url(#${p}M)"><rect y="0" width="480" height="100" fill="url(#${p}shale)"/><rect y="100" width="480" height="100" fill="url(#${p}sand)"/><rect y="200" width="480" height="55" fill="url(#${p}lime)"/><rect y="255" width="480" height="55" fill="url(#${p}cross)"/><rect y="310" width="480" height="50" fill="url(#${p}cong)"/><path d="M0 100H480M0 255H480M0 310H480" stroke="#111" stroke-width="2"/></g>
+   <g clip-path="url(#${p}R)"><rect y="196" width="480" height="20" fill="url(#${p}hatch)"/><rect y="216" width="480" height="74" fill="url(#${p}lime)"/><rect y="290" width="480" height="70" fill="url(#${p}cross)"/><path d="M0 216H480M0 290H480" stroke="#111" stroke-width="2"/></g>
+   <path d="M120 200 Q150 190 170 198 Q190 206 215 196 L480 196" fill="none" stroke="#111" stroke-width="3"/><path d="${H}" stroke="#111" stroke-width="3.5"/><path d="${J}" stroke="#111" stroke-width="3.5"/>
+   ${lab(28, 30, 'A', 22)}${lab(40, 100, 'B')}${lab(40, 205, 'C')}${lab(270, 60, 'B')}${lab(400, 150, 'C')}${lab(170, 238, 'D')}${lab(430, 260, 'D')}${lab(180, 290, 'E')}${lab(440, 335, 'E')}${lab(160, 345, 'F', 22)}${lab(440, 212, 'G', 18)}${lab(122, 140, 'J', 22)}${lab(205, 180, 'I', 22)}${lab(300, 288, 'H', 22)}`; },
+  why:{J:'Fault J breaks Layers A, B and C, so it is the youngest event.', A:'A is the top unit on the left, above B.', B:'B lies under A.', C:'C lies on top of erosion surface I.', I:'I is an erosion surface (unconformity). It cuts across fault H and Layers G and D.', H:'Fault H breaks Layers G, D and E but is cut off by erosion surface I.', G:'G lies on top of D on the right side and is broken by fault H.', D:'D lies under G.', E:'E lies under D.', F:'F is the bottom layer, so it is the oldest.'}}
 ];
-let sk = {done:[], mistakes:0, fb:null}; let sketchBest = null;
+const pzState = {}; let pzCur = 1, pzOrder = [], pzFb = null;
 function sketchHTML() {
-  const left = shuffleSeed(SKETCH.filter(e => !sk.done.includes(e.id)));
-  return `<h3>✏️ Cliff sketch challenge</h3><p style="margin:0 0 6px">Rebuild Fossil Bluffs’ history. Choose the events in order, <b>oldest first</b>, and the sketch will grow. Use the 📏 dating rules in the time guide. (Hint: when two events don’t touch, either order can be right.)</p>
-   <canvas id="skCv" width="640" height="260" aria-label="Your sketch of the cliff"></canvas>
-   <ol class="notes" style="margin-top:8px">${sk.done.length ? sk.done.map(id => `<li><b>${SKETCH.find(e => e.id === id).t}</b></li>`).join('') : '<li>No events yet. What happened first?</li>'}</ol>
-   ${sk.done.length < SKETCH.length ? `<h3>What happened next?</h3><div class="choice">${left.map(e => `<button data-sk="${e.id}">${e.t}</button>`).join('')}</div>`
-     : `<div class="fb good pop" role="status"><b>✔ You rebuilt the cliff’s whole history${sk.mistakes ? ` with ${sk.mistakes} mistake${sk.mistakes > 1 ? 's' : ''}` : ' with no mistakes'}!</b> ${sk.xp ? '+' + sk.xp + ' XP' : ''}</div><p><button data-sk="restart">↺ Try again</button></p>`}
-   ${sk.fb ? `<div class="fb ${sk.fb[0]} pop" role="status">${sk.fb[1]}</div>` : ''}${sketchBest !== null ? `<p><small>Best so far: ${sketchBest} mistake${sketchBest === 1 ? '' : 's'}.</small></p>` : ''}`;
+  const P = PUZZLES.find(x => x.id === pzCur), letters = P.ans.split('').sort(), st = pzState[P.id];
+  return `<h3>✏️ Relative time puzzles</h3><p style="margin:0 0 6px">From the Indiana Geological &amp; Water Survey lesson <i>Which Came First?</i> Study the cross-section, then tap the letters in order from <b>YOUNGEST</b> (first) to <b>OLDEST</b> (last). Use the 📏 dating rules.</p>
+   <div class="tabs">${PUZZLES.map(x => `<button data-sk="pz:${x.id}" class="${x.id === pzCur ? 'done' : ''}" aria-pressed="${x.id === pzCur}">Puzzle ${x.id}${pzState[x.id] && pzState[x.id].solved ? ' ⭐' : ''}</button>`).join('')}</div>
+   <div class="lab" style="grid-template-columns:minmax(260px,480px) 1fr"><div><svg viewBox="0 0 480 360" width="100%" style="max-width:480px;border:3px solid var(--ink);border-radius:8px;display:block" role="img" aria-label="Puzzle ${P.id} cross-section: ${P.title}">${PZ_PATTERNS('pz' + P.id)}${P.svg('pz' + P.id)}</svg>
+     <p style="margin:4px 0"><b>Puzzle ${P.id}: ${P.title}</b><br><small>Rule to use: ${P.rule}</small></p></div>
+   <div><h4 style="margin:0 0 4px">Youngest</h4><ol class="notes" style="margin:0 0 4px">${letters.map((_, i) => { const L = pzOrder[i]; const mark = pzFb && pzFb.marks ? (pzFb.marks[i] ? ' ✔' : ' ✖') : ''; return `<li>${L ? `<button data-sk="rm:${i}" aria-label="Remove ${L}" style="min-width:56px">${L}${mark}</button>` : '<span style="opacity:.5">tap a letter…</span>'}</li>`; }).join('')}</ol><h4 style="margin:0 0 8px">Oldest</h4>
+     <div class="tests" style="grid-template-columns:repeat(auto-fill,minmax(56px,1fr))">${letters.map(L => `<button data-sk="add:${L}" ${pzOrder.includes(L) ? 'disabled style="opacity:.35"' : ''}>${L}</button>`).join('')}</div>
+     <p><button data-sk="check" ${pzOrder.length < letters.length ? 'disabled' : ''}>✔ Check my order</button> <button data-sk="clear">↺ Clear</button></p>
+     ${pzFb ? `<div class="fb ${pzFb.ok ? 'good' : 'bad'} pop" role="status">${pzFb.msg}</div>` : ''}
+     ${st && st.solved ? `<p><small>⭐ Solved${st.tries === 1 ? ' on the first try' : ` in ${st.tries} tries`}.</small></p>` : ''}</div></div>`;
 }
-function shuffleSeed(a) { return a.slice().sort((x, y) => (hashStr(x.id + sk.done.length) % 97) - (hashStr(y.id + sk.done.length) % 97)); }
-function skClick(id) {
-  if (id === 'restart') { sk = {done:[], mistakes:0, fb:null}; }
-  else { const e = SKETCH.find(x => x.id === id); if (!e || sk.done.includes(id)) return;
-    const miss = e.need.filter(n => !sk.done.includes(n));
-    if (!miss.length) { sk.done.push(id); sk.fb = ['good', `✔ ${e.why}`]; sfx('test');
-      if (sk.done.length === SKETCH.length) { const first = sketchBest === null; sk.xp = first ? (sk.mistakes === 0 ? 80 : sk.mistakes <= 2 ? 50 : 30) : 10; addXP(sk.xp); sketchBest = sketchBest === null ? sk.mistakes : Math.min(sketchBest, sk.mistakes); sfx('right'); sk.fb = null; } }
-    else { sk.mistakes++; sfx('wrong'); const m = SKETCH.find(x => x.id === miss[0]); sk.fb = ['bad', `✖ Not yet. “${m.t}” has to happen first. ${e.why}`]; } }
-  renderFossilLab(); const f = $('#fossillabBody [data-sk]'); f && f.focus({preventScroll:true});
+function skClick(v) {
+  const [a, b] = v.split(':'), P = PUZZLES.find(x => x.id === pzCur), n = P.ans.length;
+  if (a === 'pz') { pzCur = +b; pzOrder = []; pzFb = null; }
+  else if (a === 'add' && pzOrder.length < n && !pzOrder.includes(b)) { pzOrder.push(b); pzFb = null; sfx('test'); }
+  else if (a === 'rm') { pzOrder.splice(+b, 1); pzFb = null; }
+  else if (a === 'clear') { pzOrder = []; pzFb = null; }
+  else if (a === 'check' && pzOrder.length === n) {
+    const st = pzState[P.id] = pzState[P.id] || {tries:0, solved:false}; st.tries++;
+    const marks = pzOrder.map((L, i) => L === P.ans[i]);
+    if (marks.every(Boolean)) { const first = !st.solved; st.solved = true; const xp1 = first ? (st.tries === 1 ? 40 : 25) : 0; if (xp1) addXP(xp1); sfx('right');
+      pzFb = {ok:true, marks, msg:`<b>✔ Correct!</b> ${xp1 ? '+' + xp1 + ' XP. ' : ''}<br>${P.ans.split('').map(L => `<b>${L}:</b> ${P.why[L]}`).join('<br>')}`}; }
+    else { sfx('wrong'); const k = marks.indexOf(false), mine = pzOrder[k];
+      pzFb = {ok:false, marks, msg:`✖ ${marks.filter(Boolean).length} of ${n} are in the right place (✔). <b>Hint about your first ✖ (${mine}):</b> ${P.why[mine]} Where does that put it in the order?`}; }
+  }
+  renderFossilLab(); const f = $('#fossillabBody [data-sk^="add"]:not([disabled]), #fossillabBody [data-sk="check"]'); f && f.focus({preventScroll:true});
 }
-function drawSketch() {   // a simple cross-section that grows as events are placed
-  const cv = $('#skCv'); if (!cv) return; const c = cv.getContext('2d'), d = id => sk.done.includes(id), W = 640, H = 260, U = 110;
-  c.fillStyle = '#fbe7c4'; c.fillRect(0, 0, W, H);
-  const lower = LAYERS.filter(l => !l.upper).reverse(), upper = LAYERS.filter(l => l.upper);
-  if (d('dep1')) { c.save(); c.beginPath(); c.rect(0, d('erode') ? U : 0, W, H); c.clip();
-    const tilt = d('tilt') ? .22 : 0;
-    for (const side of [0, 1]) { c.save(); c.beginPath(); c.rect(side ? 420 : 0, 0, side ? W - 420 : 420, H); c.clip(); const off = d('fault') && side ? -34 : 0;
-      lower.forEach((l, i) => { const y0 = H - (i + 1) * 22 - off; c.fillStyle = l.col; c.beginPath(); c.moveTo(0, y0 + tilt * 0 + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt + (i ? 22 : 400)); c.lineTo(0, y0 + 60 * tilt + (i ? 22 : 400)); c.closePath(); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.stroke(); });
-      c.restore(); }
-    if (d('fault')) { c.strokeStyle = '#1c2541'; c.lineWidth = 3; c.setLineDash([8, 5]); c.beginPath(); c.moveTo(420, d('erode') ? U : 0); c.lineTo(420, H); c.stroke(); c.setLineDash([]); }
-    if (d('dike')) { c.fillStyle = '#33343a'; c.fillRect(200, d('erode') ? U : 0, 16, H); }
-    c.restore(); }
-  if (d('erode')) { c.strokeStyle = '#b35400'; c.lineWidth = 3; c.beginPath(); for (let x = 0; x <= W; x += 8) c.lineTo(x, U + Math.sin(x / 18) * 2); c.stroke(); }
-  if (d('dep2')) upper.forEach(l => { c.fillStyle = l.col; c.fillRect(0, 30, W, U - 30); c.fillStyle = 'rgba(60,50,40,.5)'; for (let k = 0; k < 60; k++) { c.beginPath(); c.arc((k * 97) % W, 36 + (k * 37) % (U - 40), 2 + k % 4, 0, 7); c.fill(); } });   // glacial till with boulders
-  if (d('canyon')) { c.fillStyle = '#fbe7c4'; c.beginPath(); c.moveTo(470, 0); c.lineTo(530, 70); c.lineTo(580, 70); c.lineTo(620, 0); c.closePath(); c.fill(); c.fillStyle = '#5fb3e6'; c.fillRect(530, 64, 50, 6); }
-  c.fillStyle = '#1c2541'; c.font = 'bold 13px Verdana, sans-serif'; c.textAlign = 'left'; if (!sk.done.length) c.fillText('Your sketch will appear here.', 20, 30);
-}
+function drawSketch() {}
 
 /* ---------- 15n. LEVEL 2 FOSSIL LAB, FOSSIL DEX, ROCK COLUMN, GEOLOGIC TIME GUIDE ---------- */
 const fbag = [], fossilFound = new Set(), colConf = {}; let flTab = 'id', fIdx = 0, fResult = null, fossilIntroSeen = false, fossilPassed = false, fx = null;
@@ -3862,7 +3937,7 @@ function columnHTML() {
 }
 function renderFossilLab() {
   const el = $('#fossillabBody');
-  const tabs = [['id', '🔬 Identify fossils' + (fbag.length ? ` (${fbag.length})` : '')], ['column', '🪨 Rock column journal'], ['sketch', '✏️ Cliff sketch challenge']];
+  const tabs = [['id', '🔬 Identify fossils' + (fbag.length ? ` (${fbag.length})` : '')], ['column', '🪨 Rock column journal'], ['sketch', '✏️ Relative time puzzles']];
   let h = `<div class="tabs" role="tablist">${tabs.map(([k, n]) => `<button role="tab" data-fl="ftab:${k}" class="${flTab === k ? 'done' : ''}" aria-selected="${flTab === k}">${n}</button>`).join('')}<button data-tgo="Fossil key">🔑 Fossil key</button><button data-tgo="Symmetry">🪞 Symmetry</button><button data-tgo="Range">📊 Range chart</button></div>`;
   if (flTab === 'column') { el.innerHTML = h + columnHTML(); return; }
   if (flTab === 'sketch') { el.innerHTML = h + sketchHTML(); drawSketch(); return; }
@@ -3956,12 +4031,19 @@ function renderTimeGuide() {
     <text x="290" y="90" font-weight="bold">▲ mid-ocean ridge (new rock forms here)</text><text x="80" y="14">← plate moves</text><text x="510" y="14">plate moves →</text></g></svg>`;
   tabify($('#timeguideBody'), `<h3>🕰️ Time scale</h3><p>Earth is about <b>4.6 billion years</b> old. Scientists organize that history into eras and periods using rock layers and the fossils in them. (In the bar below, the Precambrian is squeezed into a small box so the other periods fit, but it really lasted about 88% of Earth’s history!)</p>${scale}
   <div class="scroll"><table><tr><th>Period</th><th>Era</th><th>Time</th><th>What happened</th></tr>${PERIODS.slice().reverse().map(p => `<tr><td><b>${p.name}</b></td><td>${p.era}</td><td>${rangeTxt(p)}</td><td>${p.event}</td></tr>`).join('')}</table></div>
-  <h3>📏 Dating rules</h3><p><b>How to read rock layers (relative dating):</b></p><ul>
-   <li><b>Superposition:</b> in undisturbed layers, the oldest is at the bottom and the youngest is at the top.</li>
-   <li><b>Original horizontality:</b> layers are laid down flat. Tilted or folded layers were moved LATER.</li>
-   <li><b>Cross-cutting:</b> anything that cuts through layers (a dike, a fault) is YOUNGER than the layers it cuts.</li>
-   <li><b>Unconformity:</b> an old erosion surface. Rock (and time) is missing there.</li>
-   <li><b>Fossil succession and index fossils:</b> life changed over time in a known order. An <b>index fossil</b> lived for a short time over a wide area, so it pins a layer to one period. Long-lived fossils can’t.</li></ul>
+  <h3>📏 Dating rules</h3><p><b>Relative age</b> is the order of rocks, fossils and events compared with each other, without a number of years. (<b>Absolute age</b> is the numeric age.) Geologists use these principles:</p><ul>
+   <li><b>Uniformitarianism:</b> the processes that shape Earth today (storms, earthquakes, volcanoes, weathering) are the same ones that worked in the past. Modern ripple marks on a beach look like fossil ripple marks in sandstone.</li>
+   <li><b>Original horizontality:</b> sediments are deposited in flat, horizontal layers. Tilted or <b>folded</b> layers were moved LATER.</li>
+   <li><b>Superposition:</b> younger layers lie on top of older layers. Each layer is older than the one above it.</li>
+   <li><b>Lateral continuity:</b> layers spread out sideways in all directions. A break in a layer (like a valley) was caused by a barrier or by later erosion.</li>
+   <li><b>Cross-cutting relationships:</b> anything that cuts across layers, like an <b>intrusion</b> (magma that hardened inside older rock) or a <b>fault</b> (a crack where rock moved), is YOUNGER than the layers it cuts.</li>
+   <li><b>Inclusions:</b> a piece of one rock inside another rock is OLDER than the rock that holds it.</li>
+   <li><b>Unconformity:</b> a surface of erosion or non-deposition between layers of very different ages: rock (and time) is missing. Three kinds:
+     <ul><li><b>Angular unconformity:</b> flat layers on top of tilted, eroded layers (like Fossil Bluffs, and Siccar Point in Scotland).</li>
+     <li><b>Disconformity:</b> flat layers on top of eroded flat layers (like the cliffs at Shades State Park, Indiana: Mississippian rock under much younger Pennsylvanian sandstone).</li>
+     <li><b>Nonconformity:</b> flat sedimentary layers on top of eroded igneous or metamorphic rock (like the Grand Canyon).</li></ul></li>
+   <li><b>Fossil succession and index fossils:</b> life changed over time in a known order. An <b>index fossil</b> lived for a short time over a wide area, so it pins a layer to one period.</li></ul>
+   <p><small>Principles adapted from the Indiana Geological &amp; Water Survey lesson <i>Which Came First? Relative Time Puzzles</i>.</small></p>
   <h3>📊 Range chart</h3><p>Each bar shows when a fossil lived. <span style="color:#e8711c;font-weight:bold">Orange ⭐ = index fossil (short range).</span> <span style="color:#3a86c8;font-weight:bold">Blue = long-lived.</span></p>${chart}
   <h3>🌍 Plate motion</h3><p><b>Evidence that continents move:</b></p><p><b>Mesosaurus</b>, a small freshwater reptile that couldn’t cross an ocean, is found in South America AND Africa. <b>Glossopteris</b> leaves are found on five southern continents. The continents’ coastlines fit together like puzzle pieces, and the same rock layers and mountain belts line up across the ocean. All of this shows the continents were once joined in a supercontinent, <b>Pangaea</b>, and have slowly moved apart (a few centimeters per year).</p><p><b>Evidence right here:</b> Fossil Bluffs has coral reefs (Favosites, horn corals) and coal-swamp plants (Lepidodendron, Neuropteris). These need a warm, tropical climate, but Indiana isn’t tropical today. When these rocks formed, the plate carrying North America sat near the equator, and it has moved north since.</p>${pangaea}
   <p><b>Seafloor evidence:</b> new rock forms at mid-ocean ridges. Seafloor rock is youngest at the ridge and older farther away, the same on both sides, because the plates are moving apart.</p>${ridge}
@@ -3973,7 +4055,7 @@ function renderTimeGuide() {
    <tr><td><b>Faults and earthquakes</b></td><td>Sudden (seconds), repeated over time</td><td>Local to regional</td><td>The fault that shifts Layers B–G</td></tr>
    <tr><td><b>Volcanic activity</b></td><td>Fast (days to years)</td><td>Local to regional</td><td>The basalt dike</td></tr>
    <tr><td><b>Asteroid impact</b></td><td>Instant</td><td>Global effects</td><td>Not at this cliff, but a thin clay layer around the world marks the impact 66 million years ago</td></tr></table></div>
-  ${symmetryHTML()}${fossilKeyHTML()}<h3>✏️ Cliff sketch</h3><p>Practice putting the cliff’s events in order with the dating rules.</p><p><button data-open="fossillab" data-fltab="sketch">✏️ Open the cliff sketch challenge</button></p>`, 'timeguide');
+  ${symmetryHTML()}${fossilKeyHTML()}<h3>✏️ Time puzzles</h3><p>Practice ordering rock layers and events, youngest to oldest, with the relative time puzzles.</p><p><button data-open="fossillab" data-fltab="sketch">✏️ Open the relative time puzzles</button></p>`, 'timeguide');
 }
 
 /* ---------- 15o. FOSSIL FIELD EXAM (unlocks Level 3) ----------
