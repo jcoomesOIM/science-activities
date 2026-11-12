@@ -10,7 +10,17 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#101828;overflow:hidden;font-family:Verdana,"Segoe UI",sans-serif;color:var(--paper)}
 h1,h2,h3,button{font-family:"Trebuchet MS","Segoe UI",sans-serif}
-#game{position:fixed;inset:0;width:100vw;height:100vh;display:block;outline:none}
+#game{position:fixed;inset:0;width:100vw;height:100vh;display:block;outline:none;touch-action:none;-webkit-user-select:none;user-select:none}
+#touchPad{position:fixed;left:10px;bottom:10px;z-index:6;display:none;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px);gap:4px;touch-action:none}
+#touchAct{position:fixed;right:10px;bottom:10px;z-index:6;display:none;flex-direction:column;gap:6px;touch-action:none}
+body.touch #touchPad{display:grid} body.touch.digmode #touchPad{display:none} #digModeBtn.on{background:var(--hat);outline:3px solid var(--ink)} body.touch #touchAct{display:flex} body.touch .touchhint{display:inline!important}
+.tp{width:60px;height:60px;padding:0;font-size:26px;border-radius:16px;background:rgba(242,247,245,.82);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tp.down{background:var(--hat);transform:translateY(2px)}
+body.touch .statbox{bottom:auto;top:calc(var(--hudH) + 6px);font-size:12px;max-width:47vw;padding:3px 8px}
+body.touch #playerBox img{width:24px;height:24px}
+body.touch #toast{bottom:auto;top:calc(var(--hudH) + 64px);font-size:16px}
+body.touch #caption{bottom:auto;top:calc(var(--hudH) + 120px);font-size:14px}
+@media (max-width:600px){.panel{left:6px;right:6px;bottom:6px;padding:10px 12px;font-size:15px}.panel h2{font-size:22px}#hud{flex-wrap:wrap;padding:3px 5px;gap:3px}#goals{order:2;flex-basis:100%;font-size:12px}.menus{gap:3px;margin:0 auto}.mrow{gap:3px;flex-wrap:nowrap}.mbtn{font-size:15px!important;padding:2px 4px!important;border-width:2px!important;box-shadow:0 2px 0 #000!important}}
 #hud{position:fixed;top:0;left:0;right:0;z-index:12;display:flex;gap:8px;align-items:center;padding:4px 8px;background:rgba(16,24,40,.9);border-bottom:3px solid var(--hat)}
 #goals{flex:1;min-width:0;font-size:14px;line-height:1.3;font-weight:bold}
 #goals div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -197,6 +207,7 @@ th{background:var(--ink);color:var(--paper)}
       <button data-open="avatar"><span>🧑 Change my geologist</span></button>
       <button id="bSound"><span>🔇 Sound: off</span><kbd>M</kbd></button>
       <button id="bMotion"><span>🎞️ Motion: full</span></button>
+      <button id="bTouch"><span>📱 On-screen controls: off</span></button>
       <button data-open="keys"><span>⌨️ Keyboard help</span></button>
     </div></div>
   <div class="menu"><button class="mbtn" data-menu="mSave" aria-expanded="false" aria-controls="mSave" aria-label="Save and report menu" title="Save and report">💾▾</button>
@@ -206,6 +217,18 @@ th{background:var(--ink);color:var(--paper)}
       <button class="loadBtn"><span>📂 Load a save file</span></button>
     </div></div>
   </div></div>
+</div>
+<div id="touchPad" aria-label="On-screen movement controls">
+  <button class="tp" data-pad="arrowup" style="grid-column:2;grid-row:1" aria-label="Up: jump, climb, or dig up">▲</button>
+  <button class="tp" data-pad="arrowleft" style="grid-column:1;grid-row:2" aria-label="Left: walk or dig left">◀</button>
+  <button class="tp" data-pad="arrowright" style="grid-column:3;grid-row:2" aria-label="Right: walk or dig right">▶</button>
+  <button class="tp" data-pad="arrowdown" style="grid-column:2;grid-row:3" aria-label="Down: dig down or climb down">▼</button>
+</div>
+<div id="touchAct" aria-label="On-screen action buttons">
+  <button class="tp" id="digModeBtn" data-tact="digmode" aria-pressed="false" aria-label="Dig mode: tap any nearby block to dig, swipe to move">⛏️</button>
+  <button class="tp" data-tact="use" aria-label="Use: talk, machine, or jeep (E)">✋</button>
+  <button class="tp" data-tact="ladder" aria-label="Place a ladder (U)">🪜</button>
+  <button class="tp" data-tact="build" aria-label="Build rock back (B)">🧱</button>
 </div>
 <div id="locBox" class="statbox" aria-label="Where you are"></div>
 <div id="playerBox" class="statbox" aria-label="Your stats"></div>
@@ -217,7 +240,7 @@ th{background:var(--ink);color:var(--paper)}
     <h1>Rock Hound</h1>
     <p class="sub">Dig, test, and identify rocks and minerals</p>
     <canvas id="titleArt" width="600" height="190" aria-hidden="true"></canvas>
-    <p class="story">You’re the new junior field geologist at Pebble Creek Survey Camp. Dig through the rock layers, test mystery specimens like a real geologist, and identify them to fill your Rock Dex. Predict how rocks change with the Rock Cycle Machine, earn XP, trophies and gear, and dress up your pet rock. The fewer tests and guesses you need, the more XP you earn!</p>
+    <p class="story"><span class="touchhint" style="display:none">📱 <b>On a phone or tablet:</b> use the on-screen arrows, or tap a block next to your geologist to dig it. Turn on ⛏️ Dig mode to tap and swipe instead. </span>You’re the new junior field geologist at Pebble Creek Survey Camp. Dig through the rock layers, test mystery specimens like a real geologist, and identify them to fill your Rock Dex. Predict how rocks change with the Rock Cycle Machine, earn XP, trophies and gear, and dress up your pet rock. The fewer tests and guesses you need, the more XP you earn!</p>
     <div class="trow">
       <div id="titleAvatar"></div>
       <div class="tbtns">
@@ -256,6 +279,8 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>U</kbd> / <kbd>Y</kbd></span><span>Place a ladder in a dug shaft (climb ↑ ↓, dig ← → ↑) / take a ladder down</span>
       <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
       <span><kbd>F</kbd> / <kbd>Z</kbd> / <kbd>I</kbd></span><span>Fossil lab / Fossil Dex / Geologic time guide (Level 2)</span>
+      <span>📱 / 🖱️</span><span>Tap or click a block next to you to dig it; tap an open space to walk or climb there</span>
+      <span>⛏️ (touch)</span><span>Dig mode: tap any outlined block to dig; swipe ← → to walk, ↑ to jump or climb, ↓ to dig down</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
     </div>
     </div>
@@ -1335,7 +1360,7 @@ function placeLadder() {
   if (r0 - 1 < 0 || tile[r0 - 1][c] !== AIR) { toast('🪜 There’s rock right above you. Dig up first, or use the rope (R).'); return; }
   let r = r0, n = 0;
   while (r >= SURF - 1 && tile[r][c] === AIR) { ladders.add(LK(r, c)); n++; if (r === SURF - 1) break; r--; }
-  sfx('build'); toast(`🪜 Ladder placed: ${n} block${n === 1 ? '' : 's'} tall. Press ↑ to climb, one block at a time.`, 4000);
+  sfx('build'); toast(`🪜 Ladder placed: ${n} block${n === 1 ? '' : 's'} tall. ${document.body.classList.contains('touch') ? (digMode ? 'Swipe up' : 'Tap ▲') : 'Press ↑'} to climb, one block at a time.`, 4000);
   attachLadder();
 }
 function attachLadder() { const p = player, c = Math.floor((p.x + p.w / 2) / T), r = Math.floor((p.y + p.h - 1) / T);
@@ -1373,7 +1398,14 @@ function drawLadders(x0, x1, y0, y1) {
 function update(dt) {
   const p = player;
   const L = keys.arrowleft || keys.a, Rt = keys.arrowright || keys.d, U = keys.arrowup || keys.w || keys[' '], D = keys.arrowdown || keys.s;
-  const dir = (Rt ? 1 : 0) - (L ? 1 : 0);
+  let dir = (Rt ? 1 : 0) - (L ? 1 : 0), autoWalk = false;
+  if (dir || U || D) autoX = null;
+  // walking toward a tapped spot (this never digs); stops when you arrive or get blocked
+  if (!dir && autoX !== null) { const dd = autoX - (p.x + p.w / 2); if (Math.abs(dd) < 6 || (p.lastX !== undefined && Math.abs(p.x - p.lastX) < .01 && p.autoT > .15)) autoX = null; else { dir = Math.sign(dd); autoWalk = true; } }
+  p.autoT = autoWalk ? (p.autoT || 0) + dt : 0; p.lastX = p.x;
+  if (swipeDig && digCool <= 0 && !tapHold) { if (tile[swipeDig.r] && tile[swipeDig.r][swipeDig.c] !== AIR && !campObjectAt(swipeDig.r, swipeDig.c)) hit(swipeDig.r, swipeDig.c); else swipeDig = null; }
+  if (dir || U || D) swipeDig = null;
+  if (tapHold && digCool <= 0) { if (tile[tapHold.r][tapHold.c] !== AIR) hit(tapHold.r, tapHold.c); else tapHold = null; }   // hold a tap to keep digging
   if (dir || U || D) idleT = 0; else idleT += dt;
   if (dir) p.face = dir;
   p.vx += (dir * 230 - p.vx) * Math.min(1, dt * 12);
@@ -1381,7 +1413,7 @@ function update(dt) {
   nagT -= dt;
   buildCool -= dt; digCool -= dt; digAnim -= dt; hotCool -= dt; magmaTalkT -= dt;
   // On a ladder: no gravity, climb one block at a time, dig sideways
-  if (p.onLadder) { ladderUpdate(dt, dir, U, D); if (p.onLadder) { p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy'; updatePet(dt); petSense(dt); zoneEnter(); return; } }
+  if (p.onLadder) { autoX = null; ladderUpdate(dt, autoWalk ? 0 : dir, U, D); if (p.onLadder) { p.moodT -= dt; if (p.moodT <= 0) p.mood = 'happy'; updatePet(dt); petSense(dt); zoneEnter(); return; } }
   { const lc = Math.floor((p.x + p.w / 2) / T), lr = Math.floor((p.y + p.h - 1) / T);
     if (U && hasLadder(lr, lc)) { attachLadder(); return; }
     // walking or falling into a ladder space: grab it (unless you're standing on solid ground)
@@ -1389,7 +1421,7 @@ function update(dt) {
     if (D && p.onGround && hasLadder(lr + 1, lc)) { attachLadder(); p.climb = {from:p.y, to:p.y + T, t:0, d:reduceMotion ? .01 : .16}; return; } }
   const cx = p.x + p.w / 2, cyMid = p.y + p.h / 2;
   if (digCool <= 0) {
-    if (dir) { const c = Math.floor((dir > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor(cyMid / T); if (isSolid(r, c) && c >= 0 && c < COLS) hit(r, c); }
+    if (dir && !autoWalk) { const c = Math.floor((dir > 0 ? p.x + p.w + 3 : p.x - 3) / T), r = Math.floor(cyMid / T); if (isSolid(r, c) && c >= 0 && c < COLS) hit(r, c); }
     if (D && p.onGround && digCool <= 0) { const r = Math.floor((p.y + p.h + 3) / T), c = Math.floor(cx / T); if (r < ROWS && isSolid(r, c)) hit(r, c); }
   }
   // Up in the air: keep digging the rock above your head
@@ -2082,6 +2114,22 @@ document.addEventListener('input', e => {
   ticket[k] = e.target.value; if (k === 'learned') $('#tkCount').textContent = ticket.learned.length;
 });
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+/* 📱 TOUCH CONTROLS: the arrow pad works exactly like holding the arrow keys
+   (walk, dig sideways, dig down, jump, climb ladders). */
+function padPress(k, down) {
+  keys[k] = down;
+  if (down && player.onLadder) { if (k === 'arrowup') ladTap.u = 1; if (k === 'arrowdown') ladTap.d = 1; if (k === 'arrowleft') ladTap.l = 1; if (k === 'arrowright') ladTap.r = 1; }
+}
+document.querySelectorAll("[data-pad]").forEach(btn => {
+  const k = btn.dataset.pad, up = () => { padPress(k, false); btn.classList.remove('down'); };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); if (current) return; try { btn.setPointerCapture(e.pointerId); } catch (err) {} padPress(k, true); btn.classList.add('down'); audioInit(); });
+  btn.addEventListener('pointerup', up); btn.addEventListener('pointercancel', up); btn.addEventListener('lostpointercapture', up);
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+});
+document.querySelectorAll('[data-tact]').forEach(btn => btn.addEventListener('pointerdown', e => { e.preventDefault(); if (current) return;
+  ({digmode:() => setDigMode(!digMode), use:interact, ladder:placeLadder, build:() => tryBuild(true)})[btn.dataset.tact](); }));
+const useWord = () => document.body.classList.contains('touch') ? 'Tap ✋' : 'Press E';
+function setTouch(on) { document.body.classList.toggle('touch', on); const b = $('#bTouch'); if (b) b.innerHTML = `<span>📱 On-screen controls: ${on ? 'on' : 'off'}</span>`; resize(); }
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function saveName() { const v = $('#petName').value.trim().slice(0, 16); if (pet && v) { pet.name = v; pet.lastAns = `<b>${esc(v)}:</b> I love my new name!`; sfx('pet'); petSay(`Call me ${v}!`, 'happy', 3); renderPet(); } }
 function placeMenu(btn, list) {
@@ -2138,6 +2186,7 @@ document.addEventListener('click', e => {
   else if (b.classList.contains('pdfBtn')) downloadPDF();
   else if (b.classList.contains('loadBtn')) filePick.click();
   else if (b.id === 'bMotion') setMotion(!reduceMotion);
+  else if (b.id === 'bTouch') setTouch(!document.body.classList.contains('touch'));
   else if (b.id === 'bRope') ropeUp();
   else if (b.id === 'bBuild') tryBuild(true);
   else if (b.id === 'bLadder') placeLadder();
@@ -2153,19 +2202,65 @@ $('#game').addEventListener('contextmenu', e => {
 });
 // Mouse: click a block next to you to dig it
 $('#keysModal').addEventListener('click', e => { if (e.target.id === 'keysModal') { $('#keysModal').hidden = true; $('#keysBtn').focus(); } }); // click outside the box to close
-$('#game').addEventListener('mousedown', e => {
-  if (current || rope || e.button !== 0) return;
+/* TAP or CLICK the world: tap a block next to you to dig it (hold to keep digging);
+   tap an open space beside you to walk there, above you to jump or climb, below you to climb down.
+   ⛏️ DIG MODE (touch screens): the arrow pad hides for a bigger view; tap ANY block within reach to dig it,
+   and SWIPE to move: ← → walk (or dig through a block in the way), ↑ jump or climb, ↓ dig down or climb down. */
+let tapHold = null, autoX = null, swipeDig = null, digMode = false, gesture = null;
+const REACH = () => digMode ? T * 2.3 : T * 1.7;
+function setDigMode(on) {
+  digMode = on; document.body.classList.toggle('digmode', on); const b = $('#digModeBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  for (const k of ['arrowup', 'arrowdown', 'arrowleft', 'arrowright']) keys[k] = false;
+  toast(on ? '⛏️ Dig mode ON: tap any block near you to dig it. Swipe to move: ← → walk, ↑ jump or climb, ↓ dig down.' : '⛏️ Dig mode OFF: the arrow pad is back.', 5000);
+}
+function tapWorld(r, c) {   // what a tap does on an open space (or a far-away block)
+  const pc = Math.floor((player.x + player.w / 2) / T), pr = Math.floor((player.y + player.h - 1) / T);
+  if (tile[r][c] !== AIR) { autoX = (c + .5) * T; return; }
+  if (r < pr && Math.abs(c - pc) <= 1) { if (player.onLadder) ladTap.u = 1; else { keys.arrowup = true; setTimeout(() => keys.arrowup = false, 160); } return; }
+  if (r > pr && c === pc && (player.onLadder || hasLadder(pr + 1, pc))) { if (player.onLadder) ladTap.d = 1; else { keys.arrowdown = true; setTimeout(() => keys.arrowdown = false, 160); } return; }
+  if (player.onLadder && c !== pc) { if (c < pc) ladTap.l = 1; else ladTap.r = 1; return; }
+  autoX = (c + .5) * T;
+}
+function swipe(dx, dy) {
+  const p = player, pc = Math.floor((p.x + p.w / 2) / T), pr = Math.floor((p.y + p.h - 1) / T);
+  if (Math.abs(dx) > Math.abs(dy)) { const d = dx > 0 ? 1 : -1;
+    if (p.onLadder) { if (d < 0) ladTap.l = 1; else ladTap.r = 1; return; }
+    if (isSolid(pr, pc + d) && pc + d >= 0 && pc + d < COLS) { p.face = d; swipeDig = {r:pr, c:pc + d}; return; }   // something in the way: dig through it
+    autoX = (pc + .5 + d * 3) * T; return; }                                                                    // walk up to 3 blocks
+  if (dy < 0) { if (p.onLadder) ladTap.u = 1; else if (hasLadder(pr, pc)) { attachLadder(); ladTap.u = 1; } else if (isSolid(pr - 1, pc) && pr - 1 >= 0) swipeDig = {r:pr - 1, c:pc}; else { keys.arrowup = true; setTimeout(() => keys.arrowup = false, 160); } return; }
+  if (p.onLadder || hasLadder(pr + 1, pc)) { if (!p.onLadder) attachLadder(); ladTap.d = 1; return; }
+  if (pr + 1 < ROWS && isSolid(pr + 1, pc)) swipeDig = {r:pr + 1, c:pc};                                        // dig the block below all the way through
+}
+$('#game').addEventListener('pointerdown', e => {
+  if (current || rope || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault(); audioInit();
   const wx = e.clientX / zoom + cam.x, wy = e.clientY / zoom + cam.y, c = Math.floor(wx / T), r = Math.floor(wy / T);
+  gesture = {x:e.clientX, y:e.clientY, t:performance.now(), r, c, moved:false, handled:false};
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
   const dx = (c + .5) * T - (player.x + player.w / 2), dy = (r + .5) * T - (player.y + player.h / 2);
-  if (Math.hypot(dx, dy) < T * 1.7 && r >= 0 && r < ROWS && c >= 0 && c < COLS && tile[r][c] !== AIR && digCool <= 0) { player.face = dx >= 0 ? 1 : -1; hit(r, c); }
+  if (tile[r][c] !== AIR && Math.hypot(dx, dy) < REACH()) { player.face = dx >= 0 ? 1 : -1; tapHold = {r, c}; swipeDig = null; gesture.handled = true; if (digCool <= 0) hit(r, c); return; }
+  if (!digMode) { gesture.handled = true; tapWorld(r, c); }   // without dig mode, act right away
 });
+$('#game').addEventListener('pointermove', e => {
+  if (!gesture || !digMode) return;
+  if (Math.hypot(e.clientX - gesture.x, e.clientY - gesture.y) > 24) { gesture.moved = true; tapHold = null; }
+});
+$('#game').addEventListener('pointerup', e => {
+  const gs = gesture; gesture = null; if (!gs || current || rope || !digMode) return;
+  const dx = e.clientX - gs.x, dy = e.clientY - gs.y;
+  if (gs.moved && Math.hypot(dx, dy) > 30 && performance.now() - gs.t < 900) { swipe(dx, dy); return; }
+  if (!gs.handled && !gs.moved && gs.r >= 0 && gs.r < ROWS && gs.c >= 0 && gs.c < COLS) tapWorld(gs.r, gs.c);
+});
+const endTap = () => { tapHold = null; };
+addEventListener('pointerup', endTap); addEventListener('pointercancel', endTap);
+$('#game').addEventListener('contextmenu', e => { if (matchMedia('(pointer: coarse)').matches) e.preventDefault(); });
 
 /* ---------- 14. DRAWING THE WORLD ---------------------------------- */
 const cv = $('#game'), g = cv.getContext('2d');
 let dpr = 1, zoom = 1, viewW = 0, viewH = 0;
 function resize() {
   dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
-  zoom = Math.max(.8, Math.min(1.7, innerWidth / (19 * T))); viewW = innerWidth / zoom; viewH = innerHeight / zoom;
+  zoom = Math.max(innerWidth < 700 ? .62 : .8, Math.min(1.7, innerWidth / (19 * T))); viewW = innerWidth / zoom; viewH = innerHeight / zoom;
   document.documentElement.style.setProperty('--hudH', $('#hud').offsetHeight + 'px');
 }
 addEventListener('resize', resize);
@@ -2200,10 +2295,10 @@ function drawCamp() {
   g.fillStyle = '#7a5233'; g.fillRect(vx - 3, sy - 52, 6, 52); g.fillStyle = '#f2f7f5'; rr(g, vx - 64, sy - 92, 128, 44, 8); g.fill(); g.stroke();
   g.fillStyle = '#1c2541'; g.fillText({gem:'Kimberlite pipe', fossil:'River canyon'}[SITE] || 'Old volcano', vx, sy - 79); g.fillText({gem:'↓ dig here ↓', fossil:'layers exposed →'}[SITE] || 'this way →', vx, sy - 61);
   if (SITE === 'gem') drawRefinery(); else if (SITE === 'fossil') drawFossilStation(); else drawMachine();
-  if (examPassed) { drawJeep(g, JEEP_X, SURF * T, 1); if (nearJeep() && !current) bubble(JEEP_X, SURF * T - 56, 'Press E to drive to another level'); }
+  if (examPassed) { drawJeep(g, JEEP_X, SURF * T, 1); if (nearJeep() && !current) bubble(JEEP_X, SURF * T - 56, useWord() + ' to drive to another level'); }
   drawColleague(g, DOC_X, SURF * T, .62, tool.broken && !reduceMotion);
   if (tool.broken || (assign && assign.status === 'done')) { g.fillStyle = '#ffcc33'; g.beginPath(); g.arc(DOC_X, SURF * T - 62, 10, 0, 7); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 15px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', DOC_X, SURF * T - 61); }
-  if (nearColleague() && !current) bubble(DOC_X, SURF * T - 50, tool.broken ? 'Press E: Dr. Rivera can give you a new tool!' : assign && assign.status === 'done' ? 'Press E to report your assignment!' : 'Press E to talk to Dr. Rivera');
+  if (nearColleague() && !current) bubble(DOC_X, SURF * T - 50, tool.broken ? useWord() + ': Dr. Rivera can give you a new tool!' : assign && assign.status === 'done' ? useWord() + ' to report your assignment!' : useWord() + ' to talk to Dr. Rivera');
 }
 // ART: the Rock Cycle Machine at camp. Three chambers = the three ways rocks change.
 const MACH_X = 14 * T;
@@ -2220,7 +2315,7 @@ function drawMachine() {
   g.strokeStyle = '#1c2541'; g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 8, 0, 4.8); g.stroke(); g.beginPath(); g.moveTo(8, -1); g.lineTo(4, -6); g.lineTo(11, -6); g.closePath(); g.fillStyle = '#1c2541'; g.fill(); g.restore();
   g.fillStyle = '#f2f7f5'; rr(g, x - 22, y - 30, 148, 24, 8); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke();
   g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.fillText('Rock Cycle Machine', x + 52, y - 18);
-  if (nearMachine() && !current) bubble(MACH_X, y - 34, 'Press E to use the machine');
+  if (nearMachine() && !current) bubble(MACH_X, y - 34, useWord() + ' to use the machine');
 }
 function nearMachine() { const cx = player.x + player.w / 2, feet = player.y + player.h; return Math.abs(cx - MACH_X) < T * 1.8 && feet <= SURF * T + 2 && feet > SURF * T - 2 * T; }
 function tryMachine() {
@@ -2341,6 +2436,10 @@ function draw() {
     drawTile(x, y, t, r, c);
   }
   drawLadders(x0, x1, y0, y1);
+  if (digMode && !current) { const px = player.x + player.w / 2, py = player.y + player.h / 2; g.strokeStyle = 'rgba(255,204,51,.75)'; g.lineWidth = 2.5; g.setLineDash([6, 4]);
+    for (let r = Math.floor((py - 2.3 * T) / T); r <= Math.floor((py + 2.3 * T) / T); r++) for (let c = Math.floor((px - 2.3 * T) / T); c <= Math.floor((px + 2.3 * T) / T); c++)
+      if (tile[r] && tile[r][c] && Math.hypot((c + .5) * T - px, (r + .5) * T - py) < 2.3 * T && !campObjectAt(r, c)) g.strokeRect(c * T + 4, r * T + 4, T - 8, T - 8);
+    g.setLineDash([]); }
   drawLayerLines(x0, x1);
   // Darkness grows with depth; the headlamp lights a circle around you
   const a = Math.max(0, Math.min(.6, ((player.y + player.h) / T - SURF) / 28));
@@ -3380,7 +3479,7 @@ function drawFossilStation() {   // ART: a canopy tent with a prep table, brushe
   g.fillStyle = '#efe4cc'; g.beginPath(); g.ellipse(x - 10, G - 38, 14, 4, 0, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.arc(x - 24, G - 38, 4, 0, 7); g.arc(x + 4, G - 38, 4, 0, 7); g.fill();
   g.strokeStyle = '#7a5233'; g.lineWidth = 2; g.beginPath(); g.moveTo(x + 18, G - 36); g.lineTo(x + 34, G - 46); g.stroke();
   g.fillStyle = '#f2f7f5'; rr(g, x - 70, G - 122, 140, 24, 8); g.fill(); g.strokeStyle = '#1c2541'; g.lineWidth = 2.5; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Fossil Prep Lab 🦴', x, G - 110);
-  if (nearMachine() && !current) bubble(x, G - 126, 'Press E to open the Fossil lab');
+  if (nearMachine() && !current) bubble(x, G - 126, useWord() + ' to open the Fossil lab');
 }
 function nearRefinery() { return SITE === 'gem' && nearMachine(); }
 function drawRefinery() {
@@ -3393,7 +3492,7 @@ function drawRefinery() {
   g.fillStyle = '#9cc8ea'; rr(g, x + 10, y + 34, 44, 30, 8); g.fill(); g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 16px Verdana, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⚙️', x + 32, y + 49);
   g.fillStyle = '#ffcc33'; rr(g, x + 22, y + 76, 68, 22, 6); g.fill(); g.stroke(); drawBar(g, x + 56, y + 88, .9, ['#e6b422', '#fff2a8']);
   g.fillStyle = '#f2f7f5'; rr(g, x - 18, y - 30, 148, 24, 8); g.fill(); g.lineWidth = 2.5; g.stroke(); g.fillStyle = '#1c2541'; g.font = 'bold 13px Verdana, sans-serif'; g.fillText('Gem & Ore Refinery', x + 56, y - 18);
-  if (nearMachine() && !current) bubble(MACH_X, y - 34, 'Press E to use the refinery');
+  if (nearMachine() && !current) bubble(MACH_X, y - 34, useWord() + ' to use the refinery');
 }
 function gramsOf(it, rec) { return Math.round(200 * it.pct / 100 * rec); }   // each sample = 200 g of ore
 function treasureHTML() {
@@ -4077,7 +4176,8 @@ function drawTitleArt() {
 genWorld(); buildSprites(); buildExtraSprites(); measureTops(); buildBadges(); resize(); setMotion(reduceMotion);
 player.x = SPAWN_C * T + 9; player.y = SURF * T - player.h - 1;
 cam.x = Math.max(0, player.x - viewW / 2); cam.y = player.y - viewH / 2;
-drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); current = 'title'; $('#title').scrollTop = 0; scrollTo(0, 0); $('#startBtn').focus({preventScroll:true});
+drawTitleArt(); $('#titleAvatar').innerHTML = avatarHTML(); setTouch(matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window); // phones and tablets get on-screen controls
+current = 'title'; $('#title').scrollTop = 0; scrollTo(0, 0); $('#startBtn').focus({preventScroll:true});
 requestAnimationFrame(loop);
 </script>
 </body>
