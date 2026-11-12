@@ -225,7 +225,7 @@ th{background:var(--ink);color:var(--paper)}
   <button class="tp" data-pad="arrowdown" style="grid-column:2;grid-row:3" aria-label="Down: dig down or climb down">▼</button>
 </div>
 <div id="touchAct" aria-label="On-screen action buttons">
-  <button class="tp" id="digModeBtn" data-tact="digmode" aria-pressed="false" aria-label="Dig mode: tap any nearby block to dig, swipe to move">⛏️</button>
+  <button class="tp" id="digModeBtn" data-tact="digmode" aria-pressed="false" aria-label="Dig mode: tap a block right next to you to dig, swipe to move">⛏️</button>
   <button class="tp" data-tact="use" aria-label="Use: talk, machine, or jeep (E)">✋</button>
   <button class="tp" data-tact="ladder" aria-label="Place a ladder (U)">🪜</button>
   <button class="tp" data-tact="build" aria-label="Build rock back (B)">🧱</button>
@@ -280,7 +280,7 @@ th{background:var(--ink);color:var(--paper)}
       <span><kbd>T</kbd> / <kbd>K</kbd></span><span>Tool bag / drive the jeep (after the Final Field Exam)</span>
       <span><kbd>F</kbd> / <kbd>Z</kbd> / <kbd>I</kbd></span><span>Fossil lab / Fossil Dex / Geologic time guide (Level 2)</span>
       <span>📱 / 🖱️</span><span>Tap or click a block next to you to dig it; tap an open space to walk or climb there</span>
-      <span>⛏️ (touch)</span><span>Dig mode: tap any outlined block to dig; swipe ← → to walk, ↑ to jump or climb, ↓ to dig down</span>
+      <span>⛏️ (touch)</span><span>Dig mode: tap an outlined block (directly above, below, left or right of you) to dig; swipe ← → to walk, ↑ to jump or climb, ↓ to dig down</span>
       <span><kbd>R</kbd> / <kbd>M</kbd> / <kbd>Esc</kbd></span><span>Rope to camp / sound / close a window</span>
     </div>
     </div>
@@ -394,7 +394,7 @@ th{background:var(--ink);color:var(--paper)}
 <li>♻️ The Rock Cycle Machine shows each change in seconds, but in nature it takes thousands to millions of years. Changed rocks join your collection and Rock Dex so you can complete it, but real rocks can’t be traded this way!</li>
 <li>♻️ What melted rock becomes also depends on its chemistry. The machine uses two simple rules: dark, iron-rich basalt melts into dark rock (basalt or gabbro), and every other rock melts into light-colored magma (granite or obsidian). Light-colored lava often cools into rhyolite, a fine-grained rock not in our Rock Dex.</li>
 <li>💎 Crystal Ridge Mine is simplified: real kimberlite pipes bring diamonds up from more than 150 km deep, far deeper than the game shows. Rubies and sapphires (both corundum) grow in marble, and emeralds and topaz grow in pegmatites.</li>
-<li>🦴 Level 2 (Fossil Bluffs) is simplified: real layers are much thicker, and each block stands for about 100 m. The cliff’s history follows real geology (deposition, tilting, faulting, a dike, erosion, more deposition, and a river canyon), and the fossils and their time ranges are real.</li>
+<li>🦴 Level 2 (Fossil Bluffs) is modeled on Indiana: flat Ice Age glacial till over Paleozoic sea and swamp rocks. Real layers are much thicker, and each block stands for about 100 m. Indiana’s bedrock is only gently tilted and has no basalt dike; the game adds a dike and a fault to practice the cross-cutting rule. The fossils follow the Indiana Geological &amp; Water Survey 3-D fossil print lesson. Time ranges are simplified to the genus or group level; for the game, some long-lived groups are treated as index fossils for one period.</li>
 <li>📏 Density assay: SG = weight in air ÷ (weight in air − weight in water). The game models each ore sample as metal mixed with quartz (SG 2.65), so SG of the mix = 1 ÷ (fraction of metal ÷ metal SG + fraction of quartz ÷ 2.65). Real assays also use chemical tests.</li>
 <li>⚗️ The Level 3 refinery is simplified. Real ore usually holds only a few grams of gold per TON of rock, so the game’s purity numbers are much higher than real ore. Processing really does depend on mineral properties: dense metals are concentrated by gravity, some metal minerals by froth flotation, copper carbonate by acid leaching, and gems are cut only by abrasives harder than they are.</li>
 <li>🔨 Tools wear out after a hidden number of hits, like real tools. Trading for a new one at camp is a game rule that gives you a thinking break.</li>
@@ -471,64 +471,84 @@ GEMS.push(
 GEMS.forEach((s, i) => { s.n = 31 + i; s.gem = true; SP[s.id] = s; if (s.kind === 'mineral' && !s.lk) { s.lk = 'single'; s.rtype = s.id === 'malachite' ? 'Mineral (copper ore)' : ['gold', 'silver', 'platinum'].includes(s.id) ? 'Mineral (native metal)' : 'Mineral (gem)'; s.grp = 'mineral'; } });
 ALLSPEC.push(...GEMS.slice(6));
 /* ---------- 1c. LEVEL 2: FOSSIL BLUFFS (fossils, geologic time, plate motion) ----------
-   NGSS MS-ESS1-4 (rock strata + geologic time scale), MS-ESS2-3 (fossil and rock evidence of plate motion),
-   MS-ESS2-2 (surface processes at different time and space scales).                                   */
+   Fossils follow the Indiana Geological & Water Survey "Identifying 3-D Fossil Prints" lesson
+   (identification chart, dichotomous key and teacher reference observations).
+   NGSS MS-ESS1-4, MS-ESS2-3, MS-ESS2-2.                                                         */
 const PERIODS = [
  ['prec', 'Precambrian', 4600, 539, 'Precambrian', 'Earth forms 4.6 billion years ago; simple life only'],
  ['camb', 'Cambrian', 539, 485, 'Paleozoic', 'Cambrian explosion: animals with hard shells appear'],
- ['ordo', 'Ordovician', 485, 444, 'Paleozoic', 'Life spreads through warm seas; first land plants'],
- ['silu', 'Silurian', 444, 419, 'Paleozoic', 'Fish with jaws; plants spread on land'],
- ['devo', 'Devonian', 419, 359, 'Paleozoic', 'The “Age of Fishes”'],
- ['carb', 'Carboniferous', 359, 299, 'Paleozoic', 'Swamp forests that became coal; giant insects'],
+ ['ordo', 'Ordovician', 485, 444, 'Paleozoic', 'Shallow seas cover Indiana; shells, bryozoans and trilobites everywhere'],
+ ['silu', 'Silurian', 444, 419, 'Paleozoic', 'Coral reefs grow in tropical seas; plants spread on land'],
+ ['devo', 'Devonian', 419, 359, 'Paleozoic', 'The “Age of Fishes”; reefs of horn and colonial corals'],
+ ['miss', 'Mississippian', 359, 323, 'Paleozoic', 'First half of the Carboniferous: warm seas full of crinoids and blastoids'],
+ ['penn', 'Pennsylvanian', 323, 299, 'Paleozoic', 'Second half of the Carboniferous: coal-swamp forests'],
  ['perm', 'Permian', 299, 252, 'Paleozoic', 'Supercontinent Pangaea; ends with the biggest mass extinction'],
  ['tria', 'Triassic', 252, 201, 'Mesozoic', 'First dinosaurs and mammals'],
- ['jura', 'Jurassic', 201, 145, 'Mesozoic', 'Giant dinosaurs; Pangaea starts to split apart'],
- ['cret', 'Cretaceous', 145, 66, 'Mesozoic', 'Flowering plants; ends with an asteroid impact and mass extinction'],
+ ['jura', 'Jurassic', 201, 145, 'Mesozoic', 'Giant dinosaurs; Pangaea splits apart'],
+ ['cret', 'Cretaceous', 145, 66, 'Mesozoic', 'Flowering plants; ends with an asteroid impact'],
  ['pale', 'Paleogene', 66, 23, 'Cenozoic', 'Mammals spread after the dinosaurs disappear'],
  ['neog', 'Neogene', 23, 2.6, 'Cenozoic', 'Grasslands spread; early human ancestors'],
- ['quat', 'Quaternary', 2.6, 0, 'Cenozoic', 'Ice ages; modern humans']
+ ['quat', 'Quaternary', 2.6, 0, 'Cenozoic', 'Ice ages: glaciers cover Indiana; mastodons and dire wolves']
 ].map(([id, name, start, end, era, event]) => ({id, name, start, end, era, event}));
 const PER = {}; PERIODS.forEach(p => PER[p.id] = p);
 const myaTxt = v => v >= 1000 ? (v / 1000).toFixed(1).replace('.0', '') + ' billion' : v >= 1 ? Math.round(v) + ' million' : v >= .01 ? Math.round(v * 1000) + ' thousand' : Math.round(v * 1e6) + '';
 const rangeTxt = p => p.end ? `${myaTxt(p.start)}–${myaTxt(p.end)} years ago` : `${myaTxt(p.start)} years ago to today`;
+// Key groups, in the order of the IGWS fossil identification chart
+const FGROUPS = {
+ plant:{name:'Plant', taxon:'Plant', trait:'No skeletal structure', ex:'Fern, lycopod tree, horsetail'},
+ gastropod:{name:'Gastropod (snail)', taxon:'Mollusc', trait:'Coiled – conispiral'},
+ cephalopod:{name:'Cephalopod', taxon:'Mollusc', trait:'Coiled – planispiral, or Radial – tapered cone with exterior partitions'},
+ bivalve:{name:'Bivalve (clam)', taxon:'Mollusc', trait:'Bilateral – both valves same but not symmetrical'},
+ brachiopod:{name:'Brachiopod', taxon:'Brachiopod', trait:'Bilateral – valves different but symmetrical'},
+ crinoid:{name:'Crinoid', taxon:'Echinoderm', trait:'Radial or Pentameral – discs with hole, or cup-shaped body with joined plates'},
+ blastoid:{name:'Blastoid', taxon:'Echinoderm', trait:'Pentameral – nut-shaped body with five elaborate grooves'},
+ horncoral:{name:'Solitary (horn) coral', taxon:'Cnidarian', trait:'Radial – cone with radiating partitions on inside'},
+ colcoral:{name:'Colonial coral', taxon:'Cnidarian', trait:'Radial – individuals in colony with interior partitions'},
+ bryozoan:{name:'Bryozoan', taxon:'Bryozoan', trait:'Complex – corkscrewlike, twiglike, lacy, or other shapes'},
+ foram:{name:'Foram', taxon:'Protozoan', trait:'Complex, Radial, or Coiled – generally under 1/32 inch'},
+ trilobite:{name:'Trilobite', taxon:'Arthropod', trait:'Segmented body with three lobes'},
+ vertebrate:{name:'Vertebrate', taxon:'Chordate', trait:'Bone or enamel', ex:'Dire wolf, mastodon, etc.'}
+};
+const NOSHELL = 'No shells (no valves)';
 const FOSSILS = [
- {id:'trilobite', name:'Trilobite (Olenellus)', shape:'Oval body split lengthwise into 3 lobes, with a head shield and many body segments', sym:'Bilateral: left and right sides match', mat:'Hard outer shell (exoskeleton) replaced by minerals', size:'About 5 cm long', life:'Crawled on the sea floor; had compound eyes', range:[521, 509], index:true, info:'An early arthropod, related to insects and crabs. This kind lived only in the early Cambrian, so it is an index fossil.'},
- {id:'brachiopod', name:'Brachiopod (Platystrophia)', shape:'Two fan-shaped shells (top and bottom) with ribs and a fold down the middle', sym:'Bilateral: each shell matches left to right', mat:'Shell replaced by minerals', size:'About 3 cm wide', life:'Lived attached to the sea floor, filtering food from the water', range:[470, 445], index:true, info:'A shelled sea animal. This kind lived only in the Ordovician, so it is an index fossil.'},
- {id:'crinoid', name:'Crinoid stem', shape:'A stack of small round discs, like a column of buttons', sym:'Radial: arranged around a center in 5 parts', mat:'Mineral-filled discs (calcite)', size:'Each disc about 1 cm across', life:'A “sea lily”: an animal anchored to the sea floor on a long stem', range:[485, 0], index:false, info:'Crinoids have lived from the Ordovician until today. Because they lived for so long, a crinoid alone can’t tell you which period a layer is from.'},
- {id:'placoderm', name:'Armored fish plate (Dunkleosteus)', shape:'A thick bony plate with a sharp, jaw-like edge', sym:'Bilateral', mat:'Bone', size:'About 30 cm (from a fish up to 6 m long!)', life:'A giant armored fish that hunted in ancient seas', range:[382, 358], index:true, info:'From the late Devonian, the “Age of Fishes.” An index fossil.'},
- {id:'seedfern', name:'Seed fern leaf (Neuropteris)', shape:'A frond with many small, rounded leaflets in rows', sym:'Bilateral: leaflets line both sides of a center stem', mat:'Thin black carbon film on the rock', size:'About 10 cm', life:'A land plant from swamp forests (the swamps that became coal)', range:[359, 299], index:true, info:'A Carboniferous swamp plant. An index fossil for coal-age rocks.'},
- {id:'mesosaurus', name:'Mesosaurus skeleton', shape:'A small skeleton with a long, thin snout full of needle teeth and a long tail', sym:'Bilateral', mat:'Bone', size:'About 1 m long', life:'A small reptile that swam in shallow lakes and seas', range:[299, 280], index:true, info:'Found in early Permian rocks of BOTH South America and southern Africa. It could not swim across an ocean, so this is evidence that the continents were once joined.'},
- {id:'glossopteris', name:'Glossopteris leaf', shape:'A tongue-shaped leaf with a center vein and a net of side veins', sym:'Bilateral', mat:'Thin black carbon film on the rock', size:'About 12 cm', life:'A land plant from cool climates', range:[299, 201], index:false, info:'Found in South America, Africa, India, Australia and Antarctica: evidence that these continents were once joined. It lived through the Permian and Triassic, so alone it can’t pin down one period.'},
- {id:'dino', name:'Dinosaur bone (Allosaurus vertebra)', shape:'A large, spool-shaped backbone piece with a spike on top', sym:'Bilateral', mat:'Bone (spongy inside)', size:'About 20 cm', life:'Part of a large meat-eating dinosaur that walked on land', range:[155, 145], index:true, info:'Allosaurus lived in the late Jurassic. An index fossil.'},
- {id:'ammonite', name:'Ammonite', shape:'A flat, spiral (coiled) shell with wavy lines between its chambers', sym:'Spiral coil', mat:'Shell replaced by minerals', size:'About 8 cm across', life:'A squid-like animal that swam in the sea inside its coiled shell', range:[400, 66], index:false, info:'Ammonites as a group lived from the Devonian to the end of the Cretaceous, when they went extinct. Alone, a general ammonite spans many periods.'},
- {id:'shark', name:'Shark tooth (Cretoxyrhina)', shape:'A smooth, triangular tooth with a sharp point and a root', sym:'Bilateral', mat:'Shiny tooth enamel', size:'About 5 cm', life:'From a large shark that hunted in a warm inland sea', range:[107, 73], index:true, info:'This shark lived only in the Cretaceous. An index fossil.'},
- {id:'horse', name:'Early horse tooth (Eohippus)', shape:'A small, square-ish molar with low, rounded bumps', sym:'Bilateral', mat:'Tooth enamel', size:'About 1 cm', life:'From a dog-sized early horse that ate leaves in forests', range:[56, 47], index:true, info:'From the Paleogene, after the dinosaurs were gone. An index fossil.'},
- {id:'mammoth', name:'Mammoth tooth', shape:'A huge molar made of many flat, ridged plates', sym:'Bilateral', mat:'Tooth enamel', size:'About 25 cm', life:'From a woolly mammoth that grazed during the Ice Age', range:[.4, .004], index:true, info:'Woolly mammoths lived during the Quaternary ice ages. An index fossil.'}
+ {id:'neuropteris', g:'plant', name:'Fern (Neuropteris)', skel:'No skeletal structure: it looks like a plant', valves:NOSHELL, sym:'None', shape:'A leaf-like frond made of many small, rounded leaflets in rows', mat:'Thin black carbon film pressed onto gray shale', size:'About 10 cm (part of a frond)', lens:'Fine veins fan out inside each rounded leaflet', life:'Grew in hot, wet coal-swamp forests', range:[323, 299], index:true, info:'A seed fern from the coal swamps of the Pennsylvanian. In this game it is the index fossil for coal-age rocks.'},
+ {id:'lepidodendron', g:'plant', name:'Lycopod tree bark (Lepidodendron)', skel:'No skeletal structure: it is a plant', valves:NOSHELL, sym:'None (but the bark has a repeating diamond pattern)', shape:'A piece of tree bark covered in diamond-shaped leaf scars, like snake skin', mat:'Carbon film and a mud cast of the bark', size:'About 15 cm piece of a tree up to 30 m tall', lens:'Each diamond has a tiny dot where a leaf was once attached', life:'A giant “scale tree” of the coal swamps', range:[359, 299], index:false, info:'Scale trees grew through the whole Carboniferous (Mississippian and Pennsylvanian), so alone they can’t pin down one period.'},
+ {id:'calamites', g:'plant', name:'Horsetail stem (Calamites)', skel:'No skeletal structure: it is a plant', valves:NOSHELL, sym:'None', shape:'A straight stem with long parallel ribs, divided into sections by joints', mat:'A sandstone or mud cast of a hollow stem', size:'About 12 cm section of a stem up to 20 m tall', lens:'The ribs line up at each joint, like bamboo', life:'A giant horsetail that grew along swampy riverbanks', range:[330, 250], index:false, info:'A giant relative of today’s horsetails. It lived from the Mississippian into the Permian, so it is long-lived.'},
+ {id:'holopea', g:'gastropod', name:'Gastropod (Holopea)', skel:'Has skeletal structure: a shell', valves:'Univalved: a single shell', sym:'Coiled: conispiral (coils up like an ice cream cone)', shape:'A single shell that coils up into a cone-shaped spiral', mat:'Shell replaced by minerals', size:'About 2 cm', lens:'Growth lines follow each whorl; the opening is round', life:'A sea snail that grazed on the sea floor', range:[470, 443], index:true, info:'An Ordovician sea snail, common in Indiana’s oldest exposed rocks. An index fossil in this game.'},
+ {id:'cephalopod', g:'cephalopod', name:'Cephalopod (straight nautiloid)', skel:'Has skeletal structure: a shell', valves:'Univalved: a single shell', sym:'Radial (some species coil planispiral)', shape:'A tapered cone with horizontal partitions on the outside', mat:'Shell replaced by minerals; the chambers are often filled with calcite', size:'About 15 cm piece of a shell that could be meters long', lens:'A small tube (siphuncle) runs through all the chambers', life:'A squid relative that swam in the sea inside its chambered shell', range:[500, 0], index:false, info:'Cephalopods have lived from the Cambrian until today (squid, octopus, nautilus), so the class can’t date a layer.'},
+ {id:'ambonychia', g:'bivalve', name:'Bivalve (Ambonychia)', skel:'Has skeletal structure: shells', valves:'Bivalved: two shells (valves) that are identical', sym:'Bilateral: both valves the same, but each valve is not symmetrical', shape:'Two matching, lopsided shells with a pointed beak at one corner', mat:'Shell replaced by minerals', size:'About 4 cm', lens:'Fine ribs fan out from the beak', life:'A clam that attached itself to the sea floor', range:[458, 443], index:true, info:'A late Ordovician clam from Indiana’s Cincinnatian rocks. An index fossil in this game.'},
+ {id:'spirifer', g:'brachiopod', name:'Brachiopod (Spirifer)', skel:'Has skeletal structure: shells', valves:'Bivalved: two shells; one valve is concave, the other convex', sym:'Bilateral: the valves are different, but each is symmetrical', shape:'Two shells with a wide, straight hinge that spreads like wings, with ribs and a fold down the middle', mat:'Calcite shell', size:'About 5 cm wide', lens:'Fine ribs fan out from the beak; the middle fold is smooth', life:'Lived on the sea floor, filtering food from the water', range:[410, 385], index:true, info:'A winged Devonian brachiopod. An index fossil in this game.'},
+ {id:'crinoid', g:'crinoid', name:'Crinoid stem (Crinoidea)', skel:'Has skeletal structure: calcareous plates', valves:NOSHELL, sym:'Radial (some species are pentameral)', shape:'Calcareous plates stacked like buttons: discs with a hole in the middle', mat:'Calcite (calcareous) discs', size:'Each disc about 1 cm across', lens:'The hole in each disc can be round or star-shaped', life:'A “sea lily”: an animal anchored to the sea floor on a long stem', range:[485, 0], index:false, info:'Crinoids have lived from the Ordovician until today, so alone they can’t date a layer. Indiana limestone is full of them!'},
+ {id:'pentremites', g:'blastoid', name:'Blastoid (Pentremites)', skel:'Has skeletal structure: calcareous plates of armor', valves:NOSHELL, sym:'Pentameral: five equal parts', shape:'Nut-shaped (like a hickory nut) with five elaborate grooves', mat:'Calcareous (calcite) plates fitted together', size:'About 2 cm', lens:'Each of the five petal-like grooves has rows of tiny pores', life:'Sat on a short stem on the sea floor, filtering food', range:[345, 323], index:true, info:'A Mississippian blastoid, very common in southern Indiana. An index fossil in this game.'},
+ {id:'aulacophyllum', g:'horncoral', name:'Horn coral (Aulacophyllum)', skel:'Has skeletal structure: a cup', valves:NOSHELL, sym:'Radial: partitions radiate from a central point', shape:'A cone with radiating partitions (septa) inside; it looks like a horn', mat:'Calcite cup', size:'About 6 cm long', lens:'Inside the cup, thin walls radiate like spokes; the outside has wrinkly growth rings', life:'A single coral animal that lived on the sea floor', range:[393, 383], index:true, info:'A Devonian horn coral from the Falls of the Ohio area. An index fossil in this game.'},
+ {id:'favosites', g:'colcoral', name:'Colonial coral (Favosites)', skel:'Has skeletal structure: many tubes', valves:NOSHELL, sym:'Radial: individuals in a colony, each with interior partitions', shape:'Many tubes packed together like a honeycomb', mat:'Calcite tubes', size:'Colony about 8 cm across', lens:'Tiny pores connect the tube walls; flat partitions cross each tube', life:'Built reefs in warm, shallow, tropical seas', range:[460, 360], index:false, info:'“Honeycomb coral” built reefs from the late Ordovician through the Devonian, so it is long-lived.'},
+ {id:'archimedes', g:'bryozoan', name:'Fenestrate bryozoan (Archimedes)', skel:'Has skeletal structure: a colony skeleton', valves:NOSHELL, sym:'Complex: corkscrew with a lacy fan', shape:'Corkscrew-like: a twisted, screw-shaped axis', mat:'Calcite skeleton of a colony', size:'About 6 cm', lens:'The lacy fan around the screw is full of tiny windows, one for each tiny animal', life:'A colony of tiny animals filtering food in a shallow sea', range:[345, 280], index:false, info:'Named for Archimedes’ screw. It lived from the Mississippian into the Permian, so it is long-lived.'},
+ {id:'monticuliporella', g:'bryozoan', name:'Branching bryozoan (Monticuliporella)', skel:'Has skeletal structure: a colony skeleton', valves:NOSHELL, sym:'Complex: branching', shape:'Twig-like branches covered with tiny bumps', mat:'Calcite skeleton of a colony', size:'About 5 cm', lens:'Tiny bumps and pinholes cover the whole surface', life:'A colony of tiny animals filtering food in a shallow sea', range:[458, 443], index:true, info:'An Ordovician branching bryozoan. An index fossil in this game.'},
+ {id:'fusulinid', g:'foram', name:'Foram (fusulinid)', skel:'Has skeletal structure: a tiny shell', valves:'A tiny shell, coiled up inside', sym:'Coiled: rolled up tightly around a long axis', shape:'Spindle-shaped, like a grain of rice; many packed together in limestone', mat:'Calcite shell', size:'About 5 mm (most forams are under 1/32 inch; fusulinids are giants!)', lens:'Cut in half, it shows a coiled spiral of tiny chambers', life:'A single-celled creature that lived on the warm sea floor', range:[330, 252], index:false, info:'Fusulinid forams lived from the Mississippian to the end of the Permian. As a group they are long-lived.'},
+ {id:'calymene', g:'trilobite', name:'Trilobite (Calymene)', skel:'Has skeletal structure: a hard outer skeleton', valves:NOSHELL, sym:'None in the key (look for its three lobes)', shape:'A segmented body with three lobes and a rounded, bumpy head; often rolled up', mat:'Hard chitin outer skeleton replaced by minerals', size:'About 4 cm', lens:'The head has bumpy lobes and two eyes; the body has about 13 segments', life:'Crawled on the sea floor and could roll into a ball for protection', range:[444, 419], index:true, info:'A Silurian trilobite (Calymene celebra is Wisconsin’s state fossil). An index fossil in this game.'},
+ {id:'mastodon', g:'vertebrate', name:'Mastodon jaw (Mammut americanum)', skel:'Has skeletal structure: bone and teeth', valves:NOSHELL, sym:'None (a single jaw bone)', shape:'Looks like bone and teeth: a heavy lower jaw with big molars', mat:'Bone, with shiny tooth enamel', size:'About 60 cm long', lens:'Each molar has rows of cone-shaped bumps for chewing twigs', life:'An elephant relative that browsed trees during the Ice Age', range:[.4, .011], index:true, info:'Mastodons lived in Indiana during the last ice ages. An index fossil for Quaternary deposits.'},
+ {id:'direwolf', g:'vertebrate', name:'Dire wolf jaw (Aenocyon dirus)', skel:'Has skeletal structure: bone and teeth', valves:NOSHELL, sym:'None (a single jaw bone)', shape:'A long jaw with a big curved canine tooth and sharp, blade-like cheek teeth', mat:'Bone, with shiny tooth enamel', size:'About 22 cm long', lens:'Sharp, slicing teeth: the mark of a meat eater', life:'A large Ice Age wolf that hunted big animals', range:[.25, .013], index:true, info:'Dire wolves hunted across North America during the last ice age. An index fossil for Quaternary deposits.'}
 ];
-FOSSILS.forEach((f, i) => { f.n = 41 + i; f.kind = 'fossil'; f.rtype = 'Fossil'; f.grp = 'fossil'; SP[f.id] = f; });
+FOSSILS.forEach((f, i) => { f.n = 41 + i; f.kind = 'fossil'; f.rtype = 'Fossil'; f.grp = 'fossil'; f.group = FGROUPS[f.g].name; f.taxon = FGROUPS[f.g].taxon; SP[f.id] = f; });
 ALLSPEC.push(...FOSSILS);
-// which periods a fossil's lifespan overlaps
 const fossilPeriods = f => PERIODS.filter(p => f.range[0] > p.end && f.range[1] < p.start).map(p => p.id);
-const FTESTS = [['shape', '📐', 'Body shape'], ['sym', '🪞', 'Symmetry'], ['mat', '🧱', 'What it’s made of'], ['size', '📏', 'Size'], ['life', '🌊', 'Clues to how it lived']];
-// The cliff’s layers, youngest (A, top) to oldest (K, bottom)
+// Observation buttons, like the mineral test kit
+const FTESTS = [['skel', '🦴', 'Skeletal structure'], ['valves', '🐚', 'Shells (valves)'], ['sym', '🪞', 'Symmetry'], ['shape', '📐', 'Shape and form'], ['mat', '🧱', 'What it’s made of'], ['size', '📏', 'Size'], ['lens', '🔍', 'Hand lens'], ['life', '🌊', 'How it lived']];
+// The cliff, modeled on Indiana: flat Ice Age glacial deposits over tilted Paleozoic sea and swamp rocks
 const LAYERS = [
- {L:'A', per:'quat', rock:'gravel and soil', col:'#8f7f63', desc:'Loose gravel and sand left by rivers and Ice Age glaciers.'},
- {L:'B', per:'pale', rock:'olive mudstone', col:'#8d8f5c', desc:'Mud that settled on river floodplains and hardened.'},
- {L:'C', per:'kpg', rock:'thin gray clay', col:'#7d7268', desc:'A thin clay layer found all over the world, rich in the rare metal iridium.'},
- {L:'D', per:'cret', rock:'white chalk', col:'#ece8dc', desc:'Chalk made of trillions of tiny shells that sank to the floor of a warm sea.'},
- {L:'E', per:'jura', rock:'tan sandstone', col:'#d6ad74', desc:'Sand from rivers and dunes, cemented into rock.'},
- {L:'F', per:'perm', rock:'red mudstone (“red beds”)', col:'#b5523a', desc:'Red mud and sand stained by iron rust: a sign of a hot, dry climate.'},
- {L:'G', per:'carb', rock:'black shale and coal', col:'#3b3836', desc:'Black shale with coal: squeezed remains of swamp plants.'},
- {L:'H', per:'devo', rock:'dark gray shale', col:'#5a616c', desc:'Mud from a quiet sea floor.'},
- {L:'I', per:'ordo', rock:'gray limestone', col:'#bdb8a0', desc:'Limestone from shells in a warm, shallow sea.'},
- {L:'J', per:'camb', rock:'brown sandstone and shale', col:'#a88c62', desc:'Sand and mud from an ancient shoreline.'},
- {L:'K', per:'prec', rock:'granite and gneiss basement', col:'#8c6f78', desc:'Very old crystalline rock with no animal fossils.'}
+ {L:'A', per:'quat', upper:true, rock:'glacial till and gravel', col:'#8f7f63', desc:'A jumble of clay, sand and boulders dumped by Ice Age glaciers.'},
+ {L:'B', per:'penn', rock:'black shale and coal', col:'#3b3836', desc:'Shale with coal: squeezed remains of swamp-forest plants.'},
+ {L:'C', per:'miss', rock:'gray limestone full of crinoid bits', col:'#bdb8a0', desc:'Limestone from a warm, shallow sea crowded with crinoids and blastoids.'},
+ {L:'D', per:'devo', rock:'brown limestone and shale', col:'#9a8468', desc:'Limestone from a tropical sea with coral reefs.'},
+ {L:'E', per:'silu', rock:'tan dolomite (an old reef)', col:'#d6c08a', desc:'Reef rock from a warm Silurian sea.'},
+ {L:'F', per:'ordo', rock:'blue-gray limestone and shale', col:'#7f8a99', desc:'Thin beds of limestone and shale from a shallow sea, packed with shells.'},
+ {L:'G', per:'prec', rock:'granite basement', col:'#8c6f78', desc:'Very old crystalline rock with no fossils.'}
 ];
-const LAY = {}; LAYERS.forEach((l, i) => { l.tile = 28 - i; l.z = 'f' + l.L; LAY[l.z] = l; });   // tile ids 28 (A) … 18 (K)
+const LAY = {}; LAYERS.forEach((l, i) => { l.tile = 24 - i; l.z = 'f' + l.L; LAY[l.z] = l; });   // tile ids 24 (A) … 18 (G)
 const DIKE = 29;
-const FOSSIL_ZONE = {fA:['mammoth'], fB:['horse'], fC:[], fD:['shark', 'ammonite'], fE:['dino', 'ammonite'], fF:['mesosaurus', 'glossopteris', 'crinoid'], fG:['seedfern', 'crinoid'], fH:['placoderm', 'crinoid'], fI:['brachiopod', 'crinoid'], fJ:['trilobite'], fK:[]};
-const DATED_LAYERS = ['fA', 'fB', 'fD', 'fE', 'fF', 'fG', 'fH', 'fI', 'fJ'];
-const perName = id => id === 'kpg' ? 'K–Pg boundary (66 million years ago)' : PER[id].name;
+const FOSSIL_ZONE = {fA:['mastodon', 'direwolf'], fB:['neuropteris', 'lepidodendron', 'calamites', 'fusulinid'], fC:['pentremites', 'archimedes', 'crinoid'], fD:['aulacophyllum', 'spirifer', 'favosites', 'crinoid'], fE:['calymene', 'favosites', 'crinoid'], fF:['ambonychia', 'monticuliporella', 'holopea', 'cephalopod', 'crinoid'], fG:[]};
+const DATED_LAYERS = ['fA', 'fB', 'fC', 'fD', 'fE', 'fF'];
+const perName = id => PER[id].name;
 
 
 
@@ -628,7 +648,7 @@ LAYERS.forEach(l => TI[l.tile] = {c:l.col, hits:l.L === 'K' ? 4 : 2}); TI[DIKE] 
 function zoneOfType(t) {
   if (t === GRASS || t === SOIL || t === LAT) return 'soil';
   if (t === KIMB) return 'kimberlite';
-  if (t >= 18 && t <= 28) return 'f' + 'KJIHGFEDCBA'[t - 18];
+  if (t >= 18 && t <= 24) return 'f' + 'GFEDCBA'[t - 18];
   if (t === DIKE) return 'fdike';
   if (t === GRAVEL) return 'placer';
   if (t === QVEIN) return 'vein';
@@ -656,7 +676,7 @@ const ZONES = {
   magma:{short:'magma chamber',name:'Magma chamber',chat:'Magma! When it cools it becomes igneous rock.',long:'Below you is magma, melted rock at about 700–1,200 °C. When it cools and hardens, it becomes igneous rock.'}
 };
 LAYERS.forEach(l => ZONES[l.z] = {short:`Layer ${l.L} (${l.rock})`, name:`Layer ${l.L}: ${l.rock}`, chat:`Layer ${l.L} is ${l.rock}. Find an index fossil to learn how old it is!`, long:`You are in Layer ${l.L}: ${l.rock}. ${l.desc} Which geologic period is it from? Identify its fossils and check the 🕰️ time guide.`});
-ZONES.fdike = {short:'basalt dike', name:'Basalt dike', chat:'This dark rock cuts across the layers. What does that tell you about its age?', long:'You are in a basalt dike: magma squeezed up through a crack and cooled. It cuts through Layers F–K, so it is younger than them.'};
+ZONES.fdike = {short:'basalt dike', name:'Basalt dike', chat:'This dark rock cuts across the layers. What does that tell you about its age?', long:'You are in a basalt dike: magma squeezed up through a crack and cooled. It cuts through Layers B–G, so it is younger than them.'};
 // Which specimens can be found in each zone (based on where they really form)
 const ZONE_SPECIES = {
   sedimentary:['sandstone','shale','limestone','conglomerate','gypsum','calcite','hematite','galena','fluorite','quartz','pyrite'],
@@ -772,29 +792,29 @@ function gradeAt(r, c, id, zone) {
   return {g:name, gi, pct:Math.round(lo + Math.random() * (hi - lo))};
 }
 
-/* LEVEL 2 GROUND, built by the same processes that make real cliffs (like the Grand Canyon):
-   1. Layers K→F deposited flat, oldest at the bottom (superposition).
-   2. Mountain-building TILTED them, a FAULT broke and shifted them, and a basalt DIKE cut through them.
-   3. EROSION wore the tilted layers down to a flat surface (an unconformity: time is missing here).
-   4. Layers E→A were deposited flat on top. 5. Last, a river carved a CANYON on the east side.  */
-const FOSSIL_U = SURF + 18, FAULT_C = 26, DIKE_C = 21;
+/* LEVEL 2 GROUND, modeled on Indiana’s rocks and built by real processes:
+   1. Sea and swamp layers F→B deposited flat on old granite (G), oldest at the bottom (superposition).
+   2. Later movements TILTED them, a FAULT shifted them, and a basalt DIKE cut through them.
+   3. EROSION wore them down to a flat surface (an unconformity: about 300 million years missing).
+   4. Ice Age glaciers dumped Layer A (till) on top. 5. Last, a river carved a CANYON on the east side. */
+const FOSSIL_U = SURF + 5, FAULT_C = 26, DIKE_C = 21;
 function genFossilWorld() {
   tile = []; spec = []; dmg = []; ladders = new Set();
-  const upper = r => r <= SURF + 2 ? 28 : r <= SURF + 6 ? 27 : r === SURF + 7 ? 26 : r <= SURF + 12 ? 25 : 24;   // A, B, C, D, E (flat)
+  const upper = r => 24;   // Layer A: flat glacial till
   for (let r = 0; r < ROWS; r++) { tile.push([]); spec.push([]); dmg.push([]);
     for (let c = 0; c < COLS; c++) { let t = AIR;
       if (r === SURF) t = GRASS;
       else if (r > SURF && r < FOSSIL_U) t = upper(r);
       else if (r >= FOSSIL_U) { const s = (r - FOSSIL_U) + Math.floor(c * .22) + (c >= FAULT_C ? 3 : 0);   // tilted, and shifted across the fault
-        t = s < 5 ? 23 : s < 10 ? 22 : s < 15 ? 21 : s < 20 ? 20 : s < 26 ? 19 : 18; }   // F, G, H, I, J, K
+        t = s < 7 ? 23 : s < 14 ? 22 : s < 21 ? 21 : s < 28 ? 20 : s < 36 ? 19 : 18; }   // B, C, D, E, F, G
       if (c === DIKE_C && r >= FOSSIL_U) t = DIKE;          // the dike stops at the erosion surface
       tile[r].push(t); spec[r].push(null); dmg[r].push(0); } }
   for (let c = 33; c < COLS; c++) { const d = Math.max(0, Math.round(8 - Math.abs(c - 39) * 1.4));   // river canyon
-    for (let r = SURF; r < SURF + d; r++) tile[r][c] = AIR; if (d > 0) tile[SURF + d][c] = 28; }
+    for (let r = SURF; r < SURF + d; r++) tile[r][c] = AIR; if (d > 0) tile[SURF + d][c] = 24; }
   back = tile.map(row => row.slice());
   for (const z in FOSSIL_ZONE) { const list = FOSSIL_ZONE[z]; if (!list.length) continue;
     let cells = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (zoneOfType(tile[r][c]) === z && !(r === SURF + 1)) cells.push([r, c]); shuffle(cells);
-    const want = z === 'fA' || z === 'fB' ? 5 : 7, L = shuffle(list.slice());
+    const want = z === 'fA' ? 6 : 9, L = shuffle(list.slice());
     for (let i = 0; i < want && i < cells.length; i++) spec[cells[i][0]][cells[i][1]] = L[i % L.length]; }
 }
 
@@ -857,7 +877,7 @@ const MISSIONS = [
   {t:'Complete a Rock Cycle Challenge at the machine.', ok:() => chWins >= 1},
   {t:'Complete the Rock Dex: discover all 30!', ok:() => found.size >= DEX.length},
   {t:'Pass Dr. Rivera’s Final Field Exam at camp.', ok:() => examPassed},
-  {t:'At Level 2 (Fossil Bluffs), find all 12 fossils for your Fossil Dex.', ok:() => fossilDexDone()},
+  {t:`At Level 2 (Fossil Bluffs), find all ${FOSSILS.length} fossils for your Fossil Dex.`, ok:() => fossilDexDone()},
   {t:'Date every fossil layer in the Level 2 rock column.', ok:() => columnDone()},
   {t:'Pass Dr. Rivera’s Fossil Field Exam to unlock Level 3.', ok:() => fossilPassed},
   {t:'At Level 3 (Crystal Ridge Mine), find all 10 gems and precious minerals.', ok:() => gemFound.size >= GEMS.length}
@@ -1078,44 +1098,65 @@ function drawNugget(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s
 function drawCutGem(c, x, y, s, col) { c.save(); c.translate(x, y); c.scale(s, s); c.strokeStyle = 'rgba(20,20,40,.8)'; c.lineWidth = 1.3;
   c.fillStyle = col; c.beginPath(); c.moveTo(-12, -3); c.lineTo(-7, -9); c.lineTo(7, -9); c.lineTo(12, -3); c.lineTo(0, 12); c.closePath(); c.fill(); c.stroke();
   c.fillStyle = 'rgba(255,255,255,.45)'; c.beginPath(); c.moveTo(-7, -9); c.lineTo(-3, -3); c.lineTo(3, -3); c.lineTo(7, -9); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-12, -3); c.lineTo(12, -3); c.moveTo(-3, -3); c.lineTo(0, 12); c.lineTo(3, -3); c.stroke(); shine(c, -4, -6, 2.5); c.restore(); }
-// ART: fossils in a slab of their rock (drawn to look like real specimens)
-function slab(c, R, col) { const p = polyP([[8, 40], [22, 22], [70, 18], [92, 34], [90, 72], [60, 86], [14, 78]]); c.fillStyle = col; c.fill(p); c.save(); c.clip(p); dots(c, R, 90, [shade(col, .85), shade(col, 1.1)], .6, 1.5);
-  const gr = c.createRadialGradient(35, 35, 4, 55, 60, 60); gr.addColorStop(0, 'rgba(255,255,255,.22)'); gr.addColorStop(1, 'rgba(0,0,0,.25)'); c.fillStyle = gr; c.fillRect(0, 0, 100, 100); c.restore(); c.strokeStyle = 'rgba(20,20,30,.6)'; c.lineWidth = 2.5; c.stroke(p); }
-const FINK = 'rgba(40,30,20,.75)';
+// ART: fossils drawn to look like the IGWS 3-D printed specimens (resin-like, with soft shading)
+const STONE = ['#d9d2c3', '#b9b0a0', '#8f8676'];
+function fill3d(c, p, x0, y0, x1, y1, cols = STONE) { const gr = c.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, cols[0]); gr.addColorStop(.55, cols[1]); gr.addColorStop(1, cols[2]); c.fillStyle = gr; c.fill(p); c.strokeStyle = 'rgba(40,32,24,.7)'; c.lineWidth = 2; c.stroke(p); }
+function slab(c, R, col) { const p = polyP([[8, 40], [22, 22], [70, 18], [92, 34], [90, 72], [60, 86], [14, 78]]); fill3d(c, p, 20, 20, 80, 85, [shade(col, 1.15), col, shade(col, .75)]); c.save(); c.clip(p); dots(c, R, 70, [shade(col, .85), shade(col, 1.1)], .6, 1.4); c.restore(); }
+const INK = 'rgba(40,32,24,.75)';
 Object.assign(ART, {
-  trilobite(c, R) { slab(c, R, '#a88c62'); c.fillStyle = '#6b5640'; c.strokeStyle = FINK; c.lineWidth = 1.5;
-    c.beginPath(); c.ellipse(50, 34, 20, 11, 0, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
-    for (let i = 0; i < 9; i++) { const w = 18 - i * 1.3, y = 37 + i * 4.2; c.beginPath(); c.ellipse(50, y, w, 2.2, 0, 0, 7); c.fill(); c.stroke(); }
-    c.strokeStyle = 'rgba(255,240,210,.5)'; c.beginPath(); c.moveTo(43, 36); c.lineTo(45, 74); c.moveTo(57, 36); c.lineTo(55, 74); c.stroke(); c.fillStyle = '#2b2218'; c.beginPath(); c.arc(42, 30, 2, 0, 7); c.arc(58, 30, 2, 0, 7); c.fill(); },
-  brachiopod(c, R) { slab(c, R, '#bdb8a0'); c.fillStyle = '#8f8670'; c.strokeStyle = FINK; c.lineWidth = 1.6; c.beginPath(); c.moveTo(50, 70); c.quadraticCurveTo(20, 60, 24, 36); c.quadraticCurveTo(50, 22, 76, 36); c.quadraticCurveTo(80, 60, 50, 70); c.fill(); c.stroke();
-    for (let k = -4; k <= 4; k++) { c.beginPath(); c.moveTo(50, 68); c.lineTo(50 + k * 6.5, 32 - Math.abs(k) * -1); c.stroke(); } },
-  crinoid(c, R) { slab(c, R, '#5a616c'); c.strokeStyle = FINK; c.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const x = 26 + i * 6, y = 62 - i * 3.5; c.fillStyle = i % 2 ? '#c9c2ac' : '#d9d2bc'; c.beginPath(); c.ellipse(x, y, 3, 7, -.5, 0, 7); c.fill(); c.stroke(); }
-    c.fillStyle = '#d9d2bc'; for (const [x, y] of [[70, 70], [30, 38]]) { c.beginPath(); c.arc(x, y, 5, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(x, y, 1.5, 0, 7); c.stroke(); } },
-  placoderm(c, R) { slab(c, R, '#5a616c'); c.fillStyle = '#c9b08a'; c.strokeStyle = FINK; c.lineWidth = 1.8; c.beginPath(); c.moveTo(22, 60); c.quadraticCurveTo(30, 28, 70, 30); c.lineTo(80, 40); c.lineTo(68, 46); c.lineTo(74, 56); c.quadraticCurveTo(50, 72, 22, 60); c.fill(); c.stroke();
-    c.fillStyle = 'rgba(90,70,40,.6)'; for (let i = 0; i < 18; i++) { c.beginPath(); c.arc(30 + R() * 36, 38 + R() * 20, 1.4, 0, 7); c.fill(); } },
-  seedfern(c, R) { slab(c, R, '#4a4644'); c.strokeStyle = '#141212'; c.lineWidth = 2; c.beginPath(); c.moveTo(24, 76); c.quadraticCurveTo(50, 50, 76, 24); c.stroke(); c.fillStyle = '#1a1716';
-    for (let i = 0; i < 9; i++) { const t = i / 9, x = 24 + t * 52, y = 76 - t * 52; for (const s of [-1, 1]) { c.beginPath(); c.ellipse(x + s * 6, y + s * 6 - 2, 5, 3, -.8 + s * .1, 0, 7); c.fill(); } } },
-  mesosaurus(c, R) { slab(c, R, '#b5523a'); c.strokeStyle = '#efe4cc'; c.lineWidth = 2; c.lineCap = 'round';
-    c.beginPath(); c.moveTo(12, 42); c.lineTo(30, 46); c.stroke(); c.beginPath(); c.ellipse(34, 47, 5, 4, 0, 0, 7); c.stroke();
-    c.beginPath(); c.moveTo(38, 48); c.quadraticCurveTo(60, 56, 70, 52); c.quadraticCurveTo(82, 48, 92, 60); c.stroke();
-    for (let i = 0; i < 9; i++) { const x = 42 + i * 3.3, y = 50 + Math.sin(i / 3) * 2; c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x, y + 6); c.stroke(); }
-    c.lineWidth = 1.5; for (const [x, y] of [[44, 56], [64, 58]]) { c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y + 10); c.lineTo(x - 8, y + 12); c.stroke(); }
-    c.lineWidth = .8; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(14 + i * 3, 41); c.lineTo(14 + i * 3, 38); c.stroke(); } },
-  glossopteris(c, R) { slab(c, R, '#b5523a'); c.fillStyle = '#2a1a14'; c.beginPath(); c.moveTo(30, 78); c.quadraticCurveTo(18, 40, 54, 20); c.quadraticCurveTo(80, 44, 30, 78); c.fill();
-    c.strokeStyle = 'rgba(200,150,120,.6)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(30, 78); c.quadraticCurveTo(40, 50, 54, 22); c.stroke(); c.lineWidth = .7;
-    for (let i = 0; i < 9; i++) { const t = .15 + i * .09, x = 30 + t * 24, y = 78 - t * 56; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 10, y - 4); c.moveTo(x, y); c.lineTo(x + 10, y + 2); c.stroke(); } },
-  dino(c, R) { slab(c, R, '#d6ad74'); c.fillStyle = '#7a5a3a'; c.strokeStyle = FINK; c.lineWidth = 1.8; c.beginPath(); c.ellipse(50, 58, 16, 13, 0, 0, 7); c.fill(); c.stroke();
-    c.beginPath(); c.moveTo(44, 47); c.lineTo(47, 22); c.lineTo(53, 22); c.lineTo(56, 47); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#5a3f28'; c.beginPath(); c.ellipse(50, 58, 7, 6, 0, 0, 7); c.fill();
-    c.fillStyle = 'rgba(30,20,10,.5)'; for (let i = 0; i < 14; i++) { c.beginPath(); c.arc(40 + R() * 20, 50 + R() * 16, .9, 0, 7); c.fill(); } },
-  ammonite(c, R) { slab(c, R, '#ece8dc'); c.strokeStyle = '#6b5a40'; c.lineWidth = 2.2; c.beginPath(); for (let a = 0; a < 15; a += .15) { const r = 2 + a * 1.75; c.lineTo(50 + Math.cos(a) * r, 52 + Math.sin(a) * r); } c.stroke();
-    c.lineWidth = 1; for (let a = 2; a < 15; a += .55) { const r1 = 2 + (a - 6.28) * 1.75, r2 = 2 + a * 1.75; if (r1 < 0) continue; c.beginPath(); c.moveTo(50 + Math.cos(a) * r1, 52 + Math.sin(a) * r1); c.quadraticCurveTo(50 + Math.cos(a + .1) * (r1 + r2) / 2 + 2, 52 + Math.sin(a + .1) * (r1 + r2) / 2, 50 + Math.cos(a) * r2, 52 + Math.sin(a) * r2); c.stroke(); } },
-  shark(c, R) { slab(c, R, '#ece8dc'); c.fillStyle = '#3a3a44'; c.strokeStyle = FINK; c.lineWidth = 1.6; c.beginPath(); c.moveTo(34, 66); c.lineTo(50, 24); c.lineTo(66, 66); c.quadraticCurveTo(50, 60, 34, 66); c.fill(); c.stroke();
-    c.fillStyle = '#9a8a70'; c.beginPath(); c.moveTo(32, 66); c.quadraticCurveTo(50, 58, 68, 66); c.lineTo(64, 74); c.quadraticCurveTo(50, 70, 36, 74); c.closePath(); c.fill(); c.stroke(); shine(c, 46, 42, 3); },
-  horse(c, R) { slab(c, R, '#8d8f5c'); c.fillStyle = '#e8dcc0'; c.strokeStyle = FINK; c.lineWidth = 1.6; rr(c, 38, 40, 24, 22, 5); c.fill(); c.stroke(); c.fillStyle = '#c9b88f';
-    for (const [x, y] of [[44, 46], [56, 46], [44, 56], [56, 56]]) { c.beginPath(); c.arc(x, y, 3.5, 0, 7); c.fill(); c.stroke(); } c.fillStyle = '#b8a37a'; c.fillRect(41, 62, 6, 8); c.fillRect(53, 62, 6, 8); },
-  mammoth(c, R) { slab(c, R, '#8f7f63'); c.fillStyle = '#d9cbb0'; c.strokeStyle = FINK; c.lineWidth = 1.6; rr(c, 20, 34, 60, 34, 8); c.fill(); c.stroke();
-    c.strokeStyle = '#7a6a50'; c.lineWidth = 2; for (let i = 0; i < 10; i++) { const x = 25 + i * 5.4; c.beginPath(); c.moveTo(x, 37); c.quadraticCurveTo(x + 2, 51, x, 65); c.stroke(); } }
+  neuropteris(c, R) { slab(c, R, '#a39d94'); c.strokeStyle = '#231d1a'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(22, 78); c.quadraticCurveTo(48, 52, 78, 22); c.stroke();
+    for (let i = 0; i < 7; i++) { const t = i / 7 + .05, x = 22 + t * 56, y = 78 - t * 56 + Math.sin(t * 3) * 2; for (const s2 of [-1, 1]) { const lx = x + s2 * 8, ly = y + s2 * 8, p = new Path2D(); p.ellipse(lx, ly, 8.5, 4.6, .78 + s2 * .2, 0, 7);
+      c.fillStyle = '#2e2622'; c.fill(p); c.strokeStyle = 'rgba(200,190,170,.35)'; c.lineWidth = .7; c.beginPath(); c.moveTo(x, y); c.lineTo(lx + s2 * 3, ly + s2 * 3); c.stroke(); } } },
+  lepidodendron(c, R) { slab(c, R, '#5d5853'); c.save(); c.clip(polyP([[8, 40], [22, 22], [70, 18], [92, 34], [90, 72], [60, 86], [14, 78]])); c.strokeStyle = '#2a2624'; c.lineWidth = 1.6;
+    for (let y = 10; y < 96; y += 12) for (let x = (y / 12 % 2) * 7; x < 100; x += 14) { c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x + 7, y); c.lineTo(x, y + 6); c.lineTo(x - 7, y); c.closePath(); c.stroke(); c.fillStyle = '#2a2624'; c.beginPath(); c.arc(x, y, 1.3, 0, 7); c.fill(); } c.restore(); },
+  calamites(c, R) { const p = polyP([[34, 12], [66, 12], [70, 88], [30, 88]]); fill3d(c, p, 30, 0, 72, 0, ['#b8ac94', '#8f8470', '#5f5648']);
+    c.strokeStyle = INK; c.lineWidth = 1.2; for (let x = 38; x <= 64; x += 4.5) { c.beginPath(); c.moveTo(x, 14); c.lineTo(x + (x - 50) * .1, 86); c.stroke(); }
+    c.lineWidth = 2.4; for (const y of [36, 62]) { c.beginPath(); c.moveTo(33, y); c.lineTo(68, y); c.stroke(); } },
+  holopea(c, R) { c.save(); c.translate(50, 54); const whorl = (r, y) => { const p = new Path2D(); p.ellipse(0, y, r, r * .62, 0, 0, 7); return p; };
+    [[30, 14], [22, -6], [14, -20], [8, -30]].forEach(([r, y]) => fill3d(c, whorl(r, y), -r, y - r, r, y + r));
+    c.strokeStyle = INK; c.lineWidth = 1; for (let i = 0; i < 8; i++) { c.beginPath(); c.arc(0, 14, 24 - i * 1.5, Math.PI * .1 + i * .05, Math.PI * .5); c.stroke(); }
+    c.fillStyle = '#4a4238'; c.beginPath(); c.ellipse(16, 20, 9, 7, .3, 0, 7); c.fill(); c.restore(); },
+  cephalopod(c, R) { const p = polyP([[8, 50], [86, 30], [94, 50], [86, 70], [10, 60]]); fill3d(c, p, 0, 30, 0, 70, ['#d9cfbb', '#a39883', '#6f6555']);
+    c.strokeStyle = INK; c.lineWidth = 1.6; for (let i = 0; i < 10; i++) { const x = 16 + i * 7.5, top = 49 - i * 1.9, bot = 61 + i * 0.9; c.beginPath(); c.moveTo(x, top); c.quadraticCurveTo(x + 4, (top + bot) / 2, x, bot); c.stroke(); }
+    c.fillStyle = '#6f6555'; c.beginPath(); c.ellipse(92, 50, 3, 18, 0, 0, 7); c.fill(); c.fillStyle = '#3a332a'; c.beginPath(); c.arc(92, 52, 2.5, 0, 7); c.fill(); },
+  ambonychia(c, R) { const valve = s => { const p = new Path2D(); p.moveTo(30, 20); p.quadraticCurveTo(30 + s * 2, 60, 46 + s * 12, 84); p.quadraticCurveTo(76 + s * 4, 70, 76, 42); p.quadraticCurveTo(58, 22, 30, 20); return p; };
+    fill3d(c, valve(1), 30, 20, 80, 85, ['#cdb990', '#a08a62', '#6e5b3e']); fill3d(c, valve(0), 30, 20, 76, 84);
+    c.strokeStyle = INK; c.lineWidth = 1; for (let k = 0; k < 10; k++) { c.beginPath(); c.moveTo(31, 21); c.lineTo(36 + k * 4.5, 80 - k * 4); c.stroke(); } },
+  spirifer(c, R) { const p = new Path2D(); p.moveTo(8, 40); p.lineTo(92, 40); p.quadraticCurveTo(88, 70, 50, 80); p.quadraticCurveTo(12, 70, 8, 40); fill3d(c, p, 10, 40, 90, 80);
+    c.strokeStyle = INK; c.lineWidth = 1.1; for (let k = -7; k <= 7; k++) { if (Math.abs(k) < 1) continue; c.beginPath(); c.moveTo(50, 36); c.lineTo(50 + k * 6, 76 - Math.abs(k) * 3); c.stroke(); }
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.moveTo(45, 40); c.lineTo(55, 40); c.lineTo(54, 78); c.lineTo(46, 78); c.closePath(); c.fill(); c.lineWidth = 2; c.beginPath(); c.moveTo(8, 40); c.lineTo(92, 40); c.stroke(); },
+  crinoid(c, R) { c.lineWidth = 1.4; for (let i = 0; i < 8; i++) { const x = 22 + i * 7.5, y = 66 - i * 4; const p = new Path2D(); p.ellipse(x, y, 4, 10, -.45, 0, 7); fill3d(c, p, x - 4, y - 10, x + 4, y + 10); }
+    for (const [x, y] of [[70, 74], [80, 50]]) { const p = new Path2D(); p.arc(x, y, 9, 0, 7); fill3d(c, p, x - 9, y - 9, x + 9, y + 9); c.fillStyle = '#4a4238'; c.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5, r = k % 2 ? 1.5 : 3.5; c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } c.fill(); } },
+  pentremites(c, R) { const p = new Path2D(); p.moveTo(50, 86); p.quadraticCurveTo(18, 56, 30, 26); p.quadraticCurveTo(50, 14, 70, 26); p.quadraticCurveTo(82, 56, 50, 86); fill3d(c, p, 26, 20, 76, 86);
+    for (const x of [33, 50, 67]) { const pet = new Path2D(); pet.moveTo(50 + (x - 50) * .25, 22); pet.quadraticCurveTo(x - 6, 50, 50 + (x - 50) * .3, 78); pet.quadraticCurveTo(x + 6, 50, 50 + (x - 50) * .25, 22); c.fillStyle = 'rgba(80,68,52,.45)'; c.fill(pet); c.strokeStyle = INK; c.lineWidth = 1; c.stroke(pet);
+      c.lineWidth = .7; for (let y = 30; y < 74; y += 4) { c.beginPath(); c.moveTo(x - 3, y); c.lineTo(x + 3, y); c.stroke(); } } },
+  aulacophyllum(c, R) { const p = new Path2D(); p.moveTo(78, 22); p.quadraticCurveTo(84, 44, 50, 70); p.quadraticCurveTo(28, 86, 18, 88); p.quadraticCurveTo(30, 70, 44, 50); p.quadraticCurveTo(58, 30, 54, 18); p.closePath(); fill3d(c, p, 20, 20, 84, 88);
+    c.strokeStyle = INK; c.lineWidth = 1; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(56 - i * 5, 26 + i * 9); c.quadraticCurveTo(68 - i * 6, 30 + i * 9, 80 - i * 7, 30 + i * 8); c.stroke(); }
+    const cup = new Path2D(); cup.ellipse(66, 20, 13, 6, .15, 0, 7); fill3d(c, cup, 54, 14, 80, 26, ['#8f8676', '#b9b0a0', '#d9d2c3']); for (let a = 0; a < Math.PI * 2; a += Math.PI / 10) { c.beginPath(); c.moveTo(66, 20); c.lineTo(66 + Math.cos(a) * 12, 20 + Math.sin(a) * 5.5); c.stroke(); } },
+  favosites(c, R) { const p = blobP(R, 50, 54, 38, 30, 10, .1); fill3d(c, p, 12, 24, 88, 84); c.save(); c.clip(p); c.strokeStyle = INK; c.lineWidth = 1.4;
+    for (let y = 20; y < 92; y += 9) for (let x = 10 + (y / 9 % 2) * 5; x < 92; x += 10) { c.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; c.lineTo(x + Math.cos(a) * 5, y + Math.sin(a) * 5); } c.closePath(); c.stroke(); c.fillStyle = 'rgba(60,50,40,.35)'; c.beginPath(); c.arc(x, y, 2.2, 0, 7); c.fill(); } c.restore(); },
+  archimedes(c, R) { const ax = new Path2D(); ax.moveTo(46, 10); ax.lineTo(54, 10); ax.lineTo(54, 90); ax.lineTo(46, 90); ax.closePath();
+    for (let i = 0; i < 6; i++) { const y = 16 + i * 13, f = new Path2D(); f.moveTo(50, y); f.quadraticCurveTo(84, y + 2, 82, y + 10); f.quadraticCurveTo(60, y + 12, 50, y + 8); f.quadraticCurveTo(18, y + 6, 20, y - 2); f.quadraticCurveTo(40, y - 4, 50, y); fill3d(c, f, 20, y - 4, 84, y + 12);
+      c.fillStyle = 'rgba(50,40,30,.35)'; for (let k = 0; k < 7; k++) { c.beginPath(); c.arc(26 + k * 8, y + 3 + (k > 3 ? 2 : 0), 1.1, 0, 7); c.fill(); } }
+    fill3d(c, ax, 46, 0, 54, 0, ['#cfc6b3', '#9a8f7c', '#6f6555']); },
+  monticuliporella(c, R) { c.lineCap = 'round'; const br = (x, y, a, len, w, d) => { if (d > 3) return; const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+      c.strokeStyle = '#6f6555'; c.lineWidth = w + 3; c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke(); c.strokeStyle = '#b9b0a0'; c.lineWidth = w; c.beginPath(); c.moveTo(x, y); c.lineTo(x2, y2); c.stroke();
+      c.fillStyle = '#7f7564'; for (let k = 0; k < len / 4; k++) { const t = k / (len / 4); c.beginPath(); c.arc(x + (x2 - x) * t + (R() - .5) * w * .6, y + (y2 - y) * t + (R() - .5) * w * .6, 1, 0, 7); c.fill(); }
+      br(x2, y2, a - .5, len * .7, w * .8, d + 1); br(x2, y2, a + .45, len * .7, w * .8, d + 1); };
+    br(50, 92, -1.57, 26, 10, 0); },
+  fusulinid(c, R) { slab(c, R, '#cfc8b4'); for (let i = 0; i < 9; i++) { const x = 24 + R() * 52, y = 32 + R() * 40, a = R() * 3, p = new Path2D(); p.ellipse(x, y, 7, 2.6, a, 0, 7); fill3d(c, p, x - 7, y - 3, x + 7, y + 3, ['#e8dfc8', '#bfb49a', '#8a7f68']);
+      c.strokeStyle = 'rgba(40,32,24,.5)'; c.lineWidth = .6; c.beginPath(); c.ellipse(x, y, 4, 1.4, a, 0, 7); c.stroke(); } },
+  calymene(c, R) { const head = new Path2D(); head.ellipse(50, 30, 24, 13, 0, Math.PI, 0); head.closePath(); fill3d(c, head, 26, 16, 74, 32, ['#cdb990', '#a08a62', '#6e5b3e']);
+    for (let i = 0; i < 11; i++) { const w = 22 - i * 1.4, y = 34 + i * 4.3, p = new Path2D(); p.ellipse(50, y, w, 2.4, 0, 0, 7); fill3d(c, p, 50 - w, y - 3, 50 + w, y + 3, ['#cdb990', '#a08a62', '#6e5b3e']); }
+    c.strokeStyle = 'rgba(255,240,210,.55)'; c.lineWidth = 1.4; c.beginPath(); c.moveTo(43, 34); c.lineTo(45, 80); c.moveTo(57, 34); c.lineTo(55, 80); c.stroke();
+    c.fillStyle = '#6e5b3e'; for (const [x, y] of [[50, 22], [44, 27], [56, 27]]) { c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); } c.fillStyle = '#2b2218'; c.beginPath(); c.arc(36, 26, 2, 0, 7); c.arc(64, 26, 2, 0, 7); c.fill(); },
+  mastodon(c, R) { const p = new Path2D(); p.moveTo(8, 56); p.quadraticCurveTo(14, 40, 40, 42); p.lineTo(78, 40); p.quadraticCurveTo(84, 22, 90, 14); p.lineTo(95, 18); p.quadraticCurveTo(92, 50, 84, 66); p.quadraticCurveTo(50, 76, 20, 72); p.quadraticCurveTo(8, 68, 8, 56); fill3d(c, p, 0, 30, 0, 76, ['#d8c6a0', '#a8916a', '#6f5b3e']);
+    for (const x of [44, 62]) { const t = new Path2D(); rr(c, x - 9, 30, 18, 14, 3); c.fillStyle = '#ece4d0'; c.fill(); c.strokeStyle = INK; c.lineWidth = 1.2; c.stroke(); c.fillStyle = '#c9bc9e'; for (const dx of [-5, 0, 5]) { c.beginPath(); c.moveTo(x + dx - 2.5, 31); c.lineTo(x + dx, 25); c.lineTo(x + dx + 2.5, 31); c.fill(); c.stroke(); } } },
+  direwolf(c, R) { const p = new Path2D(); p.moveTo(10, 58); p.quadraticCurveTo(12, 48, 30, 48); p.lineTo(70, 46); p.quadraticCurveTo(84, 40, 90, 28); p.lineTo(94, 32); p.quadraticCurveTo(90, 56, 74, 62); p.quadraticCurveTo(40, 66, 18, 66); p.quadraticCurveTo(10, 64, 10, 58); fill3d(c, p, 0, 40, 0, 66, ['#d8c6a0', '#a8916a', '#6f5b3e']);
+    c.fillStyle = '#f2ead8'; c.strokeStyle = INK; c.lineWidth = 1.2; c.beginPath(); c.moveTo(16, 50); c.quadraticCurveTo(12, 34, 20, 26); c.quadraticCurveTo(22, 38, 24, 49); c.closePath(); c.fill(); c.stroke();
+    for (let i = 0; i < 6; i++) { const x = 30 + i * 8, h = i === 4 ? 12 : 6; c.beginPath(); c.moveTo(x - 4, 48); c.lineTo(x, 48 - h); c.lineTo(x + 4, 48); c.closePath(); c.fill(); c.stroke(); } }
 });
+
 function drawSpecimen(c, s, S) {
   const R = rng(hashStr(s.id)); c.save(); c.scale(S / 100, S / 100);
   c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(50, 91, 36, 6, 0, 0, 7); c.fill();
@@ -1405,7 +1446,7 @@ function update(dt) {
   p.autoT = autoWalk ? (p.autoT || 0) + dt : 0; p.lastX = p.x;
   if (swipeDig && digCool <= 0 && !tapHold) { if (tile[swipeDig.r] && tile[swipeDig.r][swipeDig.c] !== AIR && !campObjectAt(swipeDig.r, swipeDig.c)) hit(swipeDig.r, swipeDig.c); else swipeDig = null; }
   if (dir || U || D) swipeDig = null;
-  if (tapHold && digCool <= 0) { if (tile[tapHold.r][tapHold.c] !== AIR) hit(tapHold.r, tapHold.c); else tapHold = null; }   // hold a tap to keep digging
+  if (tapHold && digCool <= 0) { if (tile[tapHold.r][tapHold.c] !== AIR && digTargetOK(tapHold.r, tapHold.c)) hit(tapHold.r, tapHold.c); else tapHold = null; }   // hold a tap to keep digging
   if (dir || U || D) idleT = 0; else idleT += dt;
   if (dir) p.face = dir;
   p.vx += (dir * 230 - p.vx) * Math.min(1, dt * 12);
@@ -2207,11 +2248,12 @@ $('#keysModal').addEventListener('click', e => { if (e.target.id === 'keysModal'
    ⛏️ DIG MODE (touch screens): the arrow pad hides for a bigger view; tap ANY block within reach to dig it,
    and SWIPE to move: ← → walk (or dig through a block in the way), ↑ jump or climb, ↓ dig down or climb down. */
 let tapHold = null, autoX = null, swipeDig = null, digMode = false, gesture = null;
-const REACH = () => digMode ? T * 2.3 : T * 1.7;
+// You can only dig the block DIRECTLY above, below, left or right of you (no diagonals, nothing 2 blocks away)
+function digTargetOK(r, c) { const pc = Math.floor((player.x + player.w / 2) / T), pr = Math.floor((player.y + player.h - 1) / T); return (r === pr && Math.abs(c - pc) === 1) || (c === pc && Math.abs(r - pr) === 1); }
 function setDigMode(on) {
   digMode = on; document.body.classList.toggle('digmode', on); const b = $('#digModeBtn'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
   for (const k of ['arrowup', 'arrowdown', 'arrowleft', 'arrowright']) keys[k] = false;
-  toast(on ? '⛏️ Dig mode ON: tap any block near you to dig it. Swipe to move: ← → walk, ↑ jump or climb, ↓ dig down.' : '⛏️ Dig mode OFF: the arrow pad is back.', 5000);
+  toast(on ? '⛏️ Dig mode ON: tap a block right above, below, left or right of you to dig it. Swipe to move: ← → walk, ↑ jump or climb, ↓ dig down.' : '⛏️ Dig mode OFF: the arrow pad is back.', 5000);
 }
 function tapWorld(r, c) {   // what a tap does on an open space (or a far-away block)
   const pc = Math.floor((player.x + player.w / 2) / T), pr = Math.floor((player.y + player.h - 1) / T);
@@ -2238,7 +2280,7 @@ $('#game').addEventListener('pointerdown', e => {
   gesture = {x:e.clientX, y:e.clientY, t:performance.now(), r, c, moved:false, handled:false};
   if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
   const dx = (c + .5) * T - (player.x + player.w / 2), dy = (r + .5) * T - (player.y + player.h / 2);
-  if (tile[r][c] !== AIR && Math.hypot(dx, dy) < REACH()) { player.face = dx >= 0 ? 1 : -1; tapHold = {r, c}; swipeDig = null; gesture.handled = true; if (digCool <= 0) hit(r, c); return; }
+  if (tile[r][c] !== AIR && digTargetOK(r, c)) { player.face = dx > 0 ? 1 : dx < 0 ? -1 : player.face; tapHold = {r, c}; swipeDig = null; gesture.handled = true; if (digCool <= 0) hit(r, c); return; }
   if (!digMode) { gesture.handled = true; tapWorld(r, c); }   // without dig mode, act right away
 });
 $('#game').addEventListener('pointermove', e => {
@@ -2436,9 +2478,8 @@ function draw() {
     drawTile(x, y, t, r, c);
   }
   drawLadders(x0, x1, y0, y1);
-  if (digMode && !current) { const px = player.x + player.w / 2, py = player.y + player.h / 2; g.strokeStyle = 'rgba(255,204,51,.75)'; g.lineWidth = 2.5; g.setLineDash([6, 4]);
-    for (let r = Math.floor((py - 2.3 * T) / T); r <= Math.floor((py + 2.3 * T) / T); r++) for (let c = Math.floor((px - 2.3 * T) / T); c <= Math.floor((px + 2.3 * T) / T); c++)
-      if (tile[r] && tile[r][c] && Math.hypot((c + .5) * T - px, (r + .5) * T - py) < 2.3 * T && !campObjectAt(r, c)) g.strokeRect(c * T + 4, r * T + 4, T - 8, T - 8);
+  if (digMode && !current) { const pc = Math.floor((player.x + player.w / 2) / T), pr = Math.floor((player.y + player.h - 1) / T); g.strokeStyle = 'rgba(255,204,51,.85)'; g.lineWidth = 3; g.setLineDash([6, 4]);
+    for (const [r, c] of [[pr - 1, pc], [pr + 1, pc], [pr, pc - 1], [pr, pc + 1]]) if (tile[r] && tile[r][c] && !campObjectAt(r, c)) g.strokeRect(c * T + 4, r * T + 4, T - 8, T - 8);   // only the 4 diggable neighbors
     g.setLineDash([]); }
   drawLayerLines(x0, x1);
   // Darkness grows with depth; the headlamp lights a circle around you
@@ -2593,14 +2634,15 @@ function applySave(file) {
   assayStats.n = num(P.assayStats && P.assayStats.n, 0, 1e6, 0); assayStats.ok = Math.min(assayStats.n, num(P.assayStats && P.assayStats.ok, 0, 1e6, 0));
   examPassed = !!P.examPassed; fossilPassed = !!P.fossilPassed; gemsOpen = fossilPassed; exam = null; fx = null;
   fossilIntroSeen = !!P.fossilIntroSeen; sketchBest = P.sketchBest === null || P.sketchBest === undefined ? null : num(P.sketchBest, 0, 99, 0); sk = {done:[], mistakes:0, fb:null}; fossilFound.clear(); (P.fossilFound || []).forEach(id => { if (SP[id] && SP[id].kind === 'fossil') fossilFound.add(id); });
-  for (const k in colConf) delete colConf[k]; for (const z in (P.colConf || {})) { const o = P.colConf[z]; if (LAY[z] && o && (PER[o.period] || o.period === 'kpg')) colConf[z] = {period:o.period, by:String(o.by || '').slice(0, 120)}; }
+  for (const k in colConf) delete colConf[k]; for (const z in (P.colConf || {})) { const o = P.colConf[z]; if (LAY[z] && o && o.period === LAY[z].per) colConf[z] = {period:o.period, by:String(o.by || '').slice(0, 120)}; }
   fbag.length = 0; (P.fbag || []).forEach(b => { if (b && SP[b.sid] && SP[b.sid].kind === 'fossil' && LAY[b.zone]) fbag.push({uid:num(b.uid, 1, 1e6, 1), sid:b.sid, zone:b.zone, depth:num(b.depth, 0, 99, 0), done:new Set((b.done || []).filter(k => FTESTS.some(t => t[0] === k))), tries:num(b.tries, 0, 99, 0), stage:'id'}); }); fIdx = 0; fResult = null;
   gemFound.clear(); (P.gemFound || []).forEach(id => { if (isId(id) && SP[id].gem) gemFound.add(id); });
   SITE = ['fossil', 'gem'].includes(P.site) && levelOpen(P.site) ? P.site : 'main'; worlds.main = worlds.gem = worlds.fossil = null; for (const k in savedWorlds) delete savedWorlds[k];
   genFor(SITE);
-  if (P.worlds2) for (const o in P.worlds2) if (P.worlds2[o] && ['main', 'fossil', 'gem'].includes(o)) savedWorlds[o] = P.worlds2[o];
+  const oldFossil = W => W && typeof W.tiles === 'string' && /[pqrs]/.test(W.tiles);   // a Level 2 world from before the Indiana fossil update
+  if (P.worlds2) for (const o in P.worlds2) if (P.worlds2[o] && ['main', 'fossil', 'gem'].includes(o) && !(o === 'fossil' && oldFossil(P.worlds2[o]))) savedWorlds[o] = P.worlds2[o];
   if (P.world2) savedWorlds[SITE === 'gem' ? 'main' : 'gem'] = savedWorlds[SITE === 'gem' ? 'main' : 'gem'] || P.world2;
-  const W = P.world;
+  const W = SITE === 'fossil' && oldFossil(P.world) ? null : P.world;
   if (applyWorldData(W)) { restoreCampGround();
     player.x = num(W.px, 0, COLS * T - player.w, player.x); player.y = num(W.py, -3 * T, ROWS * T, player.y);
     const r = Math.floor((player.y + player.h / 2) / T), c = Math.floor((player.x + player.w / 2) / T);
@@ -3696,50 +3738,71 @@ function tabify(el, html, key) {
   el.innerHTML = `<div class="tabs reftabs" role="tablist">${labels.map((l, k) => `<button role="tab" data-rtab="${key}:${k}" class="${k === i ? 'done' : ''}" aria-selected="${k === i}">${l}</button>`).join('')}</div>${intro}<div role="tabpanel">${parts[i] || ''}</div>`;
 }
 function openRef(panel, tabLabel) { tabState[panel] = tabLabel; openPanel(panel, !!current); }
-/* 🔑 FOSSIL KEY as a DIAGRAM (a dichotomous key drawn as a branching tree).
-   Question boxes split into branches; the bottom boxes name each fossil and its key trait. */
-const KEY_TREE = {q:'Is it a thin black film shaped like a leaf?', kids:[
-  {edge:'Yes: a PLANT', node:{q:'What is the leaf like?', kids:[{leaf:'seedfern', trait:'many small, rounded leaflets'}, {leaf:'glossopteris', trait:'one tongue shape with a net of veins'}]}},
-  {edge:'No: an ANIMAL', node:{q:'Is it bone or a tooth?', kids:[
-    {edge:'Yes', node:{q:'Is it a tooth?', kids:[
-      {edge:'Yes', node:{q:'What shape is the tooth?', kids:[{leaf:'shark', trait:'triangle with a sharp point'}, {leaf:'horse', trait:'small square with round bumps'}, {leaf:'mammoth', trait:'huge, made of ridged plates'}]}},
-      {edge:'No: bone', node:{q:'What kind of bone?', kids:[{leaf:'mesosaurus', trait:'small skeleton, long toothy snout'}, {leaf:'dino', trait:'big spool-shaped backbone'}, {leaf:'placoderm', trait:'thick plate with a jaw-like edge'}]}}]}},
-    {edge:'No: shell or outer skeleton', node:{q:'What shape is it?', kids:[{leaf:'trilobite', trait:'3 lobes and many segments'}, {leaf:'brachiopod', trait:'two ribbed, fan-shaped shells'}, {leaf:'ammonite', trait:'flat spiral with chambers'}, {leaf:'crinoid', trait:'stack of round discs'}]}}]}}]};
+/* 🔑 FOSSIL KEY as a DIAGRAM, following the IGWS Fossil Identification Chart.
+   Blue boxes ask a question; orange labels are the answers; yellow boxes name the group,
+   its key trait, and the fossils at Fossil Bluffs that belong to it. */
+const KEY_TREE = {q:'Skeletal structure?', kids:[
+  {edge:'No', leaf:'plant'},
+  {edge:'Yes', node:{q:'What kind of skeleton?', kids:[
+    {edge:'Valves (shells)?', node:{q:'How many valves?', kids:[
+      {edge:'Univalved (one shell)', node:{q:'Symmetry?', kids:[{leaf:'gastropod'}, {leaf:'cephalopod'}]}},
+      {edge:'Bivalved (two shells)', node:{q:'Symmetry?', kids:[{leaf:'bivalve'}, {leaf:'brachiopod'}]}}]}},
+    {edge:'Calcareous plates?', node:{q:'Symmetry and shape?', kids:[{leaf:'crinoid'}, {leaf:'blastoid'}]}},
+    {edge:'Cups, tubes, or complex shapes?', node:{q:'Symmetry and shape?', kids:[{leaf:'horncoral'}, {leaf:'colcoral'}, {leaf:'bryozoan'}, {leaf:'foram'}]}},
+    {edge:'Segmented, 3 lobes?', leaf:'trilobite'},
+    {edge:'Bone or enamel?', leaf:'vertebrate'}]}}]};
 function fossilKeyHTML() {
-  const LW = 112, GAP = 10, DY = 108, boxes = [], lines = []; let slot = 0;
+  const LW = 128, GAP = 10, DY = 120, boxes = [], lines = []; let slot = 0;
   const wrap = (t, n) => { const out = []; let line = ''; for (const w of t.split(' ')) { if ((line + ' ' + w).trim().length > n && line) { out.push(line); line = w; } else line = (line + ' ' + w).trim(); } if (line) out.push(line); return out; };
-  const place = (n, depth) => {   // lay out the tree: leaves left to right, each question centered over its branches
-    if (n.leaf) { const x = slot * (LW + GAP) + LW / 2 + 4; slot++; n.x = x; n.y = depth * DY + 8; return x; }
+  const place = (n, depth) => {
+    if (n.leaf) { n.x = slot * (LW + GAP) + LW / 2 + 4; slot++; n.y = depth * DY + 8; return n.x; }
     const xs = n.kids.map(k => place(k.node || k, depth + 1)); n.x = (Math.min(...xs) + Math.max(...xs)) / 2; n.y = depth * DY + 8; return n.x;
   };
-  place(KEY_TREE, 0);
+  place(KEY_TREE, 0); let maxY = 0;
   const draw = n => {
-    if (n.leaf) { const F = SP[n.leaf], name = wrap(F.name.split(' (')[0], 15), tr = wrap(n.trait, 16);
-      boxes.push(`<g><rect x="${n.x - LW / 2}" y="${n.y}" width="${LW}" height="${30 + (name.length + tr.length) * 15}" rx="10" fill="#fff4cc" stroke="#1c2541" stroke-width="2.5"/>
-        ${tr.map((l, i) => `<text x="${n.x}" y="${n.y + 17 + i * 15}" font-size="12">${esc(l)}</text>`).join('')}
-        ${name.map((l, i) => `<text x="${n.x}" y="${n.y + 24 + (tr.length + i) * 15}" font-size="13" font-weight="bold">${esc(l)}</text>`).join('')}</g>`); return; }
-    const q = wrap(n.q, 22), w = 170, h = 12 + q.length * 16;
+    if (n.leaf) { const G = FGROUPS[n.leaf], name = wrap(G.name, 16), tr = wrap(G.trait, 19), here = FOSSILS.filter(f => f.g === n.leaf).map(f => f.name.match(/\((.*)\)/) ? f.name.match(/\((.*)\)/)[1] : f.name), ex = wrap('Here: ' + here.join(', '), 20);
+      const h = 14 + name.length * 15 + 10 + tr.length * 13 + 6 + ex.length * 12; maxY = Math.max(maxY, n.y + h);
+      boxes.push(`<g><rect x="${n.x - LW / 2}" y="${n.y}" width="${LW}" height="${h}" rx="10" fill="#fff4cc" stroke="#1c2541" stroke-width="2.5"/>
+        <text x="${n.x}" y="${n.y + 12}" font-size="10" fill="#6b5a40">${esc(G.taxon.toUpperCase())}</text>
+        ${name.map((l, i) => `<text x="${n.x}" y="${n.y + 27 + i * 15}" font-size="13.5" font-weight="bold">${esc(l)}</text>`).join('')}
+        ${tr.map((l, i) => `<text x="${n.x}" y="${n.y + 32 + name.length * 15 + i * 13}" font-size="11">${esc(l)}</text>`).join('')}
+        ${ex.map((l, i) => `<text x="${n.x}" y="${n.y + 38 + name.length * 15 + tr.length * 13 + i * 12}" font-size="10" font-style="italic" fill="#b35400">${esc(l)}</text>`).join('')}</g>`); return; }
+    const q = wrap(n.q, 20), w = 150, h = 12 + q.length * 16;
     boxes.push(`<g><rect x="${n.x - w / 2}" y="${n.y}" width="${w}" height="${h}" rx="12" fill="#9cc8ea" stroke="#1c2541" stroke-width="2.5"/>${q.map((l, i) => `<text x="${n.x}" y="${n.y + 20 + i * 16}" font-size="13" font-weight="bold">${esc(l)}</text>`).join('')}</g>`);
     for (const k of n.kids) { const c = k.node || k, y1 = n.y + h, y2 = c.y, ym = (y1 + y2) / 2;
       lines.push(`<path d="M${n.x} ${y1} V${ym} H${c.x} V${y2}" fill="none" stroke="#1c2541" stroke-width="2"/>`);
-      if (k.edge) { const tw = k.edge.length * 6.4 + 12; lines.push(`<rect x="${c.x - tw / 2}" y="${ym + 2}" width="${tw}" height="18" rx="9" fill="#fff" stroke="#e8711c" stroke-width="1.5"/><text x="${c.x}" y="${ym + 15}" font-size="11.5" font-weight="bold" fill="#b35400">${esc(k.edge)}</text>`); }
+      if (k.edge) { const el = wrap(k.edge, 18), tw = Math.max(...el.map(l => l.length)) * 6.2 + 12; lines.push(`<rect x="${c.x - tw / 2}" y="${ym + 3}" width="${tw}" height="${el.length * 13 + 6}" rx="8" fill="#fff" stroke="#e8711c" stroke-width="1.5"/>${el.map((l, i) => `<text x="${c.x}" y="${ym + 15 + i * 13}" font-size="11" font-weight="bold" fill="#b35400">${esc(l)}</text>`).join('')}`); }
       draw(c); }
   };
   draw(KEY_TREE);
-  const W = slot * (LW + GAP) + 8, H = 4 * DY + 150;
-  return `<h3>🔑 Fossil key</h3><p style="margin:0 0 6px">Start at the top. Answer each question about YOUR fossil and follow the matching branch down until you reach a name.</p>
-   <div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:900px;max-width:${W}px;display:block" role="img" aria-label="Dichotomous key diagram for the 12 Level 2 fossils">
+  const W = slot * (LW + GAP) + 8, H = maxY + 10;
+  return `<h3>🔑 Fossil key</h3><p style="margin:0 0 6px">Based on the Indiana Geological &amp; Water Survey fossil identification chart. Start at the top, answer each question about YOUR fossil, and follow the branch down to its group. Then use the shape clues to pick the exact fossil.</p>
+   <div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:1500px;max-width:${W}px;display:block" role="img" aria-label="Dichotomous key diagram for Level 2 fossils">
    <g font-family="Trebuchet MS, sans-serif" text-anchor="middle" fill="#1c2541">${lines.join('')}${boxes.join('')}</g></svg></div>`;
+}
+/* 🪞 TYPES OF SYMMETRY reference (from the IGWS lesson) */
+function symmetryHTML() {
+  const ic = (svg, title, def, ex) => `<div class="card" style="text-align:left;display:flex;gap:12px;align-items:center"><svg viewBox="0 0 90 90" width="90" height="90" style="flex-shrink:0" aria-hidden="true"><g fill="#d9d2c3" stroke="#1c2541" stroke-width="2.5">${svg}</g></svg><div><h4 style="margin:0 0 2px;font-size:19px">${title}</h4><p style="margin:0 0 4px">${def}</p><small><b>Examples here:</b> ${ex}</small></div></div>`;
+  const names = g => FOSSILS.filter(f => g(f)).map(f => f.name.split(' (')[0]).join(', ');
+  return `<h3>🪞 Symmetry</h3><p><b>Symmetry</b> is the arrangement of body parts around a point or plane. The major fossil groups can be told apart by the symmetry of their skeletons. There are five basic types:</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(330px,1fr))">
+   ${ic('<path d="M45 10 C20 20 12 55 45 80 C78 55 70 20 45 10Z"/><line x1="45" y1="4" x2="45" y2="86" stroke-dasharray="5 4" stroke="#e8711c"/>', 'Bilateral', 'Can be cut into two mirror-image halves along a central plane.', names(f => /^Bilateral/.test(f.sym)))}
+   ${ic('<circle cx="45" cy="45" r="34"/>' + [0, 1, 2, 3, 4, 5, 6, 7].map(k => `<line x1="45" y1="45" x2="${45 + Math.cos(k * Math.PI / 4) * 34}" y2="${45 + Math.sin(k * Math.PI / 4) * 34}"/>`).join(''), 'Radial', 'Body parts radiate from a central point, like spokes on a wheel.', names(f => /^Radial/.test(f.sym)))}
+   ${ic(`<path d="M${Array.from({length:90}, (_, k) => { const t = k / 89 * Math.PI * 5.2, r = 2 + t * 2.1; return `${(30 + Math.cos(t) * r).toFixed(1)} ${(32 + Math.sin(t) * r).toFixed(1)}`; }).join(' L')}" fill="none" stroke-width="3"/><path d="M62 84 L84 84 L73 50 Z"/><path d="M64 78 L82 74 M66 70 L80 66 M68 62 L78 58" fill="none" stroke-width="2"/><text x="30" y="88" font-size="9" stroke="none" fill="#1c2541" text-anchor="middle">flat</text><text x="73" y="46" font-size="9" stroke="none" fill="#1c2541" text-anchor="middle">cone</text>`, 'Coiled', 'Body parts arranged around a spiral. <b>Planispiral</b> coils lie flat (like a rope coiled on the floor); <b>conispiral</b> coils climb into a cone (like a snail shell or an ice cream cone).', names(f => /^Coiled/.test(f.sym)))}
+   ${ic([0, 1, 2, 3, 4].map(k => { const a = -Math.PI / 2 + k * 2 * Math.PI / 5; return `<ellipse cx="${45 + Math.cos(a) * 20}" cy="${45 + Math.sin(a) * 20}" rx="9" ry="18" transform="rotate(${a * 180 / Math.PI + 90} ${45 + Math.cos(a) * 20} ${45 + Math.sin(a) * 20})"/>`; }).join('') + '<circle cx="45" cy="45" r="7"/>', 'Pentameral', 'Body parts arranged in five equal parts, like a sea star.', names(f => /^Pentameral/.test(f.sym) || /pentameral/.test(f.sym)))}
+   ${ic('<path d="M45 86 V50 M45 60 L22 30 M45 52 L66 22 M22 30 L12 12 M22 30 L32 10 M66 22 L58 6 M66 22 L82 12" fill="none" stroke-width="6" stroke-linecap="round"/>', 'Complex', 'A compound arrangement, such as branching, fanlike, lacy or corkscrew shapes.', names(f => /^Complex/.test(f.sym)))}
+   ${ic('<path d="M15 70 Q30 20 50 40 T80 25" fill="none" stroke-width="5"/><circle cx="62" cy="65" r="10"/>', 'None', 'Some fossils, like plant pieces, bones and teeth, aren’t sorted by symmetry in the key. Use their other features.', names(f => /^None/.test(f.sym)))}
+  </div>`;
 }
 /* ✏️ CLIFF SKETCH CHALLENGE: rebuild the cliff’s history one event at a time.
    Each event can only happen after the events it depends on (relative dating rules). */
 const SKETCH = [
-  {id:'dep1', t:'Deposit Layers K to F', need:[], why:'Layers are laid down flat, oldest at the bottom (superposition).'},
-  {id:'tilt', t:'Tilt Layers K to F', need:['dep1'], why:'Layers start out flat, so tilting must happen AFTER they are deposited (original horizontality).'},
-  {id:'fault', t:'Fault breaks Layers K to F', need:['tilt'], why:'The fault is a straight crack through the TILTED layers, so the tilting came first (cross-cutting).'},
-  {id:'dike', t:'Basalt dike cuts Layers K to F', need:['tilt'], why:'The dike is straight up and down, cutting the tilted layers, so it came after tilting (cross-cutting).'},
+  {id:'dep1', t:'Deposit Layers F to B on the granite', need:[], why:'Layers are laid down flat, oldest at the bottom (superposition).'},
+  {id:'tilt', t:'Tilt Layers B to G', need:['dep1'], why:'Layers start out flat, so tilting must happen AFTER they are deposited (original horizontality).'},
+  {id:'fault', t:'Fault breaks Layers B to G', need:['tilt'], why:'The fault is a straight crack through the TILTED layers, so the tilting came first (cross-cutting).'},
+  {id:'dike', t:'Basalt dike cuts Layers B to G', need:['tilt'], why:'The dike is straight up and down, cutting the tilted layers, so it came after tilting (cross-cutting).'},
   {id:'erode', t:'Erosion wears the top down flat', need:['tilt', 'fault', 'dike'], why:'The erosion surface cuts off the tilted layers, the fault AND the dike, so it came after all of them (unconformity).'},
-  {id:'dep2', t:'Deposit Layers E to A', need:['erode'], why:'Flat Layers E to A sit on top of the erosion surface, so they came after it (superposition).'},
+  {id:'dep2', t:'Ice Age glaciers deposit Layer A', need:['erode'], why:'The flat glacial till (Layer A) sits on top of the erosion surface, so it came after it (superposition).'},
   {id:'canyon', t:'River carves the canyon', need:['dep2'], why:'The canyon cuts through the top layers, so it is the youngest event (cross-cutting).'}
 ];
 let sk = {done:[], mistakes:0, fb:null}; let sketchBest = null;
@@ -3765,17 +3828,17 @@ function skClick(id) {
 function drawSketch() {   // a simple cross-section that grows as events are placed
   const cv = $('#skCv'); if (!cv) return; const c = cv.getContext('2d'), d = id => sk.done.includes(id), W = 640, H = 260, U = 110;
   c.fillStyle = '#fbe7c4'; c.fillRect(0, 0, W, H);
-  const lower = LAYERS.slice(5).reverse(), upper = LAYERS.slice(0, 5).reverse();
+  const lower = LAYERS.filter(l => !l.upper).reverse(), upper = LAYERS.filter(l => l.upper);
   if (d('dep1')) { c.save(); c.beginPath(); c.rect(0, d('erode') ? U : 0, W, H); c.clip();
     const tilt = d('tilt') ? .22 : 0;
     for (const side of [0, 1]) { c.save(); c.beginPath(); c.rect(side ? 420 : 0, 0, side ? W - 420 : 420, H); c.clip(); const off = d('fault') && side ? -34 : 0;
-      lower.forEach((l, i) => { const y0 = H - (i + 1) * 26 - off; c.fillStyle = l.col; c.beginPath(); c.moveTo(0, y0 + tilt * 0 + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt + (i ? 26 : 400)); c.lineTo(0, y0 + 60 * tilt + (i ? 26 : 400)); c.closePath(); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.stroke(); });
+      lower.forEach((l, i) => { const y0 = H - (i + 1) * 22 - off; c.fillStyle = l.col; c.beginPath(); c.moveTo(0, y0 + tilt * 0 + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt); c.lineTo(W, y0 - W * tilt + 60 * tilt + (i ? 22 : 400)); c.lineTo(0, y0 + 60 * tilt + (i ? 22 : 400)); c.closePath(); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.stroke(); });
       c.restore(); }
     if (d('fault')) { c.strokeStyle = '#1c2541'; c.lineWidth = 3; c.setLineDash([8, 5]); c.beginPath(); c.moveTo(420, d('erode') ? U : 0); c.lineTo(420, H); c.stroke(); c.setLineDash([]); }
     if (d('dike')) { c.fillStyle = '#33343a'; c.fillRect(200, d('erode') ? U : 0, 16, H); }
     c.restore(); }
   if (d('erode')) { c.strokeStyle = '#b35400'; c.lineWidth = 3; c.beginPath(); for (let x = 0; x <= W; x += 8) c.lineTo(x, U + Math.sin(x / 18) * 2); c.stroke(); }
-  if (d('dep2')) upper.forEach((l, i) => { const y = U - (i + 1) * 20; c.fillStyle = l.col; c.fillRect(0, y, W, 20); c.strokeStyle = 'rgba(0,0,0,.25)'; c.strokeRect(0, y, W, 20); });
+  if (d('dep2')) upper.forEach(l => { c.fillStyle = l.col; c.fillRect(0, 30, W, U - 30); c.fillStyle = 'rgba(60,50,40,.5)'; for (let k = 0; k < 60; k++) { c.beginPath(); c.arc((k * 97) % W, 36 + (k * 37) % (U - 40), 2 + k % 4, 0, 7); c.fill(); } });   // glacial till with boulders
   if (d('canyon')) { c.fillStyle = '#fbe7c4'; c.beginPath(); c.moveTo(470, 0); c.lineTo(530, 70); c.lineTo(580, 70); c.lineTo(620, 0); c.closePath(); c.fill(); c.fillStyle = '#5fb3e6'; c.fillRect(530, 64, 50, 6); }
   c.fillStyle = '#1c2541'; c.font = 'bold 13px Verdana, sans-serif'; c.textAlign = 'left'; if (!sk.done.length) c.fillText('Your sketch will appear here.', 20, 30);
 }
@@ -3785,26 +3848,25 @@ const fbag = [], fossilFound = new Set(), colConf = {}; let flTab = 'id', fIdx =
 const fossilDexDone = () => FOSSILS.every(f => fossilFound.has(f.id));
 const columnDone = () => DATED_LAYERS.every(z => colConf[z]);
 function autoColumn() {   // layers with no fossils are dated by their position (superposition)
-  if (colConf.fB && colConf.fD && !colConf.fC) colConf.fC = {period:'kpg', by:'position: between the last Cretaceous layer and the first Paleogene layer'};
-  if (colConf.fJ && !colConf.fK) colConf.fK = {period:'prec', by:'position: below the oldest Cambrian layer'};
+  if (colConf.fF && !colConf.fG) colConf.fG = {period:'prec', by:'position: below the oldest fossil layer, with no fossils at all'};
 }
 function columnHTML() {
   autoColumn();
   const row = l => { const cf = colConf[l.z]; return `<tr><td style="background:${l.col};width:16px"></td><td><b>Layer ${l.L}</b><br><small>${l.rock}</small></td><td>${cf ? `<b>${perName(cf.period)}</b>${cf.period !== 'kpg' ? `<br><small>${rangeTxt(PER[cf.period])}</small>` : ''}` : '❓ Not dated yet'}</td><td><small>${cf ? 'Dated by ' + (SP[cf.by] ? 'the index fossil ' + SP[cf.by].name : cf.by) : FOSSIL_ZONE[l.z].length ? 'Find and identify an index fossil here' : 'No fossils: date it by its position'}</small></td></tr>`; };
-  const upper = LAYERS.slice(0, 5).map(row).join(''), lower = LAYERS.slice(5).map(row).join('');
-  const gap = colConf.fE && colConf.fF ? `The Triassic (${rangeTxt(PER.tria)}) is MISSING here: those layers were eroded away before Layer E was deposited.` : 'Above this line the layers are flat; below it they are tilted and cut off. Date the layers on both sides to see how much time is missing.';
+  const upper = LAYERS.filter(l => l.upper).map(row).join(''), lower = LAYERS.filter(l => !l.upper).map(row).join('');
+  const gap = colConf.fA && colConf.fB ? `Everything from the Permian through the Neogene (${rangeTxt({start:299, end:2.6})}) is MISSING here: about 300 million years of rock was eroded away before the glaciers came.` : 'Above this line the layer is flat; below it the layers are tilted and cut off. Date the layers on both sides to see how much time is missing.';
   return `<h3>🪨 Rock column journal (${DATED_LAYERS.filter(z => colConf[z]).length} / ${DATED_LAYERS.length} fossil layers dated)</h3><p style="margin:0 0 6px">Youngest at the top, oldest at the bottom (superposition). Identify an <b>index fossil</b> from a layer, then name its period to date the layer.</p>
    <div class="scroll"><table style="max-width:900px"><tr><th></th><th>Layer</th><th>Period and age</th><th>Evidence</th></tr>${upper}
-   <tr><td colspan="4" style="background:#fff1e3"><b>〰️ Erosion surface (unconformity)</b> under Layer E. ${gap}</td></tr>${lower}</table></div>
-   <p style="margin:6px 0 0"><small>📌 Field observations: a <b>basalt dike</b> cuts through Layers F–K but stops at the erosion surface, and a <b>fault</b> shifts Layers F–K but not Layer E. Use these with the cross-cutting rule in the 🕰️ time guide.</small></p>`;
+   <tr><td colspan="4" style="background:#fff1e3"><b>〰️ Erosion surface (unconformity)</b> under Layer A. ${gap}</td></tr>${lower}</table></div>
+   <p style="margin:6px 0 0"><small>📌 Field observations: a <b>basalt dike</b> cuts through Layers B–G but stops at the erosion surface, and a <b>fault</b> shifts Layers B–G but not Layer A. Use these with the cross-cutting rule in the 🕰️ time guide.</small></p>`;
 }
 function renderFossilLab() {
   const el = $('#fossillabBody');
   const tabs = [['id', '🔬 Identify fossils' + (fbag.length ? ` (${fbag.length})` : '')], ['column', '🪨 Rock column journal'], ['sketch', '✏️ Cliff sketch challenge']];
-  let h = `<div class="tabs" role="tablist">${tabs.map(([k, n]) => `<button role="tab" data-fl="ftab:${k}" class="${flTab === k ? 'done' : ''}" aria-selected="${flTab === k}">${n}</button>`).join('')}<button data-tgo="Fossil key">🔑 Fossil key</button><button data-tgo="Range">📊 Range chart</button></div>`;
+  let h = `<div class="tabs" role="tablist">${tabs.map(([k, n]) => `<button role="tab" data-fl="ftab:${k}" class="${flTab === k ? 'done' : ''}" aria-selected="${flTab === k}">${n}</button>`).join('')}<button data-tgo="Fossil key">🔑 Fossil key</button><button data-tgo="Symmetry">🪞 Symmetry</button><button data-tgo="Range">📊 Range chart</button></div>`;
   if (flTab === 'column') { el.innerHTML = h + columnHTML(); return; }
   if (flTab === 'sketch') { el.innerHTML = h + sketchHTML(); drawSketch(); return; }
-  h += `<p style="margin-top:0"><b>1.</b> Make observations and use the 🔑 fossil key to identify the fossil. <b>2.</b> Use the 📊 range chart to date its rock layer.</p>`;
+  h += `<p style="margin-top:0"><b>1.</b> Make observations (like the mineral tests!) and follow the 🔑 fossil key to identify the fossil. <b>2.</b> Use the 📊 range chart to date its rock layer.</p>`;
   if (fResult) h += fResult;
   if (!fbag.length) h += '<p class="big">No fossils to study. Dig in the layers at Level 2 (Fossil Bluffs) and look for glints!</p>';
   else {
@@ -3814,11 +3876,11 @@ function renderFossilLab() {
     if (it.stage === 'id') {
       h += `<h3>1. Observe</h3><div class="tests">${FTESTS.map(([k, ic, n]) => `<button data-fl="obs:${k}" class="${it.done.has(k) ? 'done' : ''}">${ic} ${n}${it.done.has(k) ? ' ✔' : ''}</button>`).join('')}</div>
         <ul class="notes">${it.done.size ? FTESTS.filter(([k]) => it.done.has(k)).map(([k, ic, n]) => `<li><b>${ic} ${n}:</b> ${F[k]}</li>`).join('') : '<li>No observations yet.</li>'}</ul>
-        <h3>2. Identify it</h3><label for="fguess">My fossil is: </label><select id="fguess"><option value="">Choose…</option>${FOSSILS.map(f => `<option value="${f.id}">${f.name}</option>`).join('')}</select> <button data-fl="id">✔ Identify</button>
+        <h3>2. Identify it</h3><label for="fguess">My fossil is: </label><select id="fguess"><option value="">Choose…</option>${Object.keys(FGROUPS).map(g => `<optgroup label="${FGROUPS[g].taxon}: ${FGROUPS[g].name}">${FOSSILS.filter(f => f.g === g).map(f => `<option value="${f.id}">${f.name}</option>`).join('')}</optgroup>`).join('')}</select> <button data-fl="id">✔ Identify</button>
         ${it.fb ? `<div class="fb bad pop" role="status">${it.fb}</div>` : ''}<p><button data-tgo="Fossil key">🔑 Open the fossil key diagram</button></p>`;
     } else {
       const opts = it.popts;
-      h += `<div class="fb good">✔ It’s a <b>${F.name}</b>! ${F.info}</div><h3>3. Date the layer: which period is Layer ${lay.L} from?</h3>
+      h += `<div class="fb good">✔ It’s a <b>${F.name}</b>, a ${F.group.toLowerCase()} (${F.taxon}). ${F.info}</div><h3>3. Date the layer: which period is Layer ${lay.L} from?</h3>
         <p>Use the fossil’s time range in the <button data-tgo="Range">📊 range chart</button>${F.index ? '' : ', and think about whether this fossil alone is enough evidence'}.</p>
         <div class="choice" style="grid-template-columns:1fr 1fr">${opts.map(o => `<button data-fl="per:${o}">${o === 'none' ? '🤔 Not enough evidence yet: this fossil lived during more than one period' : PER[o].name + ' (' + rangeTxt(PER[o]) + ')'}</button>`).join('')}</div>`;
     }
@@ -3863,7 +3925,7 @@ function renderFossilDex(sel) {
   let detail = '';
   if (sel) { const F = SP[sel], got = fossilFound.has(sel), lays = LAYERS.filter(l => FOSSIL_ZONE[l.z].includes(sel)).map(l => 'Layer ' + l.L);
     detail = got ? `<div class="detail"><img src="${spriteURL[F.id]}" alt="${F.name}"><div><h3>#${F.n} ${F.name} <span class="tag">${F.index ? '⭐ Index fossil' : 'Long-lived (not an index fossil)'}</span></h3><p>${F.info}</p>
-      <p><b>Lived:</b> ${rangeTxt({start:F.range[0], end:F.range[1]})} (${fossilPeriods(F).map(id => PER[id].name).join(', ')})<br><b>How it lived:</b> ${F.life}<br><b>Found at Fossil Bluffs in:</b> ${lays.join(', ')}</p></div></div>`
+      <p><b>Group:</b> ${F.taxon} · ${F.group}<br><b>Symmetry:</b> ${F.sym}<br><b>Description:</b> ${F.shape}<br><b>Lived:</b> ${rangeTxt({start:F.range[0], end:F.range[1]})} (${fossilPeriods(F).map(id => PER[id].name).join(', ')})<br><b>How it lived:</b> ${F.life}<br><b>Found at Fossil Bluffs in:</b> ${lays.join(', ')}</p></div></div>`
       : `<div class="detail"><div class="blank">🦴</div><div><h3>#${F.n} Not found yet</h3><p>Hint: dig in ${lays.join(' or ')} at Level 2.</p></div></div>`; }
   $('#fossildexBody').innerHTML = `<p class="big" style="margin-top:0">Fossils found: <b>${fossilFound.size} / ${FOSSILS.length}</b>. Select an entry to read it.</p>${detail}
     <div class="grid">${FOSSILS.map(F => fossilFound.has(F.id) ? `<button class="card" data-fdex="${F.id}"><img src="${spriteURL[F.id]}" alt="">#${F.n} ${F.name}<br><span class="tag">${F.index ? '⭐ Index' : 'Long-lived'}</span></button>`
@@ -3877,7 +3939,7 @@ function renderTimeGuide() {
   const lx = mya => x0 + (540 - Math.min(540, mya)) / 540 * (x1 - x0);   // range chart: linear, last 540 million years
   const ticks = [0, 2.6, 23, 66, 145, 201, 252, 299, 359, 419, 444, 485, 539, 4600];
   const scale = `<svg viewBox="0 0 ${W} 120" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="Geologic time scale from 4.6 billion years ago to today">
-    <g font-family="Trebuchet MS" font-size="11" text-anchor="middle">${PERIODS.map((p, i) => { const a = tx(p.start), b = tx(p.end); return `<rect x="${a}" y="40" width="${b - a}" height="34" fill="${['#c9b4d9', '#a3c9a8', '#8fbfb0', '#b6d6c0', '#d9c38a', '#7f8a7f', '#e39a7a', '#c9a0dc', '#9ec9e6', '#a9d48c', '#f2d38a', '#f6e3a0', '#e8e8e8'][i]}" stroke="#1c2541"/><text x="${(a + b) / 2}" y="${i % 2 ? 90 : 34}" font-weight="bold" font-size="${b - a < 45 ? 9 : 11}">${b - a < 45 ? p.name.slice(0, 4) + '.' : p.name}</text>`; }).join('')}
+    <g font-family="Trebuchet MS" font-size="11" text-anchor="middle">${PERIODS.map((p, i) => { const a = tx(p.start), b = tx(p.end); return `<rect x="${a}" y="40" width="${b - a}" height="34" fill="${['#c9b4d9', '#a3c9a8', '#8fbfb0', '#b6d6c0', '#d9c38a', '#7f8a7f', '#9aa98f', '#e39a7a', '#c9a0dc', '#9ec9e6', '#a9d48c', '#f2d38a', '#f6e3a0', '#e8e8e8'][i]}" stroke="#1c2541"/><text x="${(a + b) / 2}" y="${i % 2 ? 90 : 34}" font-weight="bold" font-size="${b - a < 45 ? 9 : 11}">${b - a < 45 ? p.name.slice(0, 4) + '.' : p.name}</text>`; }).join('')}
     ${ticks.filter(t => [0, 66, 252, 539, 4600].includes(t)).map(t => `<text x="${tx(t)}" y="${86 + 18}" fill="#1c2541">${t >= 1000 ? '4,600' : t}</text>`).join('')}<text x="40" y="62" text-anchor="start" font-weight="bold">Periods →</text><text x="40" y="112" text-anchor="start">million years ago</text></g></svg>`;
   const chart = `<svg viewBox="0 0 ${W} ${FOSSILS.length * 22 + 48}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="Range chart showing when each fossil lived">
     <g font-family="Trebuchet MS" font-size="12">${PERIODS.filter(p => p.id !== 'prec').map((p, i) => `<line x1="${lx(p.start)}" x2="${lx(p.start)}" y1="10" y2="${FOSSILS.length * 22 + 14}" stroke="#c9ced6"/><text x="${(lx(p.start) + lx(p.end)) / 2}" y="${FOSSILS.length * 22 + (i % 2 ? 40 : 28)}" text-anchor="middle" font-size="10">${lx(p.end) - lx(p.start) < 50 ? p.name.slice(0, 4) + '.' : p.name}</text>`).join('')}
@@ -3901,16 +3963,17 @@ function renderTimeGuide() {
    <li><b>Unconformity:</b> an old erosion surface. Rock (and time) is missing there.</li>
    <li><b>Fossil succession and index fossils:</b> life changed over time in a known order. An <b>index fossil</b> lived for a short time over a wide area, so it pins a layer to one period. Long-lived fossils can’t.</li></ul>
   <h3>📊 Range chart</h3><p>Each bar shows when a fossil lived. <span style="color:#e8711c;font-weight:bold">Orange ⭐ = index fossil (short range).</span> <span style="color:#3a86c8;font-weight:bold">Blue = long-lived.</span></p>${chart}
-  <h3>🌍 Plate motion</h3><p><b>Evidence that continents move:</b></p><p><b>Mesosaurus</b>, a small freshwater reptile that couldn’t cross an ocean, is found in South America AND Africa. <b>Glossopteris</b> leaves are found on five southern continents. The continents’ coastlines fit together like puzzle pieces, and the same rock layers and mountain belts line up across the ocean. All of this shows the continents were once joined in a supercontinent, <b>Pangaea</b>, and have slowly moved apart (a few centimeters per year).</p>${pangaea}
+  <h3>🌍 Plate motion</h3><p><b>Evidence that continents move:</b></p><p><b>Mesosaurus</b>, a small freshwater reptile that couldn’t cross an ocean, is found in South America AND Africa. <b>Glossopteris</b> leaves are found on five southern continents. The continents’ coastlines fit together like puzzle pieces, and the same rock layers and mountain belts line up across the ocean. All of this shows the continents were once joined in a supercontinent, <b>Pangaea</b>, and have slowly moved apart (a few centimeters per year).</p><p><b>Evidence right here:</b> Fossil Bluffs has coral reefs (Favosites, horn corals) and coal-swamp plants (Lepidodendron, Neuropteris). These need a warm, tropical climate, but Indiana isn’t tropical today. When these rocks formed, the plate carrying North America sat near the equator, and it has moved north since.</p>${pangaea}
   <p><b>Seafloor evidence:</b> new rock forms at mid-ocean ridges. Seafloor rock is youngest at the ridge and older farther away, the same on both sides, because the plates are moving apart.</p>${ridge}
   <h3>⛰️ Surface processes</h3><p><b>Processes that change Earth’s surface:</b></p><div class="scroll"><table><tr><th>Process</th><th>How fast?</th><th>How big an area?</th><th>Example at Fossil Bluffs</th></tr>
-   <tr><td><b>Weathering and erosion</b></td><td>Slow (thousands to millions of years)</td><td>Small to continent-wide</td><td>The river canyon; the erosion surface under Layer E</td></tr>
-   <tr><td><b>Deposition</b></td><td>Slow (mm per year)</td><td>Local to whole sea floors</td><td>Every layer, A to J</td></tr>
-   <tr><td><b>Uplift and mountain building</b></td><td>Very slow (millions of years)</td><td>Hundreds of kilometers</td><td>Sea-floor chalk (Layer D) is now high and dry; Layers F–K were tilted</td></tr>
-   <tr><td><b>Faults and earthquakes</b></td><td>Sudden (seconds), repeated over time</td><td>Local to regional</td><td>The fault that shifts Layers F–K</td></tr>
+   <tr><td><b>Weathering and erosion</b></td><td>Slow (thousands to millions of years)</td><td>Small to continent-wide</td><td>The river canyon; the erosion surface under Layer A</td></tr>
+   <tr><td><b>Deposition in seas and swamps</b></td><td>Slow (mm per year)</td><td>Local to whole sea floors</td><td>Limestone and shale Layers B–F</td></tr>
+   <tr><td><b>Glaciers</b></td><td>Thousands of years per advance</td><td>Continent-wide ice sheets</td><td>Layer A: glacial till with mastodon and dire wolf bones</td></tr>
+   <tr><td><b>Uplift and tilting</b></td><td>Very slow (millions of years)</td><td>Hundreds of kilometers</td><td>Sea-floor limestone is now high and dry; Layers B–G were tilted</td></tr>
+   <tr><td><b>Faults and earthquakes</b></td><td>Sudden (seconds), repeated over time</td><td>Local to regional</td><td>The fault that shifts Layers B–G</td></tr>
    <tr><td><b>Volcanic activity</b></td><td>Fast (days to years)</td><td>Local to regional</td><td>The basalt dike</td></tr>
-   <tr><td><b>Asteroid impact</b></td><td>Instant</td><td>Global effects</td><td>The thin K–Pg clay (Layer C), found worldwide</td></tr></table></div>
-  ${fossilKeyHTML()}<h3>✏️ Cliff sketch</h3><p>Practice putting the cliff’s events in order with the dating rules.</p><p><button data-open="fossillab" data-fltab="sketch">✏️ Open the cliff sketch challenge</button></p>`, 'timeguide');
+   <tr><td><b>Asteroid impact</b></td><td>Instant</td><td>Global effects</td><td>Not at this cliff, but a thin clay layer around the world marks the impact 66 million years ago</td></tr></table></div>
+  ${symmetryHTML()}${fossilKeyHTML()}<h3>✏️ Cliff sketch</h3><p>Practice putting the cliff’s events in order with the dating rules.</p><p><button data-open="fossillab" data-fltab="sketch">✏️ Open the cliff sketch challenge</button></p>`, 'timeguide');
 }
 
 /* ---------- 15o. FOSSIL FIELD EXAM (unlocks Level 3) ----------
@@ -3918,29 +3981,30 @@ function renderTimeGuide() {
    5 parts, one per big idea. A wrong answer gives a hint and a NEW version (no repeats). */
 const FX_PARTS = ['🪨 Order the events (MS-ESS1-4)', '⭐ Index fossils (MS-ESS1-4)', '🌍 Plate motion (MS-ESS2-3)', '⛰️ Surface processes (MS-ESS2-2)', '✍️ Explain with evidence (MS-ESS1-4)'];
 const FX_BANK = [
- [ // 1. sequence of events at Fossil Bluffs
-  {q:'Put the history of Fossil Bluffs in order, OLDEST first.', right:'Layers K to F deposited → layers tilted → dike cuts through them → erosion makes a flat surface → Layers E to A deposited → river cuts the canyon', wrong:['Layers E to A deposited → layers K to F deposited → erosion → dike → river cuts the canyon', 'Layers K to F deposited → erosion makes a flat surface → Layers E to A deposited → dike cuts through all layers → layers tilted', 'River cuts the canyon → layers K to A deposited → dike → layers tilted'], why:'Lower layers are oldest (superposition). The dike cuts F–K, so it is younger than them, but it stops at the erosion surface, so it is older than Layer E (cross-cutting). The canyon cuts the top layers, so it came last.'},
-  {q:'The fault shifts Layers F to K but does NOT shift Layer E. What does this tell you?', right:'The fault happened after Layer F was deposited but before Layer E was deposited.', wrong:['The fault is older than Layer K.', 'The fault happened after Layer A was deposited.', 'Faults and layers always form at the same time.'], why:'Cross-cutting: a fault is younger than the layers it breaks. Layer E was laid down later, on top, so it wasn’t broken.'},
-  {q:'Layers F to K are tilted, but Layers A to E are flat. Which explanation fits best?', right:'F to K were deposited flat, then tilted; after erosion, A to E were deposited flat on top.', wrong:['F to K were deposited tilted, and A to E were deposited flat.', 'All layers were tilted, then A to E became flat by themselves.', 'A to E are older than F to K.'], why:'Layers are deposited flat (original horizontality), so tilting happened later. The erosion surface between them is an unconformity.'}],
- [ // 2. index fossil reasoning
-  {q:'A layer contains crinoid stems AND Mesosaurus. Which period is it from?', right:'Permian', wrong:['Ordovician', 'Carboniferous', 'Not enough evidence'], why:'Crinoids lived for hundreds of millions of years, but Mesosaurus is an index fossil that lived only in the early Permian.'},
-  {q:'A layer contains ammonites AND Cretoxyrhina shark teeth. Which period is it from?', right:'Cretaceous', wrong:['Jurassic', 'Devonian', 'Not enough evidence'], why:'Ammonites span many periods, but this shark is an index fossil that lived only in the Cretaceous.'},
-  {q:'A layer contains ONLY crinoid stems. What can you conclude?', right:'Not enough evidence: crinoids lived in many periods, so you need an index fossil.', wrong:['It must be Ordovician.', 'It must be Permian.', 'It must be the youngest layer.'], why:'An index fossil must have lived for a SHORT time. Long-lived fossils can’t pin down one period.'},
-  {q:'Why is a trilobite like Olenellus a better index fossil than a crinoid?', right:'It lived for a short time but was widespread, so it marks one time period.', wrong:['It is bigger than a crinoid.', 'It is still alive today.', 'It is found in only one place on Earth.'], why:'Good index fossils lived briefly but were common over a wide area.'}],
- [ // 3. plate motion
+ [ // 1. sequence of events at Fossil Bluffs (MS-ESS1-4)
+  {q:'Put the history of Fossil Bluffs in order, OLDEST first.', right:'Layers F to B deposited on the granite → layers tilted → dike cuts through them → erosion makes a flat surface → glaciers deposit Layer A → river cuts the canyon', wrong:['Glaciers deposit Layer A → layers F to B deposited → erosion → dike → river cuts the canyon', 'Layers F to B deposited → erosion makes a flat surface → glaciers deposit Layer A → dike cuts through all layers → layers tilted', 'River cuts the canyon → layers B to F deposited → dike → layers tilted'], why:'Lower layers are older (superposition). The dike cuts Layers B–G, so it is younger than them, but it stops at the erosion surface, so it is older than Layer A (cross-cutting). The canyon cuts the top layers, so it came last.'},
+  {q:'The fault shifts Layers B to G but does NOT shift Layer A. What does this tell you?', right:'The fault happened after Layer B was deposited but before Layer A was deposited.', wrong:['The fault is older than the granite (Layer G).', 'The fault happened after Layer A was deposited.', 'Faults and layers always form at the same time.'], why:'Cross-cutting: a fault is younger than the layers it breaks. Layer A was laid down later, on top, so it wasn’t broken.'},
+  {q:'Layers B to F are tilted, but the glacial till (Layer A) is flat. Which explanation fits best?', right:'B to F were deposited flat, then tilted and eroded; much later, glaciers deposited Layer A on top.', wrong:['B to F were deposited tilted, and Layer A was deposited flat.', 'All layers were tilted, then Layer A became flat by itself.', 'Layer A is older than Layers B to F.'], why:'Layers are deposited flat (original horizontality), so tilting happened later. The erosion surface between them is an unconformity.'},
+  {q:'Layer B is Pennsylvanian (about 300 million years old) and Layer A is Quaternary (less than 2.6 million years old). What does the surface between them show?', right:'An unconformity: about 300 million years of rock and time are missing because of erosion.', wrong:['The two layers were deposited at the same time.', 'Layer A is older than Layer B.', 'No time passed between the two layers.'], why:'An erosion surface separating rocks of very different ages is an unconformity: rock was removed and time is missing.'}],
+ [ // 2. index fossil reasoning (MS-ESS1-4)
+  {q:'A layer contains crinoid stems AND the blastoid Pentremites. Which period is it from?', right:'Mississippian', wrong:['Ordovician', 'Devonian', 'Not enough evidence'], why:'Crinoids lived for hundreds of millions of years, but Pentremites is an index fossil from the Mississippian.'},
+  {q:'A layer contains Favosites colonial coral AND the horn coral Aulacophyllum. Which period is it from?', right:'Devonian', wrong:['Silurian', 'Ordovician', 'Not enough evidence'], why:'Favosites lived from the Ordovician to the Devonian, but Aulacophyllum is a Devonian index fossil.'},
+  {q:'A layer contains ONLY crinoid stems. What can you conclude?', right:'Not enough evidence: crinoids lived in many periods, so you need an index fossil.', wrong:['It must be Ordovician.', 'It must be Mississippian.', 'It must be the youngest layer.'], why:'An index fossil must have lived for a SHORT time. Long-lived fossils can’t pin down one period.'},
+  {q:'Why is the blastoid Pentremites a better index fossil than a crinoid?', right:'It lived for a short time but was widespread, so it marks one time period.', wrong:['It is bigger than a crinoid.', 'It is still alive today.', 'It is found in only one place on Earth.'], why:'Good index fossils lived briefly but were common over a wide area.'}],
+ [ // 3. plate motion (MS-ESS2-3)
+  {q:'Indiana’s rocks hold coral reefs (Favosites, horn corals) and coal-swamp plants (Lepidodendron, Neuropteris). Both need warm, tropical climates, but Indiana isn’t tropical today. What is the best explanation?', right:'North America has moved: long ago, Indiana was near the equator.', wrong:['Corals and swamp plants can grow in snow.', 'Rivers carried the fossils up from the tropics.', 'Indiana’s climate has never changed.'], why:'Fossils of tropical life in rocks now far from the equator are evidence that the plate carrying the continent moved.'},
   {q:'Mesosaurus fossils (a freshwater reptile) are found in South America and in Africa, but not in between. What is the best explanation?', right:'The two continents were once joined, and have since drifted apart.', wrong:['Mesosaurus swam across the Atlantic Ocean.', 'Two different animals evolved exactly the same way.', 'Birds carried the fossils across the ocean.'], why:'A small freshwater reptile couldn’t cross an ocean. The continents were joined in Pangaea when it lived.'},
-  {q:'Glossopteris leaves are found in South America, Africa, India, Australia and even Antarctica. What does this suggest?', right:'These continents were once connected in one landmass with a similar climate.', wrong:['Antarctica has always been covered with ice.', 'Wind blew the leaves across oceans.', 'The plants grew underwater.'], why:'The same land plant on all five continents shows they were once joined (Gondwana, part of Pangaea).'},
   {q:'Seafloor rock is youngest at the mid-ocean ridge and gets older the same way on both sides. What does this show?', right:'New seafloor forms at the ridge and the plates move apart.', wrong:['The ocean is shrinking at the ridge.', 'All seafloor is the same age.', 'Ridges are the oldest part of the ocean.'], why:'Matching age stripes on both sides show the seafloor spreading apart from the ridge.'},
   {q:'The coastlines of South America and Africa fit together, and the same rock layers line up across them. What is this evidence of?', right:'Past plate motion: the continents were once joined.', wrong:['Erosion made the coasts look alike by chance.', 'The continents are still connected underwater.', 'Sea level was much higher.'], why:'Matching shapes AND matching rocks are evidence the continents split apart.'}],
- [ // 4. surface processes, time and space scales
-  {q:'Which pair shows a SLOW process and a FAST process at Fossil Bluffs?', right:'Slow: the river carving the canyon. Fast: the asteroid impact that left the K–Pg clay.', wrong:['Slow: the asteroid impact. Fast: depositing all of the chalk.', 'Slow: an earthquake on the fault. Fast: the canyon.', 'Both the canyon and the chalk formed in one day.'], why:'Canyons are carved over millions of years; an asteroid impact happens in moments but changes the whole planet.'},
-  {q:'Layer D is chalk made of tiny sea shells, but today it is high above sea level. What explains this?', right:'The land was uplifted very slowly over millions of years.', wrong:['The sea level has always been this high.', 'The shells were carried up by wind.', 'Chalk forms on mountaintops.'], why:'Uplift raises old sea-floor rock over millions of years.'},
-  {q:'Layer G (coal) lies below Layer F (red beds). What does this show about how the environment changed?', right:'A swampy forest was replaced later by a hot, dry environment.', wrong:['A desert later became a swamp.', 'The environment never changed.', 'Coal and red beds form in the same place at the same time.'], why:'Coal forms from swamp plants; red beds form where iron rusts in a hot, dry climate. G is older (below), so the swamp came first.'},
-  {q:'The K–Pg clay (Layer C) is thin but is found all over the world. What does this tell you?', right:'A sudden event affected the whole planet.', wrong:['It formed slowly in one small lake.', 'It is the oldest layer on Earth.', 'It formed from a local river flood.'], why:'A thin worldwide layer points to a fast, global event: the asteroid impact 66 million years ago.'}]
+ [ // 4. surface processes, time and space scales (MS-ESS2-2)
+  {q:'Which pair shows a SLOW process and a FASTER process at Fossil Bluffs?', right:'Slow: limestone building up from shells on the sea floor (millimeters per year). Faster: a glacier dumping a layer of till.', wrong:['Slow: an earthquake on the fault. Fast: limestone forming from shells.', 'Both the limestone and the canyon formed in one day.', 'Slow: the dike cooling. Fast: tilting the whole cliff.'], why:'Limestone builds up very slowly from shells; glaciers can drop thick till in thousands of years, and an earthquake happens in seconds.'},
+  {q:'Layer C is limestone made of sea creatures, but today it is high above sea level. What explains this?', right:'The land was uplifted very slowly over millions of years (and sea level changed).', wrong:['The sea level has always been this high.', 'The crinoids climbed up the cliff.', 'Limestone forms on mountaintops.'], why:'Uplift raises old sea-floor rock over millions of years.'},
+  {q:'Layer B (coal) lies above Layer C (sea limestone). What does this show about how the environment changed?', right:'A shallow sea was later replaced by swampy forests.', wrong:['A swamp was later replaced by a sea.', 'The environment never changed.', 'Coal and limestone form in the same place at the same time.'], why:'Layer C is older (below). Sea creatures made the limestone first; later, swamp plants made the coal.'},
+  {q:'Layer A is a jumble of clay, sand and boulders with mastodon and dire wolf bones. What process made it?', right:'Ice Age glaciers spread over the land and dumped the rock they carried as they melted.', wrong:['A warm, quiet sea slowly settled shells on the bottom.', 'A volcano erupted lava.', 'Swamp plants were squeezed into coal.'], why:'Glacial till is unsorted rock carried and dropped by glaciers. Mastodons and dire wolves lived during the Ice Age.'}]
 ];
 const FX_WRITE = [
- {q:'Explain how you know the basalt dike is YOUNGER than Layer F but OLDER than Layer E. Use evidence from the cliff.', need:[[/cut|cross/i, 'What does the dike do to Layers F–K?'], [/stop|does ?n.t (cut|reach|go)|not (cut|reach)|eros|unconform/i, 'What happens to the dike at Layer E (or the erosion surface)?'], [/young|after|later/i, 'What does cutting through a layer tell you about age?'], [/old|before|earlier/i, 'How does Layer E compare in age to the dike?']]},
- {q:'Explain how scientists use rock layers and fossils to figure out that the chalk (Layer D) is older than the mudstone (Layer B).', need:[[/below|under|beneath|deeper|bottom|superposition/i, 'Where is Layer D compared with Layer B?'], [/fossil|ammonite|shark|horse|mammal/i, 'Which fossils are in each layer?'], [/old|young|before|after|earlier|later/i, 'What do position and fossils say about age?']]}
+ {q:'Explain how you know the basalt dike is YOUNGER than Layer B but OLDER than Layer A. Use evidence from the cliff.', need:[[/cut|cross/i, 'What does the dike do to Layers B–G?'], [/stop|does ?n.t (cut|reach|go)|not (cut|reach)|eros|unconform/i, 'What happens to the dike at Layer A (or the erosion surface)?'], [/young|after|later/i, 'What does cutting through a layer tell you about age?'], [/old|before|earlier/i, 'How does Layer A compare in age to the dike?']]},
+ {q:'Explain how scientists use rock layers and fossils to figure out that the limestone (Layer C) is older than the coal (Layer B).', need:[[/below|under|beneath|deeper|bottom|superposition/i, 'Where is Layer C compared with Layer B?'], [/fossil|blastoid|pentremites|crinoid|fern|neuropteris|index/i, 'Which fossils are in each layer?'], [/old|young|before|after|earlier|later/i, 'What do position and fossils say about age?']]}
 ];
 function fxNew() { const p = fx.part;
   if (p < 4) { let pool = FX_BANK[p].filter(x => !fx.used.has(x.q)); if (!pool.length) pool = FX_BANK[p]; const q = pool[Math.floor(Math.random() * pool.length)]; fx.used.add(q.q); fx.v = {...q, opts:shuffle([q.right, ...q.wrong])}; }
@@ -3999,7 +4063,7 @@ const TROPHIES = [
   {id:'assistant', tier:2, icon:'📋', name:'Field Assistant', need:'Complete 5 field assignments', prog:() => [stats.assigns || 0, 5]},
   {id:'vault', tier:3, icon:'🔐', name:'Vault Victor', need:'Win 5 Science vault prizes', prog:() => [VAULT.filter(v => vault[v.id].status === 'won').length, 5]},
   {id:'exam', tier:3, icon:'🎓', name:'Master Examiner', need:'Pass Dr. Rivera’s Final Field Exam', prog:() => [examPassed ? 1 : 0, 1]},
-  {id:'fossils', tier:3, icon:'🦴', name:'Fossil Dex Complete', need:'Find all 12 Level 2 fossils', prog:() => [fossilFound.size, FOSSILS.length]},
+  {id:'fossils', tier:3, icon:'🦴', name:'Fossil Dex Complete', need:`Find all ${FOSSILS.length} Level 2 fossils`, prog:() => [fossilFound.size, FOSSILS.length]},
   {id:'column', tier:2, icon:'🪨', name:'Time Detective', need:'Date every fossil layer in the rock column', prog:() => [DATED_LAYERS.filter(z => colConf[z]).length, DATED_LAYERS.length]},
   {id:'fexam', tier:3, icon:'🕰️', name:'Paleontologist', need:'Pass the Fossil Field Exam', prog:() => [fossilPassed ? 1 : 0, 1]},
   {id:'traveler', tier:1, icon:'🚙', name:'Gem Country Traveler', need:'Visit Level 3, Crystal Ridge Mine', prog:() => [gemIntroSeen ? 1 : 0, 1]},
